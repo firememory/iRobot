@@ -18,6 +18,9 @@ public:
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 支持
 
+	BOOL ReadCfg();
+
+	BOOL SetCfg();
 
 // 实现
 protected:
@@ -44,6 +47,14 @@ private:
 	CEdit m_ctrlDBConStr;
 	CEdit m_ctrlDBUser;
 	CEdit m_ctrlDBPwd;
+
+	CEdit m_ctrlCustID;
+	CEdit m_ctrlAgent;	
+	CEdit m_ctrlCustPwd;	
+	CEdit m_ctrlOpId;	
+	CEdit m_ctrlOpPwd;	
+	CEdit m_ctrlBranch;
+
 	CButton m_ctrlUserMid;
 	CButton m_ctrlUseKcxp;
 
@@ -59,8 +70,13 @@ private:
 	CString m_strDBUser;
 	CString m_strDBPwd;
 
+	CString m_strCustID;
+	CString m_strAccount;
+	CString m_strCustPwd;
+	CString m_strOpId;
+	CString m_strOpPwd;
+	CString m_strBranch;
 public:
 	afx_msg void OnBnClickedUseMid();
 	afx_msg void OnBnClickedUseKcxp();	
-	
 };

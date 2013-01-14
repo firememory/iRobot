@@ -80,6 +80,12 @@ CIRobotDlg::CIRobotDlg(CWnd* pParent /*=NULL*/)
 	, m_strDBConnStr(_T(""))
 	, m_strDBUser(_T(""))
 	, m_strDBPwd(_T(""))	
+	, m_strCustID(_T(""))
+	, m_strAccount(_T(""))
+	, m_strCustPwd(_T(""))
+	, m_strOpId(_T(""))
+	, m_strOpPwd(_T(""))
+	, m_strBranch(_T(""))
 {
 	m_nTestMode = USE_MID;
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
@@ -102,6 +108,13 @@ void CIRobotDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_DB_USER, m_ctrlDBUser);
 	DDX_Control(pDX, IDC_DB_PWD, m_ctrlDBPwd);
 
+	DDX_Control(pDX, IDC_AGENT_CUSTID, m_ctrlCustID);
+	DDX_Control(pDX, IDC_AGENT_ACCOUNT, m_ctrlAgent);
+	DDX_Control(pDX, IDC_AGENT_CUSTPWD, m_ctrlCustPwd);
+	DDX_Control(pDX, IDC_AGENT_OPID, m_ctrlOpId);
+	DDX_Control(pDX, IDC_AGENT_OPPWD, m_ctrlOpPwd);
+	DDX_Control(pDX, IDC_AGENT_BRANCH, m_ctrlBranch);
+
 	DDX_Text(pDX, IDC_KCXP_IP, m_strKcxpIp);
 	DDX_Text(pDX, IDC_KCXP_PORT, m_strKcxpPort);
 	DDX_Text(pDX, IDC_KCXP_SENDQ, m_strKcxpSendQ);
@@ -114,6 +127,13 @@ void CIRobotDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_DB_CONN, m_strDBConnStr);
 	DDX_Text(pDX, IDC_DB_USER, m_strDBUser);
 	DDX_Text(pDX, IDC_DB_PWD, m_strDBPwd);	
+	
+	DDX_Text(pDX, IDC_AGENT_CUSTID, m_strCustID);
+	DDX_Text(pDX, IDC_AGENT_ACCOUNT, m_strAccount);
+	DDX_Text(pDX, IDC_AGENT_CUSTPWD, m_strCustPwd);
+	DDX_Text(pDX, IDC_AGENT_OPID, m_strOpId);
+	DDX_Text(pDX, IDC_AGENT_OPPWD, m_strOpPwd);
+	DDX_Text(pDX, IDC_AGENT_BRANCH, m_strBranch);
 }
 
 BEGIN_MESSAGE_MAP(CIRobotDlg, CDialog)
@@ -167,29 +187,7 @@ BOOL CIRobotDlg::OnInitDialog()
 		return FALSE;
 	}
 	
-	g_pCfg->ReadCfg();
-
-	m_strKcxpIp = g_pCfg->GetKcxpIp();
-	m_strKcxpSendQ = g_pCfg->GetKcxpSendQ();
-	m_strKcxpRecvQ = g_pCfg->GetKcxpRecvQ();
-
-	m_strMidIp = g_pCfg->GetMidIp();
-	m_strMidPort = g_pCfg->GetMidPort();
-
-	m_strLogPath = g_pCfg->GetLogPath();
-
-	m_nTestMode = g_pCfg->GetTestMode();
-
-	if (m_nTestMode == USE_MID)
-	{
-		m_ctrlUserMid.SetCheck(TRUE);
-		m_ctrlUseKcxp.SetCheck(FALSE);
-	}
-	else
-	{
-		m_ctrlUserMid.SetCheck(FALSE);
-		m_ctrlUseKcxp.SetCheck(TRUE);
-	}
+	ReadCfg();
 	
 	UpdateData(FALSE);
 
@@ -288,33 +286,9 @@ void CIRobotDlg::OnBnClickedOk()
 	// 获取设置的参数
 	UpdateData(TRUE);
 
-	// 将参数设为不可编辑
-	m_ctrlKcxpIp.EnableWindow(FALSE);
-	m_ctrlKcxpSendQ.EnableWindow(FALSE);
-	m_ctrlKcxpRecvQ.EnableWindow(FALSE);
-
-	m_ctrlMidIp.EnableWindow(FALSE);
-	m_ctrlMidPort.EnableWindow(FALSE);
-
-	m_ctrlLogPath.EnableWindow(FALSE);
-
-	m_ctrlUserMid.EnableWindow(FALSE);
-	m_ctrlUseKcxp.EnableWindow(FALSE);
-
-	// 保存配置
-	g_pCfg->SetKcxpIp(m_strKcxpIp);
-	g_pCfg->SetKcxpSendQ(m_strKcxpSendQ);
-	g_pCfg->SetKcxpRecvQ(m_strKcxpRecvQ);
-
-	g_pCfg->SetMidIp(m_strMidIp);
-	g_pCfg->SetMidPort(m_strMidPort);
-
-	g_pCfg->SetLogPath(m_strLogPath);
-	g_pCfg->SetTestMode(m_nTestMode);
-
-	g_pCfg->SetCfg();
-
+	// 初始化KCXP连接
 	g_pKcxpConn->InitKcxp();
+	g_pKcxpConn->OpLogin();
 }
 
 void CIRobotDlg::OnNMCustomdrawProgress1(NMHDR *pNMHDR, LRESULT *pResult)
@@ -334,4 +308,87 @@ void CIRobotDlg::OnBnClickedUseKcxp()
 {
 	// TODO: Add your control notification handler code here
 	m_nTestMode = USE_KCXP;
+}
+
+BOOL CIRobotDlg::ReadCfg()
+{
+	g_pCfg->ReadCfg();
+
+	m_strKcxpIp = g_pCfg->GetKcxpIp();
+	m_strKcxpPort = g_pCfg->GetKcxpPort();
+	m_strKcxpSendQ = g_pCfg->GetKcxpSendQ();
+	m_strKcxpRecvQ = g_pCfg->GetKcxpRecvQ();
+
+	m_strMidIp = g_pCfg->GetMidIp();
+	m_strMidPort = g_pCfg->GetMidPort();
+
+	m_strLogPath = g_pCfg->GetLogPath();
+
+	m_nTestMode = g_pCfg->GetTestMode();
+
+	if (m_nTestMode == USE_MID)
+	{
+		m_ctrlUserMid.SetCheck(TRUE);
+		m_ctrlUseKcxp.SetCheck(FALSE);
+	}
+	else
+	{
+		m_ctrlUserMid.SetCheck(FALSE);
+		m_ctrlUseKcxp.SetCheck(TRUE);
+	}
+
+	m_strDBConnStr = g_pCfg->GetDBConnStr();
+	m_strDBUser = g_pCfg->GetDBUser();
+	m_strDBPwd = g_pCfg->GetDBPwd();
+
+	m_strCustID = g_pCfg->GetCustID();
+	m_strAccount = g_pCfg->GetAccount();
+	m_strCustPwd = g_pCfg->GetCustPwd();
+	m_strOpId = g_pCfg->GetOpId();
+	m_strOpPwd = g_pCfg->GetOpPwd();
+	m_strBranch = g_pCfg->GetBranch();
+
+	return TRUE;
+}
+
+BOOL CIRobotDlg::SetCfg()
+{
+	// 将参数设为不可编辑
+	m_ctrlKcxpIp.EnableWindow(FALSE);
+	m_ctrlKcxpPort.EnableWindow(FALSE);
+	m_ctrlKcxpSendQ.EnableWindow(FALSE);
+	m_ctrlKcxpRecvQ.EnableWindow(FALSE);
+
+	m_ctrlMidIp.EnableWindow(FALSE);
+	m_ctrlMidPort.EnableWindow(FALSE);
+
+	m_ctrlLogPath.EnableWindow(FALSE);
+
+	m_ctrlUserMid.EnableWindow(FALSE);
+	m_ctrlUseKcxp.EnableWindow(FALSE);
+
+	m_ctrlDBConStr.EnableWindow(FALSE);
+	m_ctrlDBUser.EnableWindow(FALSE);
+	m_ctrlDBPwd.EnableWindow(FALSE);
+
+
+	// 保存配置
+	g_pCfg->SetKcxpIp(m_strKcxpIp);
+	g_pCfg->SetKcxpPort(m_strKcxpPort);
+	g_pCfg->SetKcxpSendQ(m_strKcxpSendQ);
+	g_pCfg->SetKcxpRecvQ(m_strKcxpRecvQ);
+
+	g_pCfg->SetMidIp(m_strMidIp);
+	g_pCfg->SetMidPort(m_strMidPort);
+
+	g_pCfg->SetLogPath(m_strLogPath);
+	g_pCfg->SetTestMode(m_nTestMode);
+
+	g_pCfg->SetDBConnStr(m_strDBConnStr);
+	g_pCfg->SetDBUser(m_strDBUser);
+	g_pCfg->SetDBPwd(m_strDBPwd);
+
+	g_pCfg->SetCfg();
+
+	return TRUE;
 }

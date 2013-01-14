@@ -9,6 +9,7 @@ public:
 	~CKcxpConn(void);
 
 	BOOL InitKcxp();
+	BOOL OpLogin();
 
 private:
 	tagKCBPConnectOption stKCBPConnection; //KCBP 连接选项

@@ -20,8 +20,14 @@
 #define IDC_DB_CONN                     1010
 #define IDC_DB_USER                     1011
 #define IDC_DB_PWD                      1012
-#define IDC_KCXP_IP2                    1013
 #define IDC_KCXP_PORT                   1013
+#define IDC_AGENT_CUSTID                1014
+#define IDC_AGENT_ACCOUNT               1015
+#define IDC_AGENT_CUSTPWD               1016
+#define IDC_AGENT_OPID                  1017
+#define IDC_AGENT_OPPWD                 1018
+#define IDC_DB_PWD3                     1019
+#define IDC_AGENT_BRANCH                1019
 
 // Next default values for new objects
 // 

@@ -59,8 +59,36 @@ BOOL CCfg::ReadCfg()
 	memset(szTmp, 0x00, sizeof(szTmp));
 	GetPrivateProfileString( "DB", "PASSWORD", "xctest", szTmp, sizeof(szTmp) - 1, pCfgPath);
 	m_strDBPwd = szTmp;
-	return TRUE;
+	
+	// ȡAgent CUSTID
+	memset(szTmp, 0x00, sizeof(szTmp));
+	GetPrivateProfileString( "AGENT", "CUSTID", "18798721", szTmp, sizeof(szTmp) - 1, pCfgPath);
+	m_strCustID = szTmp;
 
+	// ȡAgent ACCOUNT
+	memset(szTmp, 0x00, sizeof(szTmp));
+	GetPrivateProfileString( "AGENT", "ACCOUNT", "85807073", szTmp, sizeof(szTmp) - 1, pCfgPath);
+	m_strAccount = szTmp;
+
+	// ȡAgent CUSTPWD
+	memset(szTmp, 0x00, sizeof(szTmp));
+	GetPrivateProfileString( "AGENT", "CUSTPWD", "753951", szTmp, sizeof(szTmp) - 1, pCfgPath);
+	m_strCustPwd = szTmp;
+
+	// ȡAgent OPID
+	memset(szTmp, 0x00, sizeof(szTmp));
+	GetPrivateProfileString( "AGENT", "OPID", "11726", szTmp, sizeof(szTmp) - 1, pCfgPath);
+	m_strOpId = szTmp;
+
+	// ȡAgent OPPWD
+	memset(szTmp, 0x00, sizeof(szTmp));
+	GetPrivateProfileString( "AGENT", "OPPWD", "753951", szTmp, sizeof(szTmp) - 1, pCfgPath);
+	m_strOpPwd= szTmp;
+
+	// ȡAgent BRANCH
+	memset(szTmp, 0x00, sizeof(szTmp));
+	GetPrivateProfileString( "AGENT", "BRANCH", "8070", szTmp, sizeof(szTmp) - 1, pCfgPath);
+	m_strBranch = szTmp;
 
 	// ȡLog Path
 	memset(szTmp, 0x00, sizeof(szTmp));
@@ -69,6 +97,8 @@ BOOL CCfg::ReadCfg()
 
 	// ȡTest Mode	
 	m_nTestMode = GetPrivateProfileInt( "COMMON", "MODE", 1, pCfgPath);
+
+	return TRUE;
 }
 
 BOOL CCfg::SetCfg()
@@ -86,6 +116,13 @@ BOOL CCfg::SetCfg()
 	WritePrivateProfileString("DB", "CONNSTR", m_strDBConnStr.GetBuffer(), pCfgPath);
 	WritePrivateProfileString("DB", "USER", m_strDBUser.GetBuffer(), pCfgPath);
 	WritePrivateProfileString("DB", "PASSWORD", m_strDBPwd.GetBuffer(), pCfgPath);
+
+	WritePrivateProfileString("AGENT", "CUSTID", m_strCustID.GetBuffer(), pCfgPath);
+	WritePrivateProfileString("AGENT", "CUSTPWD", m_strCustPwd.GetBuffer(), pCfgPath);
+	WritePrivateProfileString("AGENT", "ACCOUNT", m_strAccount.GetBuffer(), pCfgPath);
+	WritePrivateProfileString("AGENT", "OPID", m_strOpId.GetBuffer(), pCfgPath);
+	WritePrivateProfileString("AGENT", "OPPWD", m_strOpPwd.GetBuffer(), pCfgPath);
+	WritePrivateProfileString("AGENT", "BRANCH", m_strBranch.GetBuffer(), pCfgPath);
 	
 	WritePrivateProfileString("COMMON", "LOGPATH", m_strLogPath.GetBuffer(), pCfgPath);
 

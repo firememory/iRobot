@@ -42,6 +42,23 @@ public:
 	CString GetDBPwd() const { return m_strDBPwd; }
 	void SetDBPwd(CString val) { m_strDBPwd = val; }
 
+	CString GetCustID() const { return m_strCustID; }
+	void SetCustID(CString val) { m_strCustID = val; }
+
+	CString GetAccount() const { return m_strAccount; }
+	void SetAccount(CString val) { m_strAccount = val; }
+
+	CString GetCustPwd() const { return m_strCustPwd; }
+	void SetCustPwd(CString val) { m_strCustPwd = val; }
+
+	CString GetOpId() const { return m_strOpId; }
+	void SetOpId(CString val) { m_strOpId = val; }
+
+	CString GetOpPwd() const { return m_strOpPwd; }
+	void SetOpPwd(CString val) { m_strOpPwd = val; }
+
+	CString GetBranch() const { return m_strBranch; }
+	void SetBranch(CString val) { m_strBranch = val; }
 private:
 	CString m_strCfgPath;
 
@@ -58,7 +75,12 @@ private:
 
 	CString m_strDBConnStr;
 	CString m_strDBUser;
-	
 	CString m_strDBPwd;
-	
+
+	CString m_strCustID; // 客户代码	
+	CString m_strAccount; // 资金账户	
+	CString m_strCustPwd; // 客户密码	
+	CString m_strOpId; // 操作员号
+	CString m_strOpPwd; // 操作员密码	
+	CString m_strBranch; // 营业部	
 };
