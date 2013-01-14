@@ -26,7 +26,7 @@
 
 #include <afxdisp.h>        // MFC 自动化类
 
-
+#import "C://program files//common files//system//ado//msado15.dll" no_namespace rename ("EOF","adoEOF")
 
 #ifndef _AFX_NO_OLE_SUPPORT
 #include <afxdtctl.h>           // MFC 对 Internet Explorer 4 公共控件的支持

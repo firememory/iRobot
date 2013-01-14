@@ -67,7 +67,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="KCBPCli.lib"
 				LinkIncremental="2"
+				AdditionalLibraryDirectories="./lib"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
@@ -190,6 +192,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\DBConnect.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\IRobot.cpp"
 				>
 			</File>
@@ -198,7 +204,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\KcxpConn.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\kdmidcli.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\loginterface.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\MidConn.cpp"
 				>
 			</File>
 			<File
@@ -221,6 +239,34 @@
 					/>
 				</FileConfiguration>
 			</File>
+			<Filter
+				Name="KDGateWay"
+				>
+				<File
+					RelativePath=".\BlowFish.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\CMiniSocket.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\CRC.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\error.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\KDGateway.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\tools.cpp"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -232,6 +278,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\DBConnect.h"
+				>
+			</File>
+			<File
 				RelativePath=".\IRobot.h"
 				>
 			</File>
@@ -240,7 +290,23 @@
 				>
 			</File>
 			<File
+				RelativePath=".\KCBPCli.h"
+				>
+			</File>
+			<File
+				RelativePath=".\KcxpConn.h"
+				>
+			</File>
+			<File
+				RelativePath=".\kdmidcli.h"
+				>
+			</File>
+			<File
 				RelativePath=".\loginterface.h"
+				>
+			</File>
+			<File
+				RelativePath=".\MidConn.h"
 				>
 			</File>
 			<File
@@ -259,6 +325,34 @@
 				RelativePath=".\targetver.h"
 				>
 			</File>
+			<Filter
+				Name="KDGateWay"
+				>
+				<File
+					RelativePath=".\Blowfish.h"
+					>
+				</File>
+				<File
+					RelativePath=".\CMiniSocket.H"
+					>
+				</File>
+				<File
+					RelativePath=".\CRC.h"
+					>
+				</File>
+				<File
+					RelativePath=".\error.h"
+					>
+				</File>
+				<File
+					RelativePath=".\KDGateway.h"
+					>
+				</File>
+				<File
+					RelativePath=".\tools.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Resource Files"

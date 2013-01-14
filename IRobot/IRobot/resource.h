@@ -17,7 +17,11 @@
 #define IDC_USE_MID                     1007
 #define IDC_USE_KCXP                    1008
 #define IDC_LOG_PATH                    1009
-#define IDC_BUTTON1                     1010
+#define IDC_DB_CONN                     1010
+#define IDC_DB_USER                     1011
+#define IDC_DB_PWD                      1012
+#define IDC_KCXP_IP2                    1013
+#define IDC_KCXP_PORT                   1013
 
 // Next default values for new objects
 // 

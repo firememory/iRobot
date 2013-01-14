@@ -5,7 +5,13 @@
 #include "stdafx.h"
 #include "IRobot.h"
 #include "IRobotDlg.h"
+
+#include "loginterface.h"
 #include "Cfg.h"
+#include "KcxpConn.h"
+#include "MidConn.h"
+#include "DBConnect.h"
+
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -15,6 +21,10 @@
 /* 全局变量                                                             */
 /************************************************************************/
 CCfg *g_pCfg = NULL;
+CLoginterface *g_pLog = NULL;
+CKcxpConn *g_pKcxpConn = NULL;
+CMidConn *g_pMidConn = NULL;
+CDBConnect *g_pDBConn = NULL;
 
 enum TEST_MODE
 {
@@ -61,11 +71,15 @@ END_MESSAGE_MAP()
 CIRobotDlg::CIRobotDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CIRobotDlg::IDD, pParent)
 	, m_strKcxpIp(_T(""))
+	, m_strKcxpPort(_T(""))
 	, m_strKcxpSendQ(_T(""))
 	, m_strKcxpRecvQ(_T(""))
 	, m_strMidIp(_T(""))	
 	, m_strMidPort(_T(""))
 	, m_strLogPath(_T(""))
+	, m_strDBConnStr(_T(""))
+	, m_strDBUser(_T(""))
+	, m_strDBPwd(_T(""))	
 {
 	m_nTestMode = USE_MID;
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
@@ -75,20 +89,31 @@ void CIRobotDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_KCXP_IP, m_ctrlKcxpIp);
+	DDX_Control(pDX, IDC_KCXP_PORT, m_ctrlKcxpPort);
 	DDX_Control(pDX, IDC_KCXP_SENDQ, m_ctrlKcxpSendQ);
 	DDX_Control(pDX, IDC_KCXP_RECVQ, m_ctrlKcxpRecvQ);
 	DDX_Control(pDX, IDC_MID_IP, m_ctrlMidIp);
 	DDX_Control(pDX, IDC_MID_PORT, m_ctrlMidPort);
 	DDX_Control(pDX, IDC_LOG_PATH, m_ctrlLogPath);
 
+	DDX_Control(pDX, IDC_USE_MID, m_ctrlUserMid);
+	DDX_Control(pDX, IDC_USE_KCXP, m_ctrlUseKcxp);
+	DDX_Control(pDX, IDC_DB_CONN, m_ctrlDBConStr);
+	DDX_Control(pDX, IDC_DB_USER, m_ctrlDBUser);
+	DDX_Control(pDX, IDC_DB_PWD, m_ctrlDBPwd);
+
 	DDX_Text(pDX, IDC_KCXP_IP, m_strKcxpIp);
+	DDX_Text(pDX, IDC_KCXP_PORT, m_strKcxpPort);
 	DDX_Text(pDX, IDC_KCXP_SENDQ, m_strKcxpSendQ);
 	DDX_Text(pDX, IDC_KCXP_RECVQ, m_strKcxpRecvQ);
+
 	DDX_Text(pDX, IDC_MID_IP, m_strMidIp);
 	DDX_Text(pDX, IDC_MID_PORT, m_strMidPort);
 	DDX_Text(pDX, IDC_LOG_PATH, m_strLogPath);
-	DDX_Control(pDX, IDC_USE_MID, m_ctrlUserMid);
-	DDX_Control(pDX, IDC_USE_KCXP, m_ctrlUseKcxp);
+
+	DDX_Text(pDX, IDC_DB_CONN, m_strDBConnStr);
+	DDX_Text(pDX, IDC_DB_USER, m_strDBUser);
+	DDX_Text(pDX, IDC_DB_PWD, m_strDBPwd);	
 }
 
 BEGIN_MESSAGE_MAP(CIRobotDlg, CDialog)
@@ -138,6 +163,7 @@ BOOL CIRobotDlg::OnInitDialog()
 	g_pCfg = new CCfg;
 	if (NULL == g_pCfg)
 	{
+		AfxMessageBox("创建配置类失败!", MB_OK, 0);
 		return FALSE;
 	}
 	
@@ -166,6 +192,41 @@ BOOL CIRobotDlg::OnInitDialog()
 	}
 	
 	UpdateData(FALSE);
+
+	g_pLog = new CLoginterface(m_strLogPath.GetBuffer());
+	if (NULL == g_pLog)
+	{
+		AfxMessageBox("创建日志类失败!", MB_OK, 0);
+		return FALSE;
+	}
+
+	g_pKcxpConn = new CKcxpConn;
+	if (NULL == g_pKcxpConn)
+	{
+		g_pLog->WriteRunLog(__FILE__, __LINE__, LOG_EMERGENT, "创建KCXP连接类失败!");
+		return FALSE;
+	}
+	
+	g_pMidConn = new CMidConn;
+	if (NULL == g_pMidConn)
+	{
+		g_pLog->WriteRunLog(__FILE__, __LINE__, LOG_EMERGENT, "创建MID连接类失败!");
+		return FALSE;
+	}
+	else
+	{
+		if (!g_pMidConn->Init())
+		{
+			return FALSE;
+		}
+	}
+
+	g_pDBConn = new CDBConnect;
+	if (NULL == g_pDBConn)
+	{
+		g_pLog->WriteRunLog(__FILE__, __LINE__, LOG_EMERGENT, "创建DB连接类失败!");
+		return FALSE;
+	}
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -253,6 +314,7 @@ void CIRobotDlg::OnBnClickedOk()
 
 	g_pCfg->SetCfg();
 
+	g_pKcxpConn->InitKcxp();
 }
 
 void CIRobotDlg::OnNMCustomdrawProgress1(NMHDR *pNMHDR, LRESULT *pResult)

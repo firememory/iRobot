@@ -9,7 +9,7 @@
 #include <string.h>
 #include <stdarg.h>
 
-CLoginterface::CLoginterface()
+CLoginterface::CLoginterface(char *pLogPath)
 {
 	m_nLogLevel = LOG_NOTIFY;
 	m_nLogFileCnt = MAX_LOG_FILE_CNT;
@@ -17,7 +17,7 @@ CLoginterface::CLoginterface()
 	m_nLogIdx = 0;
 
 	ZEROMEM(m_szLogFileName, MAX_FILE_PATH);
-	STRNCPY_EX(m_szLogFileName,"kcbp_cjis.log", MAX_FILE_PATH);
+	STRNCPY_EX(m_szLogFileName,pLogPath, MAX_FILE_PATH);
 
 	m_pBuf = new char[MAX_LOG_SIZE];
 	ZEROMEM(m_pBuf, MAX_LOG_SIZE);

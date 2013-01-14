@@ -84,7 +84,7 @@ class CLoginterface
 	
 
 public:
-	CLoginterface();
+	CLoginterface(char *);
 	~CLoginterface();
 
 	void SetLogLevel(int);
