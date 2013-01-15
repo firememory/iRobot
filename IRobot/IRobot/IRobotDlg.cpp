@@ -88,6 +88,8 @@ CIRobotDlg::CIRobotDlg(CWnd* pParent /*=NULL*/)
 	, m_strBranch(_T(""))
 {
 	m_nTestMode = USE_MID;
+	m_pMyService = NULL;
+	m_bAllowSetCfg = TRUE;
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
 
@@ -109,7 +111,7 @@ void CIRobotDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_DB_PWD, m_ctrlDBPwd);
 
 	DDX_Control(pDX, IDC_AGENT_CUSTID, m_ctrlCustID);
-	DDX_Control(pDX, IDC_AGENT_ACCOUNT, m_ctrlAgent);
+	DDX_Control(pDX, IDC_AGENT_ACCOUNT, m_ctrlAccount);
 	DDX_Control(pDX, IDC_AGENT_CUSTPWD, m_ctrlCustPwd);
 	DDX_Control(pDX, IDC_AGENT_OPID, m_ctrlOpId);
 	DDX_Control(pDX, IDC_AGENT_OPPWD, m_ctrlOpPwd);
@@ -145,6 +147,7 @@ BEGIN_MESSAGE_MAP(CIRobotDlg, CDialog)
 	ON_NOTIFY(NM_CUSTOMDRAW, IDC_PROGRESS1, &CIRobotDlg::OnNMCustomdrawProgress1)
 	ON_BN_CLICKED(IDC_USE_MID, &CIRobotDlg::OnBnClickedUseMid)
 	ON_BN_CLICKED(IDC_USE_KCXP, &CIRobotDlg::OnBnClickedUseKcxp)
+	ON_BN_CLICKED(IDC_SET_CFG, &CIRobotDlg::OnBnClickedSetCfg)
 END_MESSAGE_MAP()
 
 
@@ -226,6 +229,12 @@ BOOL CIRobotDlg::OnInitDialog()
 		return FALSE;
 	}
 
+	m_pMyService = new CMyService;
+	if (NULL == m_pMyService)
+	{
+		g_pLog->WriteRunLog(__FILE__, __LINE__, LOG_EMERGENT, "创建MyService类失败!");
+		return FALSE;
+	}
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -282,13 +291,8 @@ HCURSOR CIRobotDlg::OnQueryDragIcon()
 void CIRobotDlg::OnBnClickedOk()
 {
 	// TODO: Add your control notification handler code here
-	
-	// 获取设置的参数
-	UpdateData(TRUE);
-
-	// 初始化KCXP连接
-	g_pKcxpConn->InitKcxp();
-	g_pKcxpConn->OpLogin();
+	m_pMyService->Init();
+	m_pMyService->Run();
 }
 
 void CIRobotDlg::OnNMCustomdrawProgress1(NMHDR *pNMHDR, LRESULT *pResult)
@@ -371,6 +375,13 @@ BOOL CIRobotDlg::SetCfg()
 	m_ctrlDBUser.EnableWindow(FALSE);
 	m_ctrlDBPwd.EnableWindow(FALSE);
 
+	m_ctrlCustID.EnableWindow(FALSE);
+	m_ctrlAccount.EnableWindow(FALSE);
+	m_ctrlCustPwd.EnableWindow(FALSE);
+
+	m_ctrlOpId.EnableWindow(FALSE);
+	m_ctrlOpPwd.EnableWindow(FALSE);
+	m_ctrlBranch.EnableWindow(FALSE);
 
 	// 保存配置
 	g_pCfg->SetKcxpIp(m_strKcxpIp);
@@ -388,7 +399,67 @@ BOOL CIRobotDlg::SetCfg()
 	g_pCfg->SetDBUser(m_strDBUser);
 	g_pCfg->SetDBPwd(m_strDBPwd);
 
+	g_pCfg->SetCustID(m_strCustID);
+	g_pCfg->SetAccount(m_strAccount);
+	g_pCfg->SetCustPwd(m_strCustPwd);
+	g_pCfg->SetOpId(m_strOpId);
+	g_pCfg->SetOpPwd(m_strOpPwd);
+	g_pCfg->SetBranch(m_strBranch);
+
 	g_pCfg->SetCfg();
 
 	return TRUE;
+}
+
+void CIRobotDlg::OnBnClickedSetCfg()
+{
+	// TODO: Add your control notification handler code here
+	if (FALSE == m_bAllowSetCfg)
+	{
+		m_ctrlKcxpIp.EnableWindow(TRUE);
+		m_ctrlKcxpPort.EnableWindow(TRUE);
+		m_ctrlKcxpSendQ.EnableWindow(TRUE);
+		m_ctrlKcxpRecvQ.EnableWindow(TRUE);
+
+		m_ctrlMidIp.EnableWindow(TRUE);
+		m_ctrlMidPort.EnableWindow(TRUE);
+
+		m_ctrlLogPath.EnableWindow(TRUE);
+
+		m_ctrlUserMid.EnableWindow(TRUE);
+		m_ctrlUseKcxp.EnableWindow(TRUE);
+
+		m_ctrlDBConStr.EnableWindow(TRUE);
+		m_ctrlDBUser.EnableWindow(TRUE);
+		m_ctrlDBPwd.EnableWindow(TRUE);
+
+		m_ctrlCustID.EnableWindow(TRUE);
+		m_ctrlAccount.EnableWindow(TRUE);
+		m_ctrlCustPwd.EnableWindow(TRUE);
+
+		m_ctrlOpId.EnableWindow(TRUE);
+		m_ctrlOpPwd.EnableWindow(TRUE);
+		m_ctrlBranch.EnableWindow(TRUE);
+
+		m_bAllowSetCfg = TRUE;
+
+		g_pMidConn->DisConnect();
+	}
+	else
+	{
+		// 获取设置的参数
+		UpdateData(TRUE);
+
+		// 保存配置到配置文件
+		m_bAllowSetCfg = FALSE;
+		SetCfg();
+
+		// 初始化KCXP连接
+		g_pKcxpConn->InitKcxp();
+		g_pKcxpConn->OpLogin();
+
+		// 初始化MID连接
+		g_pMidConn->Connect();
+		
+	}
 }

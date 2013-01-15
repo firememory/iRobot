@@ -125,8 +125,8 @@ int iLen;
 			return -1;			
 	}
 	
-	strncpy_s(m_pszNetwork,p_pszNetwork,32);
-	strncpy_s(m_pszAddress,p_pszAddress,32);
+	strncpy(m_pszNetwork,p_pszNetwork,32);
+	strncpy(m_pszAddress,p_pszAddress,32);
 	m_iPort = p_iPort;
 	m_iProtoType = p_iProtoType;
 	
@@ -372,7 +372,7 @@ int iLen;
 
 	m_pszErrorMessage = new char[iLen];
 	
-	strncpy_s(m_pszErrorMessage, iLen, p_pszErrorMessage,iLen);
+	strncpy(m_pszErrorMessage,p_pszErrorMessage,iLen);
 
 //	WriteLog(m_pszErrorMessage);
 }

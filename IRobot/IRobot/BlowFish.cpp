@@ -532,7 +532,7 @@ void CBlowFish::Encrypt(const unsigned char* in, unsigned char* out, size_t k, i
 	memset(szinbuf,0,200);
 	memset(szoutbuf,0,200);
 	memset(sztrueoutbuf,0,200);
-	strcpy_s((char *)szinbuf, 200, (const char *)in);
+	strcpy((char *)szinbuf, (const char *)in);
 	int n,m,len;
 	
 	n =k;
@@ -592,7 +592,7 @@ void CBlowFish::Encrypt(const unsigned char* in, unsigned char* out, size_t k, i
 	}
 
 	CharStr2HexStr((const unsigned char *)szoutbuf, (char *)sztrueoutbuf, len);
-	strcpy_s((char *)out, 200, (const char *)sztrueoutbuf);
+	strcpy((char *)out, (const char *)sztrueoutbuf);
 }
 
 //Decrypt from Input Buffer to Output Buffer
@@ -608,7 +608,7 @@ void CBlowFish::Decrypt(const unsigned char* in, unsigned char* out, size_t k, i
 	memset(sztrueinbuf,0,200);
 	memset(szoutbuf,0,200);
 	memset(sztrueoutbuf,0,200);
-	strcpy_s((char *)szinbuf, 200, (const char *)in);
+	strcpy((char *)szinbuf,(const char *)in);
 	int n,len;
 	n=k;
 	
@@ -670,7 +670,7 @@ void CBlowFish::Decrypt(const unsigned char* in, unsigned char* out, size_t k, i
 		len--;
 	}
 
-	strcpy_s((char *)out, 200, (const char *)szoutbuf);
+	strcpy((char *)out,(const char *)szoutbuf);
 }
 
 
@@ -714,7 +714,7 @@ void CBlowFish::CharStr2HexStr(const unsigned char* pucCharStr, char* pszHexStr,
 	for(i=0; i<iSize; i++)
 	{
 		Char2Hex(pucCharStr[i], szHex);
-		strcat_s(pszHexStr, 3, szHex);
+		strcat(pszHexStr, szHex);
 	}
 }
 

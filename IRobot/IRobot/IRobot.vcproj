@@ -196,6 +196,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\IPCKDGateWayVistor.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\IRobot.cpp"
 				>
 			</File>
@@ -216,7 +220,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\LoginVistor.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\MidConn.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\MyService.cpp"
 				>
 			</File>
 			<File
@@ -282,6 +294,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\IPCKDGateWayVistor.h"
+				>
+			</File>
+			<File
 				RelativePath=".\IRobot.h"
 				>
 			</File>
@@ -306,7 +322,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\LoginVistor.h"
+				>
+			</File>
+			<File
 				RelativePath=".\MidConn.h"
+				>
+			</File>
+			<File
+				RelativePath=".\MyService.h"
 				>
 			</File>
 			<File

@@ -55,7 +55,7 @@ void CRC_Get(unsigned char* buffer, int nSize,unsigned char* lpoutbuf)
 	int icrc;
 	icrc = crc^0xffffffff;
 	memset(ch,0x00,20);
-	_itoa_s(icrc , ch,16);
+	itoa(icrc , ch,16);
 	for (int i=0;i<8;i++)
 	{
 		if (ch[i]==0)
@@ -64,6 +64,6 @@ void CRC_Get(unsigned char* buffer, int nSize,unsigned char* lpoutbuf)
 		}
 	}
 
-	strcpy_s((char *)lpoutbuf, 20, ch);
+	strcpy((char *)lpoutbuf, ch);
 	//return ch;
 }

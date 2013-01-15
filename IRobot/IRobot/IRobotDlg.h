@@ -4,6 +4,7 @@
 
 #pragma once
 #include "afxwin.h"
+#include "MyService.h"
 
 // CIRobotDlg ¶Ô»°¿ò
 class CIRobotDlg : public CDialog
@@ -49,7 +50,7 @@ private:
 	CEdit m_ctrlDBPwd;
 
 	CEdit m_ctrlCustID;
-	CEdit m_ctrlAgent;	
+	CEdit m_ctrlAccount;
 	CEdit m_ctrlCustPwd;	
 	CEdit m_ctrlOpId;	
 	CEdit m_ctrlOpPwd;	
@@ -76,7 +77,12 @@ private:
 	CString m_strOpId;
 	CString m_strOpPwd;
 	CString m_strBranch;
+
+	BOOL m_bAllowSetCfg;
 public:
 	afx_msg void OnBnClickedUseMid();
-	afx_msg void OnBnClickedUseKcxp();	
+	afx_msg void OnBnClickedUseKcxp();
+	afx_msg void OnBnClickedSetCfg();
+private:
+	CMyService *m_pMyService;
 };

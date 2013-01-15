@@ -8,9 +8,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <WinBase.h>
+
 
 CLoginterface::CLoginterface(char *pLogPath)
 {
+	InitializeCriticalSection(&m_lock);
+	
 	m_nLogLevel = LOG_NOTIFY;
 	m_nLogFileCnt = MAX_LOG_FILE_CNT;
 	m_nLogSize = MAX_LOG_SIZE;
@@ -115,7 +119,7 @@ void CLoginterface::WriteRunLog(char* pszFile, int nLineNum, int nLogLevel, cons
 
 	// if buf is larger than 10 M
 	
-	EnterCriticalSection(m_lock);
+	EnterCriticalSection(&m_lock);
 	int nBufUsedSize = strlen(m_pBuf);
 	int nLenBufStr = strlen(bufStr);
 	printf("%s:%d $ nBufUsedSize=%d, nLenBufStr=%d, msgStr=%s\n", pszFile, nLineNum, nBufUsedSize, nLenBufStr, bufStr);
@@ -130,7 +134,7 @@ void CLoginterface::WriteRunLog(char* pszFile, int nLineNum, int nLogLevel, cons
 	"%s\n", this, m_pBuf);
 	
 	_snprintf_s(m_pBuf, MAX_LOG_SIZE, _TRUNCATE, "%s%s", m_pBuf, bufStr);
-	LeaveCriticalSection(m_lock);
+	LeaveCriticalSection(&m_lock);
 }
 
 void CLoginterface::FlushLogBuf()

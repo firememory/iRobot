@@ -80,7 +80,7 @@ class CLoginterface
 	char* m_pBuf;
 	LEVEL_DESCRIPTION m_stLogLevelDescription[4];
 	FILE* m_pFp;
-	LPCRITICAL_SECTION m_lock;
+	CRITICAL_SECTION m_lock;
 	
 
 public:

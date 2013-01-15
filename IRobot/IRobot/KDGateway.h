@@ -87,10 +87,7 @@ public:
 	
 	//签入KDGateway
 	BOOL CheckIn();
-	
-	//登录
-	BOOL Login(char p_cUserType, char *p_pszUserID, char *p_pszPassword);
-	
+		
 	//发送请求
 	BOOL WaitAnswer(char *p_pszDataSect);
 	
@@ -125,7 +122,6 @@ public:
 	inline char *GetRequestBuffer() { return m_szRequestBuffer; }; //得到发送缓冲区
 	inline char *GetWorkKey() { return m_szWorkKey; }; //得到发送缓冲区
 
-	int ResultStrToTable(const char *pReturnData);
 	LPSTR GetNextLine(LPSTR lpstr);
 	int GetFieldInfo(LPSTR lpstr, int *iPos);
 };
