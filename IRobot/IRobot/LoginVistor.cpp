@@ -10,11 +10,16 @@ extern CLoginterface *g_pLog;
 
 CLoginVistor::CLoginVistor(void)
 {
-	m_pLogin_Msg = NULL;
+	m_pLoginMsg = NULL;
 }
 
 CLoginVistor::~CLoginVistor(void)
 {
+	if (NULL != m_pLoginMsg)
+	{
+		delete m_pLoginMsg;
+		m_pLoginMsg = NULL;
+	}
 }
 
 BOOL CLoginVistor::Vistor()
@@ -22,6 +27,7 @@ BOOL CLoginVistor::Vistor()
 	CKDGateway *pKDGateWay = g_pMidConn->GetKDGateWay();
 
 	CString strAccount = g_pCfg->GetAccount();
+	CString strUserCode = g_pCfg->GetCustID();
 	CString strPwd = g_pCfg->GetCustPwd();
 
 	pKDGateWay->SetOP_USER(strAccount.GetBuffer());
@@ -33,19 +39,15 @@ BOOL CLoginVistor::Vistor()
 
 	char szTemp[512] = {0};
 	sprintf_s(szTemp, "409101|Z|%s|%s|", strAccount.GetBuffer(), szPwd);
-
-	if (TRUE != pKDGateWay->WaitAnswer(szTemp))
-	{
-		g_pLog->WriteRunLog(__FILE__, __LINE__, LOG_WARN, "[MID 409101] 登录接口, 调用失败!");
-		return FALSE;
-	}
-
-	if (TRUE != ResultStrToTable(pKDGateWay->m_pReturnData))
-	{
-		g_pLog->WriteRunLog(__FILE__, __LINE__, LOG_WARN, "[MID 409101] 登录接口, 返回值解析失败!");
-		return FALSE;
-	}
 	
+	if (TRUE != SendMsg(szTemp))
+	{
+		
+	}
+
+	// 登录成功后，须将包头的OP_USER改回为客户号码,供后面的业务使用
+	pKDGateWay->SetOP_USER(strUserCode.GetBuffer());
+
 	GetSession();
 
 	return TRUE;
@@ -56,8 +58,8 @@ BOOL CLoginVistor::ResultStrToTable(char *pRetStr)
 	CKDGateway *pKDGateWay = g_pMidConn->GetKDGateWay();
 
 	int nRecNo = pKDGateWay->GetRecNum();
-	m_pLogin_Msg = new MID_LOGIN_409101[nRecNo];
-	memset(m_pLogin_Msg, 0x00, sizeof(MID_LOGIN_409101)*nRecNo);
+	m_pLoginMsg = new MID_LOGIN_409101[nRecNo];
+	memset(m_pLoginMsg, 0x00, sizeof(MID_LOGIN_409101)*nRecNo);
 
 	char *p = (char *)pRetStr;
 
@@ -80,43 +82,43 @@ BOOL CLoginVistor::ResultStrToTable(char *pRetStr)
 					switch (nCol)
 					{
 					case 0:
-						strncpy_s(m_pLogin_Msg[nRow].szUserCode, q, 9);
+						strncpy_s(m_pLoginMsg[nRow].szUserCode, q, 9);
 						break;
 					case 1:
-						strncpy_s(m_pLogin_Msg[nRow].szMarket, q, 3);
+						strncpy_s(m_pLoginMsg[nRow].szMarket, q, 3);
 						break;
 					case 2:
-						strncpy_s(m_pLogin_Msg[nRow].szBoard, q, 2);
+						strncpy_s(m_pLoginMsg[nRow].szBoard, q, 2);
 						break;
 					case 3:
-						strncpy_s(m_pLogin_Msg[nRow].szSecuAcc, q, 15);
+						strncpy_s(m_pLoginMsg[nRow].szSecuAcc, q, 15);
 						break;
 					case 4:
-						strncpy_s(m_pLogin_Msg[nRow].szSecuAccName, q, 20);
+						strncpy_s(m_pLoginMsg[nRow].szSecuAccName, q, 20);
 						break;
 					case 5:
-						strncpy_s(m_pLogin_Msg[nRow].szAccount, q, 10);
+						strncpy_s(m_pLoginMsg[nRow].szAccount, q, 10);
 						break;
 					case 6:
-						strncpy_s(m_pLogin_Msg[nRow].szUserName, q, 20);
+						strncpy_s(m_pLoginMsg[nRow].szUserName, q, 20);
 						break;
 					case 7:
-						strncpy_s(m_pLogin_Msg[nRow].szBrh, q, 10);
+						strncpy_s(m_pLoginMsg[nRow].szBrh, q, 10);
 						break;
 					case 8:
-						strncpy_s(m_pLogin_Msg[nRow].szMainFlag, q, 2);
+						strncpy_s(m_pLoginMsg[nRow].szMainFlag, q, 2);
 						break;
 					case 9:
-						strncpy_s(m_pLogin_Msg[nRow].szSession, q, 20);
+						strncpy_s(m_pLoginMsg[nRow].szSession, q, 20);
 						break;
 					case 10:
-						strncpy_s(m_pLogin_Msg[nRow].szTaCode, q, 5);
+						strncpy_s(m_pLoginMsg[nRow].szTaCode, q, 5);
 						break;
 					case 11:
-						strncpy_s(m_pLogin_Msg[nRow].szCertDays, q, 2);
+						strncpy_s(m_pLoginMsg[nRow].szCertDays, q, 2);
 						break;
 					case 12:
-						strncpy_s(m_pLogin_Msg[nRow].szEtokenDays, q, 2);
+						strncpy_s(m_pLoginMsg[nRow].szEtokenDays, q, 2);
 						break;
 					}
 
@@ -133,7 +135,26 @@ BOOL CLoginVistor::ResultStrToTable(char *pRetStr)
 void CLoginVistor::GetSession()
 {
 	CKDGateway *pKDGateWay = g_pMidConn->GetKDGateWay();
-	pKDGateWay->SetSession(m_pLogin_Msg[0].szSession);
+	pKDGateWay->SetSession(m_pLoginMsg[0].szSession);
 
-	g_pLog->WriteRunLog(__FILE__,__LINE__,LOG_NOTIFY, "[MID 409101] 登录接口, 获取Session:%s", m_pLogin_Msg[0].szSession);
+	g_pLog->WriteRunLog(SYS_MODE,LOG_NOTIFY, "[409101] 登录接口, 获取Session:%s", m_pLoginMsg[0].szSession);
+}
+
+BOOL CLoginVistor::SendMsg( char *szMsg )
+{
+	CKDGateway *pKDGateWay = g_pMidConn->GetKDGateWay();
+
+	if (TRUE != pKDGateWay->WaitAnswer(szMsg))
+	{
+		g_pLog->WriteRunLog(MID_MODE, LOG_WARN, "[409101] 登录接口, 调用失败!");
+		return FALSE;
+	}
+
+	if (TRUE != ResultStrToTable(pKDGateWay->m_pReturnData))
+	{
+		g_pLog->WriteRunLog(MID_MODE, LOG_WARN, "[409101] 登录接口, 返回值解析失败!");
+		return FALSE;
+	}
+
+	return TRUE;
 }

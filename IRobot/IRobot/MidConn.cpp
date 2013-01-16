@@ -22,7 +22,7 @@ BOOL CMidConn::Init()
 	CMiniSocket InitMiniSocket;//初始化
 	if (InitMiniSocket.InitWinSocket()!=0)
 	{
-		g_pLog->WriteRunLog(__FILE__, __LINE__, LOG_EMERGENT, "初始化MiniSocket失败!");
+		g_pLog->WriteRunLog(SYS_MODE, LOG_WARN, "初始化MiniSocket失败!");
 		return FALSE;
 	}
 
@@ -30,7 +30,7 @@ BOOL CMidConn::Init()
 
 	if (m_pKDGateWay==NULL)
 	{
-		g_pLog->WriteRunLog(__FILE__, __LINE__, LOG_EMERGENT, "初始化KDGateWay失败!");
+		g_pLog->WriteRunLog(SYS_MODE, LOG_WARN, "初始化KDGateWay失败!");
 		return FALSE;
 	}
 
@@ -50,13 +50,13 @@ BOOL CMidConn::Connect()
 	
 	if (TRUE != m_pKDGateWay->Connect(g_pCfg->GetMidIp().GetBuffer(), nPort))
 	{
-		g_pLog->WriteRunLog(__FILE__, __LINE__, LOG_DEBUG, "连接MID失败!");
+		g_pLog->WriteRunLog(SYS_MODE, LOG_DEBUG, "连接MID失败!");
 		return FALSE;
 	}
 
 	if (TRUE != m_pKDGateWay->CheckIn())
 	{
-		g_pLog->WriteRunLog(__FILE__, __LINE__, LOG_DEBUG, "KDGateWay Check In失败!");
+		g_pLog->WriteRunLog(SYS_MODE, LOG_DEBUG, "KDGateWay Check In失败!");
 		return FALSE;
 	}
 	

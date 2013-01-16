@@ -4,7 +4,8 @@
 
 #pragma once
 #include "afxwin.h"
-#include "MyService.h"
+#include "resource.h"
+#include "afxcmn.h"
 
 // CIRobotDlg 对话框
 class CIRobotDlg : public CDialog
@@ -12,6 +13,7 @@ class CIRobotDlg : public CDialog
 // 构造
 public:
 	CIRobotDlg(CWnd* pParent = NULL);	// 标准构造函数
+	~CIRobotDlg();
 
 // 对话框数据
 	enum { IDD = IDD_IROBOT_DIALOG };
@@ -59,6 +61,12 @@ private:
 	CButton m_ctrlUserMid;
 	CButton m_ctrlUseKcxp;
 
+	CEdit m_ctrlTotalCaseNum;	
+	CEdit m_ctrlSuccCaseNum;	
+	CEdit m_ctrlFailCaseNum;
+
+	CComboBoxEx m_ctrlLogLevel;
+
 	CString m_strKcxpIp;
 	CString m_strKcxpPort;
 	CString m_strKcxpSendQ;
@@ -78,11 +86,26 @@ private:
 	CString m_strOpPwd;
 	CString m_strBranch;
 
+	int m_nTotalCaseNum;
+	int m_nSuccCaseNum;
+	int m_nFailCaseNum;
+
+	int m_nLogLevel;
+
 	BOOL m_bAllowSetCfg;
+
+
 public:
 	afx_msg void OnBnClickedUseMid();
 	afx_msg void OnBnClickedUseKcxp();
 	afx_msg void OnBnClickedSetCfg();
-private:
-	CMyService *m_pMyService;
+
+	void SetCtrlTotalCaseNum(int);
+	void SetCtrlSuccCaseNum(int);
+	void SetCtrlFailCaseNum(int);
+
+	void InitComboxLogLevel();
+	
+public:
+	afx_msg void OnCbnSelchangeComboboxex1();
 };

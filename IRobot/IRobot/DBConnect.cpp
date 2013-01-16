@@ -4,6 +4,11 @@
 
 #include "stdafx.h"
 #include "DBConnect.h"
+#include "Cfg.h"
+#include "loginterface.h"
+
+extern CCfg *g_pCfg;
+extern CLoginterface *g_pLog;
 
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -23,12 +28,25 @@ CDBConnect::CDBConnect()
 
 CDBConnect::~CDBConnect()
 {
-	m_pRecordset->Close();
-	m_pConnection->Close();
+	if (m_pRecordset)
+	{
+      if (m_pRecordset->State == adStateOpen)
+         m_pRecordset->Close();
+	}
+
+	if (m_pConnection)
+	{
+      if (m_pConnection->GetState() == adStateOpen)
+         m_pConnection->Close();
+	}
 }
 
-void CDBConnect::init(char* pConnStr, char* pUser, char* pPwd)
+BOOL CDBConnect::init()
 {
+	strcpy_s(m_szConnStr, g_pCfg->GetDBConnStr().GetBuffer());
+	strcpy_s(m_szUser, g_pCfg->GetDBUser().GetBuffer());
+	strcpy_s(m_szPwd, g_pCfg->GetDBPwd());
+
 	try
 	{
 		//没有配置oracle客户端情况下ado连接字符串
@@ -37,7 +55,7 @@ void CDBConnect::init(char* pConnStr, char* pUser, char* pPwd)
 		//配置好了oracle客户端 情况下ado连接字符串
 		CString m_sConn;
 		m_sConn.Format("Provider=OraOLEDB.Oracle.1;Persist Security Info=True;server=serveraddress;Data Source=%s;User ID=%s;Password=%s",
-			pConnStr, pUser, pPwd);
+			m_szConnStr, m_szUser, m_szPwd);
 		
 		m_pConnection->Open((_bstr_t)m_sConn,"","",adConnectUnspecified);
 		
@@ -67,8 +85,9 @@ void CDBConnect::init(char* pConnStr, char* pUser, char* pPwd)
 		long errorCode=e.WCode();
 		if(3127==errorCode) AfxMessageBox("表不存在");
 		if(3092==errorCode) AfxMessageBox("表已经存在");
-		return ;
+		return FALSE;
 	}
-	
-	
+
+	g_pLog->WriteRunLog(SYS_MODE, LOG_DEBUG, "初始化DBConn成功! ConnStr:%s, User:%s, Pwd:%s", m_szConnStr, m_szUser, m_szPwd);
+	return TRUE;
 }

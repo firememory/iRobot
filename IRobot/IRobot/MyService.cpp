@@ -3,15 +3,19 @@
 
 CMyService::CMyService(void)
 {
+	m_pDlg = NULL;
+	m_nTotalCaseCnt = m_nSuccCaseCnt = m_nFailCaseCnt = 0;
 }
 
 CMyService::~CMyService(void)
 {
+	/*
 	int nCnt = m_ptServiceArray.GetCount();
 	for (int i=0; i<nCnt; i++)
 	{
 		delete m_ptServiceArray[i];
 	}
+	*/
 
 	m_ptServiceArray.RemoveAll();
 }
@@ -19,6 +23,16 @@ CMyService::~CMyService(void)
 void CMyService::Init()
 {
 	RegisterProtocal(&LoginVistor);
+	RegisterProtocal(&BuyVistor);
+
+	m_nTotalCaseCnt = m_ptServiceArray.GetCount();
+	
+	CString strTotalCaseCnt;
+	strTotalCaseCnt.Format("%d", m_nTotalCaseCnt);
+
+	m_pDlg->SetCtrlTotalCaseNum(m_nTotalCaseCnt);
+
+	m_pDlg->UpdateData(TRUE);
 }
 
 void CMyService::RegisterProtocal(IPCKDGateWayVistor *pService)

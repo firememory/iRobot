@@ -56,10 +56,17 @@ struct CRITICAL_SECTION
 
 enum LOGLEVEL
 {
-	LOG_NOTIFY,
-	LOG_WARN,
-	LOG_EMERGENT,
-	LOG_DEBUG
+	LOG_NOTIFY = 0, // 提示信息
+	LOG_WARN,		// 告警信息
+	LOG_DEBUG,		// 调试信息
+	MAX_LOG_LEVEL = LOG_DEBUG + 1
+};
+
+enum LOG_MODE
+{
+	SYS_MODE = 0, // 系统日志
+	MID_MODE, // MID 接口日志
+	KCXP_MODE // KCXP接口日志
 };
 
 struct LEVEL_DESCRIPTION
@@ -68,9 +75,9 @@ struct LEVEL_DESCRIPTION
 	char description[10];
 };
 
-
 class CLoginterface
 {
+public:
 	int m_nLogLevel;
 	int m_nLogSize;
 	int m_nLogFileCnt;
@@ -85,10 +92,11 @@ class CLoginterface
 
 public:
 	CLoginterface(char *);
-	~CLoginterface();
+	virtual ~CLoginterface();
 
 	void SetLogLevel(int);
-	void WriteRunLog(char*, int, int, const char *, ...);
+	void WriteRunLogEx(char*, int, int, const char *, ...);
+	void WriteRunLog(int, int, const char *, ...);
 	void FlushLogBuf();
 };
 #endif

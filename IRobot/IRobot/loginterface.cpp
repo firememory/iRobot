@@ -15,7 +15,7 @@ CLoginterface::CLoginterface(char *pLogPath)
 {
 	InitializeCriticalSection(&m_lock);
 	
-	m_nLogLevel = LOG_NOTIFY;
+	m_nLogLevel = LOG_WARN;
 	m_nLogFileCnt = MAX_LOG_FILE_CNT;
 	m_nLogSize = MAX_LOG_SIZE;
 	m_nLogIdx = 0;
@@ -31,12 +31,9 @@ CLoginterface::CLoginterface(char *pLogPath)
 	
 	m_stLogLevelDescription[1].level = LOG_WARN;
 	STRNCPY_EX(m_stLogLevelDescription[1].description, "WARN", 10);
-	
-	m_stLogLevelDescription[2].level = LOG_EMERGENT;
-	STRNCPY_EX(m_stLogLevelDescription[2].description, "EMERGENT", 10);
 		
-	m_stLogLevelDescription[3].level = LOG_DEBUG;
- 	STRNCPY_EX(m_stLogLevelDescription[3].description, "DEBUG", 10);
+	m_stLogLevelDescription[2].level = LOG_DEBUG;
+ 	STRNCPY_EX(m_stLogLevelDescription[2].description, "DEBUG", 10);
 	
 	// create log file
 	FILE *fp = NULL;
@@ -55,6 +52,8 @@ CLoginterface::CLoginterface(char *pLogPath)
 CLoginterface::~CLoginterface()
 {
 	//DELCLS(m_pTimeBuf);
+	FlushLogBuf();
+
 	DELARY(m_pBuf);
 
 	if(NULL != m_pFp)
@@ -66,13 +65,12 @@ CLoginterface::~CLoginterface()
 
 void CLoginterface::SetLogLevel(int nLevel)
 {
-	WriteRunLog(__FILE__, __LINE__, LOG_NOTIFY, "set log to level %s", m_stLogLevelDescription[nLevel].description);
-	//printf("set log to %s\n", m_stLogLevelDescription[nLevel].description);
+	WriteRunLog(SYS_MODE, LOG_NOTIFY, "set log to level %s", m_stLogLevelDescription[nLevel].description);
 
 	m_nLogLevel = nLevel;
 }
 
-void CLoginterface::WriteRunLog(char* pszFile, int nLineNum, int nLogLevel, const char *msg, ...)
+void CLoginterface::WriteRunLogEx(char* pszFile, int nLineNum, int nLogLevel, const char *msg, ...)
 {
 	if(nLogLevel < m_nLogLevel)
 	{
@@ -174,4 +172,78 @@ void CLoginterface::FlushLogBuf()
 			printf("create log file %s failed!", m_szLogFileName);
 		}
 	}
+}
+
+void CLoginterface::WriteRunLog(int nMode, int nLogLevel, const char *msg, ...)
+{
+	if(nLogLevel < m_nLogLevel)
+	{
+		return;
+	}
+
+	const int nTmpBufSize = 1024;
+	char msgStr[nTmpBufSize]={0};
+	char bufStr[nTmpBufSize]={0};
+	char timeStr[nTmpBufSize]={0};
+
+	ZEROMEM(msgStr,nTmpBufSize);
+	ZEROMEM(bufStr,nTmpBufSize);
+	ZEROMEM(timeStr,nTmpBufSize);
+
+	// get user input
+	va_list arg_ptr;
+	va_start(arg_ptr, msg);
+	vsprintf_s(msgStr, msg, arg_ptr);
+	va_end(arg_ptr);
+
+	// get current time
+	time_t 	NowTime;
+	struct timeb timebuffer;
+	tm stCurTm;
+	tm *pTm= &stCurTm;
+
+	time( &NowTime );
+	ftime( &timebuffer );
+
+	localtime_s(pTm, &NowTime);
+	sprintf_s(timeStr, "%4d%02d%02d %02d:%02d:%02d",
+		pTm->tm_year+1900, 
+		pTm->tm_mon+1,
+		pTm->tm_mday, 
+		pTm->tm_hour,
+		pTm->tm_min,
+		pTm->tm_sec); 
+
+	sprintf_s( timeStr, "%s.%03hu", timeStr, timebuffer.millitm );
+
+	// compose the log string
+	char szLogMode[10];
+	switch (nMode)
+	{
+	case SYS_MODE:
+		strcpy_s(szLogMode, "SYS");
+		break;
+	case MID_MODE:
+		strcpy_s(szLogMode, "MID");
+		break;
+	case KCXP_MODE:
+		strcpy_s(szLogMode, "KCXP");
+		break;
+	default:
+		break;
+	}
+	
+	_snprintf_s(bufStr, nTmpBufSize, "%s [%s][%s][%s]\n", timeStr, m_stLogLevelDescription[nLogLevel].description, szLogMode, msgStr);
+
+	EnterCriticalSection(&m_lock);
+	int nBufUsedSize = strlen(m_pBuf);
+	int nLenBufStr = strlen(bufStr);
+
+	if (nBufUsedSize >= MAX_LOG_SIZE || (nBufUsedSize+nLenBufStr) >= MAX_LOG_SIZE)
+	{
+		FlushLogBuf();
+	}
+
+	_snprintf_s(m_pBuf, MAX_LOG_SIZE, _TRUNCATE, "%s%s", m_pBuf, bufStr);
+	LeaveCriticalSection(&m_lock);
 }

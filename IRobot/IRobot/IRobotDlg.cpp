@@ -5,13 +5,14 @@
 #include "stdafx.h"
 #include "IRobot.h"
 #include "IRobotDlg.h"
+#include "public.h"
 
 #include "loginterface.h"
 #include "Cfg.h"
 #include "KcxpConn.h"
 #include "MidConn.h"
 #include "DBConnect.h"
-
+#include "MyService.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -25,6 +26,7 @@ CLoginterface *g_pLog = NULL;
 CKcxpConn *g_pKcxpConn = NULL;
 CMidConn *g_pMidConn = NULL;
 CDBConnect *g_pDBConn = NULL;
+CMyService *g_pMyService = NULL;
 
 enum TEST_MODE
 {
@@ -64,10 +66,6 @@ END_MESSAGE_MAP()
 
 
 // CIRobotDlg 对话框
-
-
-
-
 CIRobotDlg::CIRobotDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CIRobotDlg::IDD, pParent)
 	, m_strKcxpIp(_T(""))
@@ -86,11 +84,24 @@ CIRobotDlg::CIRobotDlg(CWnd* pParent /*=NULL*/)
 	, m_strOpId(_T(""))
 	, m_strOpPwd(_T(""))
 	, m_strBranch(_T(""))
+	, m_nTotalCaseNum(0)
+	, m_nSuccCaseNum(0)
+	, m_nFailCaseNum(0)
+	, m_nLogLevel(0)
 {
 	m_nTestMode = USE_MID;
-	m_pMyService = NULL;
 	m_bAllowSetCfg = TRUE;
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+}
+
+CIRobotDlg::~CIRobotDlg()
+{
+	DELCLS(g_pCfg);
+	DELCLS(g_pLog);
+	DELCLS(g_pMyService);
+	DELCLS(g_pMidConn);
+	DELCLS(g_pDBConn);
+	DELCLS(g_pKcxpConn);
 }
 
 void CIRobotDlg::DoDataExchange(CDataExchange* pDX)
@@ -117,6 +128,12 @@ void CIRobotDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_AGENT_OPPWD, m_ctrlOpPwd);
 	DDX_Control(pDX, IDC_AGENT_BRANCH, m_ctrlBranch);
 
+	DDX_Control(pDX, IDC_TOTAL_CASE, m_ctrlTotalCaseNum);
+	DDX_Control(pDX, IDC_SUCC_CASE, m_ctrlSuccCaseNum);
+	DDX_Control(pDX, IDC_FAIL_CASE, m_ctrlFailCaseNum);
+
+	DDX_Control(pDX, IDC_COMBOBOXEX_LOG_LEVEL, m_ctrlLogLevel);
+
 	DDX_Text(pDX, IDC_KCXP_IP, m_strKcxpIp);
 	DDX_Text(pDX, IDC_KCXP_PORT, m_strKcxpPort);
 	DDX_Text(pDX, IDC_KCXP_SENDQ, m_strKcxpSendQ);
@@ -129,13 +146,17 @@ void CIRobotDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_DB_CONN, m_strDBConnStr);
 	DDX_Text(pDX, IDC_DB_USER, m_strDBUser);
 	DDX_Text(pDX, IDC_DB_PWD, m_strDBPwd);	
-	
+
 	DDX_Text(pDX, IDC_AGENT_CUSTID, m_strCustID);
 	DDX_Text(pDX, IDC_AGENT_ACCOUNT, m_strAccount);
 	DDX_Text(pDX, IDC_AGENT_CUSTPWD, m_strCustPwd);
 	DDX_Text(pDX, IDC_AGENT_OPID, m_strOpId);
 	DDX_Text(pDX, IDC_AGENT_OPPWD, m_strOpPwd);
 	DDX_Text(pDX, IDC_AGENT_BRANCH, m_strBranch);
+
+	DDX_Text(pDX, IDC_TOTAL_CASE, m_nTotalCaseNum);
+	DDX_Text(pDX, IDC_SUCC_CASE, m_nSuccCaseNum);
+	DDX_Text(pDX, IDC_FAIL_CASE, m_nFailCaseNum);
 }
 
 BEGIN_MESSAGE_MAP(CIRobotDlg, CDialog)
@@ -148,6 +169,7 @@ BEGIN_MESSAGE_MAP(CIRobotDlg, CDialog)
 	ON_BN_CLICKED(IDC_USE_MID, &CIRobotDlg::OnBnClickedUseMid)
 	ON_BN_CLICKED(IDC_USE_KCXP, &CIRobotDlg::OnBnClickedUseKcxp)
 	ON_BN_CLICKED(IDC_SET_CFG, &CIRobotDlg::OnBnClickedSetCfg)
+	ON_CBN_SELCHANGE(IDC_COMBOBOXEX_LOG_LEVEL, &CIRobotDlg::OnCbnSelchangeComboboxex1)
 END_MESSAGE_MAP()
 
 
@@ -191,8 +213,6 @@ BOOL CIRobotDlg::OnInitDialog()
 	}
 	
 	ReadCfg();
-	
-	UpdateData(FALSE);
 
 	g_pLog = new CLoginterface(m_strLogPath.GetBuffer());
 	if (NULL == g_pLog)
@@ -201,40 +221,43 @@ BOOL CIRobotDlg::OnInitDialog()
 		return FALSE;
 	}
 
+	// 必须在g_pLog创建后，再调用这两句
+	InitComboxLogLevel();
+	UpdateData(FALSE);
+
 	g_pKcxpConn = new CKcxpConn;
 	if (NULL == g_pKcxpConn)
 	{
-		g_pLog->WriteRunLog(__FILE__, __LINE__, LOG_EMERGENT, "创建KCXP连接类失败!");
+		g_pLog->WriteRunLog(SYS_MODE, LOG_WARN, "创建KCXP连接类失败!");
 		return FALSE;
 	}
 	
 	g_pMidConn = new CMidConn;
 	if (NULL == g_pMidConn)
 	{
-		g_pLog->WriteRunLog(__FILE__, __LINE__, LOG_EMERGENT, "创建MID连接类失败!");
+		g_pLog->WriteRunLog(SYS_MODE, LOG_WARN, "创建MID连接类失败!");
 		return FALSE;
-	}
-	else
-	{
-		if (!g_pMidConn->Init())
-		{
-			return FALSE;
-		}
 	}
 
 	g_pDBConn = new CDBConnect;
 	if (NULL == g_pDBConn)
 	{
-		g_pLog->WriteRunLog(__FILE__, __LINE__, LOG_EMERGENT, "创建DB连接类失败!");
+		g_pLog->WriteRunLog(SYS_MODE, LOG_WARN, "创建DB连接类失败!");
 		return FALSE;
 	}
 
-	m_pMyService = new CMyService;
-	if (NULL == m_pMyService)
+	g_pMyService = new CMyService;
+	if (NULL == g_pMyService)
 	{
-		g_pLog->WriteRunLog(__FILE__, __LINE__, LOG_EMERGENT, "创建MyService类失败!");
+		g_pLog->WriteRunLog(SYS_MODE, LOG_WARN, "创建MyService类失败!");
 		return FALSE;
 	}
+	else
+	{
+		g_pMyService->SetDlg(this);
+		g_pMyService->Init();
+	}
+
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -291,8 +314,7 @@ HCURSOR CIRobotDlg::OnQueryDragIcon()
 void CIRobotDlg::OnBnClickedOk()
 {
 	// TODO: Add your control notification handler code here
-	m_pMyService->Init();
-	m_pMyService->Run();
+	g_pMyService->Run();
 }
 
 void CIRobotDlg::OnNMCustomdrawProgress1(NMHDR *pNMHDR, LRESULT *pResult)
@@ -408,6 +430,16 @@ BOOL CIRobotDlg::SetCfg()
 
 	g_pCfg->SetCfg();
 
+	if (!g_pMidConn->Init())
+	{
+		return FALSE;
+	}
+	
+	if (!g_pDBConn->init())
+	{
+		return FALSE;
+	}
+	
 	return TRUE;
 }
 
@@ -462,4 +494,47 @@ void CIRobotDlg::OnBnClickedSetCfg()
 		g_pMidConn->Connect();
 		
 	}
+}
+
+void CIRobotDlg::SetCtrlTotalCaseNum( int nCnt)
+{
+	CString strTmp;
+	strTmp.Format("%d", nCnt);
+	m_ctrlTotalCaseNum.SetWindowText(strTmp.GetBuffer());
+}
+
+void CIRobotDlg::SetCtrlSuccCaseNum( int nCnt)
+{
+	CString strTmp;
+	strTmp.Format("%d", nCnt);
+	m_ctrlSuccCaseNum.SetWindowText(strTmp.GetBuffer());
+}
+
+void CIRobotDlg::SetCtrlFailCaseNum( int nCnt)
+{
+	CString strTmp;
+	strTmp.Format("%d", nCnt);
+	m_ctrlFailCaseNum.SetWindowText(strTmp.GetBuffer());
+}
+
+void CIRobotDlg::OnCbnSelchangeComboboxex1()
+{
+	// TODO: Add your control notification handler code here
+	int nSel = m_ctrlLogLevel.GetCurSel();
+	
+	g_pLog->SetLogLevel(nSel);
+}
+
+void CIRobotDlg::InitComboxLogLevel()
+{
+	COMBOBOXEXITEM   Item;
+	for(int i=0; i<MAX_LOG_LEVEL; i++)
+	{
+		Item.mask = CBEIF_TEXT;
+		Item.pszText   =  g_pLog->m_stLogLevelDescription[i].description;
+		Item.iItem   =  g_pLog->m_stLogLevelDescription[i].level;  
+		m_ctrlLogLevel.InsertItem(&Item);
+	}
+
+	m_ctrlLogLevel.SetCurSel(LOG_NOTIFY);
 }

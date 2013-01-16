@@ -1,6 +1,7 @@
 #pragma once
 #include "ipckdgatewayvistor.h"
 
+// MID·µ»ØÏûÏ¢
 struct MID_LOGIN_409101
 {
 	char szUserCode[9];
@@ -27,9 +28,10 @@ public:
 
 	virtual BOOL Vistor();
 	virtual BOOL ResultStrToTable(char *);
+	virtual BOOL SendMsg(char *);
 
 	void GetSession();
 
 private:
-	MID_LOGIN_409101 *m_pLogin_Msg;	
+	MID_LOGIN_409101 *m_pLoginMsg;	
 };

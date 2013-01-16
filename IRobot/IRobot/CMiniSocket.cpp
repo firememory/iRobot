@@ -251,14 +251,6 @@ int CMiniSocket::ReceiveBuf(void *p_pRecvBuf,int p_iBuffLen)
 			if (p_iBuffLen-iReadBytes<=0) { //收满一个包则退出
 				return p_iBuffLen;
 			}
-/*
-			if (iRetCode!=512) { //没收满一个包则继续收
-				iRetCode = 0; // for debug break
-				WriteRunLog("收到不是512字节的数据包");
-//				return iRetCode;
-			}
-*/
-
 		}
 	}
 

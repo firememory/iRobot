@@ -15,12 +15,16 @@ public:
 	CDBConnect();
 	virtual ~CDBConnect();
 
-	void init(char*, char*, char*);
+	BOOL init();
 
 public:
 	_ConnectionPtr m_pConnection;
 	_RecordsetPtr m_pRecordset;
 
+private:
+	char m_szConnStr[100];
+	char m_szUser[20];
+	char m_szPwd[20];
 };
 
 #endif // !defined(AFX_DBCONNECT_H__EC570EB4_4670_4371_89B3_501DCEDF30F9__INCLUDED_)

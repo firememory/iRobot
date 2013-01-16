@@ -27,8 +27,11 @@
 #define IDC_AGENT_OPID                  1017
 #define IDC_AGENT_OPPWD                 1018
 #define IDC_AGENT_BRANCH                1019
-#define IDC_BUTTON1                     1020
 #define IDC_SET_CFG                     1020
+#define IDC_TOTAL_CASE                  1022
+#define IDC_SUCC_CASE                   1023
+#define IDC_FAIL_CASE                   1024
+#define IDC_COMBOBOXEX_LOG_LEVEL        1025
 
 // Next default values for new objects
 // 
@@ -36,7 +39,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        129
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1021
+#define _APS_NEXT_CONTROL_VALUE         1030
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

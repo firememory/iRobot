@@ -10,7 +10,6 @@
 #define new DEBUG_NEW
 #endif
 
-
 // CIRobotApp
 
 BEGIN_MESSAGE_MAP(CIRobotApp, CWinAppEx)

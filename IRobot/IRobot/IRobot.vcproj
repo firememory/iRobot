@@ -220,10 +220,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\LoginVistor.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\MidConn.cpp"
 				>
 			</File>
@@ -279,6 +275,18 @@
 					>
 				</File>
 			</Filter>
+			<Filter
+				Name="业务"
+				>
+				<File
+					RelativePath=".\BuyVistor.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\LoginVistor.cpp"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -319,10 +327,6 @@
 			</File>
 			<File
 				RelativePath=".\loginterface.h"
-				>
-			</File>
-			<File
-				RelativePath=".\LoginVistor.h"
 				>
 			</File>
 			<File
@@ -374,6 +378,18 @@
 				</File>
 				<File
 					RelativePath=".\tools.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="业务"
+				>
+				<File
+					RelativePath=".\BuyVistor.h"
+					>
+				</File>
+				<File
+					RelativePath=".\LoginVistor.h"
 					>
 				</File>
 			</Filter>

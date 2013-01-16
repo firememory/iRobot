@@ -49,7 +49,7 @@ BOOL CKcxpConn::InitKcxp()
 
 			if (KCBP_MSG_OK != nRet)
 			{
-				g_pLog->WriteRunLog(__FILE__, __LINE__, LOG_EMERGENT, "KCXP Connect to Server Failed!");
+				g_pLog->WriteRunLog(SYS_MODE, LOG_WARN, "KCXP Connect to Server Failed!");
 				return FALSE;
 			}
 
@@ -57,7 +57,7 @@ BOOL CKcxpConn::InitKcxp()
 		}
 		else
 		{
-			g_pLog->WriteRunLog(__FILE__, __LINE__, LOG_EMERGENT, "LoadLibrary CITICS_CE.dll Failed!");
+			g_pLog->WriteRunLog(SYS_MODE, LOG_WARN, "LoadLibrary CITICS_CE.dll Failed!");
 
 			FreeLibrary(hLibrary);
 			return FALSE;
@@ -93,14 +93,14 @@ BOOL CKcxpConn::OpLogin()
 	{
 		
 		sprintf_s(szErrMsg,"LBM[L0102019]调用失败,ERRCODE = %ld",nRet);		
-		g_pLog->WriteRunLog(__FILE__, __LINE__, LOG_DEBUG, szErrMsg);
+		g_pLog->WriteRunLog(SYS_MODE, LOG_WARN, szErrMsg);
 
 		return FALSE;
 	}
 	if ((nRet = m_clKdMidCli.CallProgramAndCommit("L0102019")) != KCBP_MSG_OK)
 	{
 		sprintf_s(szErrMsg,"LBM[L0102019]调用失败,ERRCODE = %ld",nRet);
-		g_pLog->WriteRunLog(__FILE__, __LINE__, LOG_DEBUG, szErrMsg);
+		g_pLog->WriteRunLog(SYS_MODE, LOG_WARN, szErrMsg);
 		return FALSE;
 	}
 	
@@ -118,7 +118,7 @@ BOOL CKcxpConn::OpLogin()
 					{
 						nRet = m_clKdMidCli.RsGetCol(3, szTemp);
                         
-						g_pLog->WriteRunLog(__FILE__, __LINE__, LOG_DEBUG, szErrMsg);
+						g_pLog->WriteRunLog(SYS_MODE, LOG_WARN, szErrMsg);
 						return FALSE;
 					}
 					
@@ -127,7 +127,7 @@ BOOL CKcxpConn::OpLogin()
 			else
 			{
 				sprintf_s(szErrMsg,"获取结果集列信息失败,ERRCODE = %ld",nRet);				
-				g_pLog->WriteRunLog(__FILE__, __LINE__, LOG_DEBUG, szErrMsg);
+				g_pLog->WriteRunLog(SYS_MODE, LOG_WARN, szErrMsg);
 				return FALSE;
 			}
 		}
@@ -172,7 +172,7 @@ BOOL CKcxpConn::OpLogin()
 	else
 	{
 		sprintf_s(szErrMsg,"打开结果集失败,ERRCODE = %ld",nRet);
-		g_pLog->WriteRunLog(__FILE__, __LINE__, LOG_DEBUG, szErrMsg);
+		g_pLog->WriteRunLog(SYS_MODE, LOG_WARN, szErrMsg);
 
 		return FALSE;
 	}
