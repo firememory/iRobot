@@ -24,6 +24,7 @@ void CMyService::Init()
 {
 	RegisterProtocal(&LoginVistor);
 	RegisterProtocal(&BuyVistor);
+	RegisterProtocal(&QueryShares);
 
 	m_nTotalCaseCnt = m_ptServiceArray.GetCount();
 	

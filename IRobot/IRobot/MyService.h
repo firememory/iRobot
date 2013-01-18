@@ -1,9 +1,11 @@
 #pragma once
 
 #include "IPCKDGateWayVistor.h"
+#include "IRobotDlg.h"
 #include "LoginVistor.h"
 #include "BuyVistor.h"
-#include "IRobotDlg.h"
+#include "QueryShares.h"
+
 
 class CMyService
 {
@@ -28,4 +30,5 @@ private:
 	
 	CLoginVistor LoginVistor;
 	CBuyVistor BuyVistor;
+	CQueryShares QueryShares;
 };

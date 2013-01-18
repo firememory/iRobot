@@ -33,7 +33,7 @@ BOOL CLoginVistor::Vistor()
 	pKDGateWay->SetOP_USER(strAccount.GetBuffer());
 
 	char szPwd[32] = {0};
-	strcpy(szPwd, strPwd.GetBuffer());
+	strcpy_s(szPwd, strPwd.GetBuffer());
 
 	pKDGateWay->EncryptPassWd((char *)&szPwd);
 

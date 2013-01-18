@@ -37,5 +37,5 @@ public:
 	void ChkPnt2();
 
 private:
-	MID_ORDER_403 *m_pOrderMsg;
+	MID_ORDER_403 *m_pMsg;	
 };

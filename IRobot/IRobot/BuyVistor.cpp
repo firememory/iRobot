@@ -12,21 +12,31 @@ extern CDBConnect *g_pDBConn;
 
 CBuyVistor::CBuyVistor(void)
 {
-	m_pOrderMsg = NULL;
+	m_pMsg = NULL;
 }
 
 CBuyVistor::~CBuyVistor(void)
 {
-	if (NULL != m_pOrderMsg)
+	if (NULL != m_pMsg)
 	{
-		delete m_pOrderMsg;
-		m_pOrderMsg = NULL;
+		delete m_pMsg;
+		m_pMsg = NULL;
 	}
 }
 
 BOOL CBuyVistor::Vistor()
 {
-	// 正常参数 检查成交表中是否有该记录
+	// 正常参数 
+	/*
+		检查一下信息
+		1.matcing表中是否有该记录，获取【持仓成本】
+		2.captial表中【资金余额】不变
+		3.captial表中【资金可用】减少“委托金额+5”
+		4.captial表中【现金可取】 = 【资金可用】
+		5.captial表中【支票可取】 = 【资金可用】
+		4.captial表中【交易冻结】增加【持仓成本】
+		5.如果模拟成交是半数成交的话，shares表中【在途数量】增加“委托数量/2”
+	*/
 	ChkPnt1();
 
 	// 买入数量超过最大可买，检查系统是否校验
@@ -35,18 +45,14 @@ BOOL CBuyVistor::Vistor()
 	return TRUE;
 }
 
-#define SERVICE_STRNCPY(member)\
-{\
-	strncpy_s(m_pOrderMsg[nRow].member, q, sizeof(m_pOrderMsg[nRow].member));\
-}
-
 BOOL CBuyVistor::ResultStrToTable(char *pRetStr)
 {
 	CKDGateway *pKDGateWay = g_pMidConn->GetKDGateWay();
 
 	int nRecNo = pKDGateWay->GetRecNum();
-	m_pOrderMsg = new MID_ORDER_403[nRecNo];
-	memset(m_pOrderMsg, 0x00, sizeof(MID_ORDER_403)*nRecNo);
+	
+	m_pMsg = new MID_ORDER_403[nRecNo];
+	memset(m_pMsg, 0x00, sizeof(MID_ORDER_403)*nRecNo);
 
 	int nLen = strlen(pRetStr);
 
@@ -123,7 +129,6 @@ BOOL CBuyVistor::ResultStrToTable(char *pRetStr)
 
 void CBuyVistor::ChkPnt1()
 {
-
 	char szTemp[512];
 	sprintf_s(szTemp,"403|18798721|00|0123492912|85807073||000002|0B|2.00|200||||||||||||");
 
@@ -137,7 +142,7 @@ void CBuyVistor::ChkPnt1()
 
 	CString strSql;
 	strSql.Format("select * from  matching where trd_date = %s and order_id = '%s'",
-		strDate, m_pOrderMsg[0].szOrderID);
+		strDate, m_pMsg[0].szOrderID);
 
 	BSTR bstrSQL = strSql.AllocSysString();
 	g_pDBConn->m_pRecordset->Open(bstrSQL, (IDispatch*)g_pDBConn->m_pConnection, adOpenDynamic, adLockOptimistic, adCmdText); 
@@ -173,7 +178,7 @@ void CBuyVistor::ChkPnt2()
 
 	CString strSql;
 	strSql.Format("select * from  matching where trd_date = %s and order_id = '%s'",
-		strDate, m_pOrderMsg[0].szOrderID);
+		strDate, m_pMsg[0].szOrderID);
 
 	BSTR bstrSQL = strSql.AllocSysString();
 	g_pDBConn->m_pRecordset->Open(bstrSQL, (IDispatch*)g_pDBConn->m_pConnection, adOpenDynamic, adLockOptimistic, adCmdText); 

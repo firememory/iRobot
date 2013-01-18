@@ -228,6 +228,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\QueryShares.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Share.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\stdafx.cpp"
 				>
 				<FileConfiguration
@@ -342,7 +350,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\QueryShares.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Resource.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Share.h"
 				>
 			</File>
 			<File
