@@ -14,6 +14,8 @@
 #include "DBConnect.h"
 #include "MyService.h"
 
+#include "ParseKcbpLog.h"
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -205,6 +207,10 @@ BOOL CIRobotDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	// TODO: 在此添加额外的初始化代码
+	CParseKcbpLog parslog;
+	parslog.ParseLog();
+	parslog.ReadRlt();
+
 	g_pCfg = new CCfg;
 	if (NULL == g_pCfg)
 	{

@@ -228,6 +228,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ParseKcbpLog.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\QueryShares.cpp"
 				>
 			</File>
@@ -343,6 +347,10 @@
 			</File>
 			<File
 				RelativePath=".\MyService.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ParseKcbpLog.h"
 				>
 			</File>
 			<File
