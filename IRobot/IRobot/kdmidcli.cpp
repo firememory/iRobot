@@ -456,7 +456,7 @@ int CKDMidCli::RsFetchRow()
 // 取结果集行数, RsOpen返回100时，不能用此函数
 int CKDMidCli::RsGetRowNum(int *pnRows)
 {
-  return KCBPCLI_RsFetchRow(m_hHandle);
+  return KCBPCLI_RsGetRowNum(m_hHandle, pnRows);
 }
 
 // 取列数

@@ -30,11 +30,6 @@ CMidConn *g_pMidConn = NULL;
 CDBConnect *g_pDBConn = NULL;
 CMyService *g_pMyService = NULL;
 
-enum TEST_MODE
-{
-	USE_MID = 0,
-	USE_KCXP
-};
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 

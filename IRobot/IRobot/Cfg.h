@@ -1,5 +1,11 @@
 #pragma once
 
+enum TEST_MODE
+{
+	USE_MID = 0,
+	USE_KCXP
+};
+
 class CCfg
 {
 public:
@@ -59,6 +65,13 @@ public:
 
 	CString GetBranch() const { return m_strBranch; }
 	void SetBranch(CString val) { m_strBranch = val; }
+
+	char* GetSecu_Acc_SZA() { return &m_szSecu_Acc_SZA[0]; }
+	void SetSecu_Acc_SZA(char *val) { strcpy_s(m_szSecu_Acc_SZA, val);}
+
+	char* GetSecu_Acc_SHA() { return &m_szSecu_Acc_SHA[0]; }
+	void SetSecu_Acc_SHA(char *val) { strcpy_s(m_szSecu_Acc_SHA, val); }
+
 private:
 	CString m_strCfgPath;
 
@@ -82,5 +95,8 @@ private:
 	CString m_strCustPwd; // 客户密码	
 	CString m_strOpId; // 操作员号
 	CString m_strOpPwd; // 操作员密码	
-	CString m_strBranch; // 营业部	
+	CString m_strBranch; // 营业部
+
+	char m_szSecu_Acc_SZA[15]; // 深圳A股 股东代码
+	char m_szSecu_Acc_SHA[15]; // 上海A股 股东代码
 };

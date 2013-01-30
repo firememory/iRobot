@@ -16,11 +16,16 @@ LPFNDLLFUNC2 lpfnDecrypt;
 CKcxpConn::CKcxpConn(void)
 {
 	ZEROMEM(&stKCBPConnection, sizeof(stKCBPConnection));
+	m_pKdMidCli = NULL;
+
+	ZEROMEM(m_szSession, sizeof(m_szSession));
 }
 
 CKcxpConn::~CKcxpConn(void)
 {
 	m_clKdMidCli.DisConnectForce();
+	m_pKdMidCli = NULL;
+	ZEROMEM(m_szSession, sizeof(m_szSession));
 }
 
 BOOL CKcxpConn::InitKcxp()
@@ -53,6 +58,7 @@ BOOL CKcxpConn::InitKcxp()
 				return FALSE;
 			}
 
+			m_pKdMidCli = &m_clKdMidCli;
 			return TRUE;		
 		}
 		else
@@ -161,10 +167,13 @@ BOOL CKcxpConn::OpLogin()
 				{
 					break;
 				}
+
 				nRet =  m_clKdMidCli.RsGetColByName("USER_CODE", szTemp);			
 				nRet =  m_clKdMidCli.RsGetColByName("USER_NAME", szTemp);				
 				nRet =  m_clKdMidCli.RsGetColByName("OPEN_BRANCH", szTemp);
 				nRet =  m_clKdMidCli.RsGetColByName("SESSION", szTemp);
+
+				strcpy_s(m_szSession, szTemp);
 				n++;
 			}
 		}

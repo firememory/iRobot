@@ -13,7 +13,7 @@ void CParseKcbpLog::ParseLog()
 {
 	// ´ò¿ªlog¡¢
 	FILE *fp = NULL;
-	fp = fopen("d:/kcbp.log", "r");
+	fopen_s(&fp, "d:/kcbp.log", "r");
 
 	if (NULL == fp)
 	{		
@@ -51,8 +51,7 @@ void CParseKcbpLog::ParseLog()
 
 			*pColon = '\0';
 
-			strncpy(szLbmId, pFind, 10);
-			szLbmId[9] = '\0';
+			strcpy_s(szLbmId, pFind);			
 			printf("LBM=%s\n", szLbmId);
 			strcpy_s(pLbmInfo->szLbmId, szLbmId);
 
@@ -69,11 +68,9 @@ void CParseKcbpLog::ParseLog()
 			while( token != NULL )
 			{
 				// While there are tokens in "string"
-				printf( " %s\n", token );
+				printf( " %s\n", token );				
 
-				int n = strlen(token);
-
-				strncpy(arr[i], token, n);
+				strcpy_s(arr[i], token);
 				i++;
 
 				// Get next token: 

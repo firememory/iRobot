@@ -232,10 +232,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\QueryShares.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\Share.cpp"
 				>
 			</File>
@@ -298,6 +294,10 @@
 					RelativePath=".\LoginVistor.cpp"
 					>
 				</File>
+				<File
+					RelativePath=".\QueryShares.cpp"
+					>
+				</File>
 			</Filter>
 		</Filter>
 		<Filter
@@ -358,10 +358,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\QueryShares.h"
-				>
-			</File>
-			<File
 				RelativePath=".\Resource.h"
 				>
 			</File>
@@ -414,6 +410,10 @@
 				</File>
 				<File
 					RelativePath=".\LoginVistor.h"
+					>
+				</File>
+				<File
+					RelativePath=".\QueryShares.h"
 					>
 				</File>
 			</Filter>

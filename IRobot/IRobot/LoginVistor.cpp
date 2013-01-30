@@ -85,13 +85,25 @@ BOOL CLoginVistor::ResultStrToTable(char *pRetStr)
 						strncpy_s(m_pLoginMsg[nRow].szUserCode, q, 9);
 						break;
 					case 1:
-						strncpy_s(m_pLoginMsg[nRow].szMarket, q, 3);
+						strncpy_s(m_pLoginMsg[nRow].szMarket, q, 3);												
 						break;
 					case 2:
 						strncpy_s(m_pLoginMsg[nRow].szBoard, q, 2);
 						break;
 					case 3:
-						strncpy_s(m_pLoginMsg[nRow].szSecuAcc, q, 15);
+						{						
+							strncpy_s(m_pLoginMsg[nRow].szSecuAcc, q, 15);
+							if (strcmp(m_pLoginMsg[nRow].szMarket, "00") == 0)
+							{
+								// ÉîÊÐ
+								g_pCfg->SetSecu_Acc_SZA(q);
+							}
+							else if (strcmp(m_pLoginMsg[nRow].szMarket, "10") == 0)
+							{
+								// »¦ÊÐ
+								g_pCfg->SetSecu_Acc_SHA(q);
+							}
+						}
 						break;
 					case 4:
 						strncpy_s(m_pLoginMsg[nRow].szSecuAccName, q, 20);
