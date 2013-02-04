@@ -3,7 +3,7 @@
 #include "IPCKDGateWayVistor.h"
 #include "IRobotDlg.h"
 #include "LoginVistor.h"
-#include "BuyVistor.h"
+#include "SZA_XJ_BuyVistor.h"
 #include "QueryShares.h"
 
 
@@ -29,6 +29,6 @@ private:
 	int m_nFailCaseCnt;
 	
 	CLoginVistor LoginVistor;
-	CBuyVistor BuyVistor;
+	CSZA_XJ_BuyVistor BuyVistor;
 	CQueryShares QueryShares;
 };

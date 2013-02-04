@@ -1,6 +1,8 @@
 #ifndef LOGINTERFACE_H
 #define LOGINTERFACE_H
 
+#include "IRobotDlg.h"
+
 #ifndef WIN32
 #include <pthread.h>
 
@@ -56,9 +58,9 @@ struct CRITICAL_SECTION
 
 enum LOGLEVEL
 {
-	LOG_NOTIFY = 0, // 提示信息
-	LOG_WARN,		// 告警信息
-	LOG_DEBUG,		// 调试信息
+	LOG_NOTIFY = 0, // 提示信息, 只显示测试用例的执行结果
+	LOG_WARN,		// 告警信息, 在提示信息的基础上，增加显示检查点的执行情况
+	LOG_DEBUG,		// 调试信息, 只有在WriteRunLogEx()函数中使用,打印函数执行的调试信息
 	MAX_LOG_LEVEL = LOG_DEBUG + 1
 };
 
@@ -82,21 +84,25 @@ public:
 	int m_nLogSize;
 	int m_nLogFileCnt;
 	int m_nLogIdx;
+	int m_nShowLineCnt;
 
 	char m_szLogFileName[MAX_FILE_PATH];
 	char* m_pBuf;
 	LEVEL_DESCRIPTION m_stLogLevelDescription[4];
 	FILE* m_pFp;
 	CRITICAL_SECTION m_lock;
+	CIRobotDlg *m_pDlg;
 	
-
 public:
 	CLoginterface(char *);
 	virtual ~CLoginterface();
 
 	void SetLogLevel(int);
-	void WriteRunLogEx(char*, int, int, const char *, ...);
+	void WriteRunLogEx(char*, int, const char *, ...);
 	void WriteRunLog(int, int, const char *, ...);
 	void FlushLogBuf();
+
+	CIRobotDlg * GetDlg() const { return m_pDlg; }
+	void SetDlg(CIRobotDlg * val) { m_pDlg = val; }
 };
 #endif

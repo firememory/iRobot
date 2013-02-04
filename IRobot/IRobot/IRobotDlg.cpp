@@ -85,6 +85,7 @@ CIRobotDlg::CIRobotDlg(CWnd* pParent /*=NULL*/)
 	, m_nSuccCaseNum(0)
 	, m_nFailCaseNum(0)
 	, m_nLogLevel(0)
+	, m_nRefreshDBGap(1000)
 {
 	m_nTestMode = USE_MID;
 	m_bAllowSetCfg = TRUE;
@@ -92,7 +93,7 @@ CIRobotDlg::CIRobotDlg(CWnd* pParent /*=NULL*/)
 }
 
 CIRobotDlg::~CIRobotDlg()
-{
+{	
 	DELCLS(g_pCfg);
 	DELCLS(g_pLog);
 	DELCLS(g_pMyService);
@@ -128,8 +129,11 @@ void CIRobotDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_TOTAL_CASE, m_ctrlTotalCaseNum);
 	DDX_Control(pDX, IDC_SUCC_CASE, m_ctrlSuccCaseNum);
 	DDX_Control(pDX, IDC_FAIL_CASE, m_ctrlFailCaseNum);
-
 	DDX_Control(pDX, IDC_COMBOBOXEX_LOG_LEVEL, m_ctrlLogLevel);
+	DDX_Control(pDX, IDC_PROGRESS1, m_ctrlWait);
+	DDX_Control(pDX, IDC_EDIT_LOG_MSG, m_ctrlLogMsg);
+	DDX_Control(pDX, IDOK, m_ctrlButtonOk);
+	DDX_Control(pDX, IDC_EDIT_DB_GETDATA_GAP, m_ctrlRefreshDbGap);
 
 	DDX_Text(pDX, IDC_KCXP_IP, m_strKcxpIp);
 	DDX_Text(pDX, IDC_KCXP_PORT, m_strKcxpPort);
@@ -154,6 +158,8 @@ void CIRobotDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_TOTAL_CASE, m_nTotalCaseNum);
 	DDX_Text(pDX, IDC_SUCC_CASE, m_nSuccCaseNum);
 	DDX_Text(pDX, IDC_FAIL_CASE, m_nFailCaseNum);
+
+	DDX_Text(pDX, IDC_EDIT_DB_GETDATA_GAP, m_nRefreshDBGap);
 }
 
 BEGIN_MESSAGE_MAP(CIRobotDlg, CDialog)
@@ -167,6 +173,8 @@ BEGIN_MESSAGE_MAP(CIRobotDlg, CDialog)
 	ON_BN_CLICKED(IDC_USE_KCXP, &CIRobotDlg::OnBnClickedUseKcxp)
 	ON_BN_CLICKED(IDC_SET_CFG, &CIRobotDlg::OnBnClickedSetCfg)
 	ON_CBN_SELCHANGE(IDC_COMBOBOXEX_LOG_LEVEL, &CIRobotDlg::OnCbnSelchangeComboboxex1)
+	ON_BN_CLICKED(IDC_BUTTON_CLEAN, &CIRobotDlg::OnBnClickedButtonClean)
+	ON_BN_CLICKED(IDCANCEL, &CIRobotDlg::OnBnClickedCancel)
 END_MESSAGE_MAP()
 
 
@@ -202,6 +210,11 @@ BOOL CIRobotDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	// TODO: 在此添加额外的初始化代码
+
+	// 初始化 Progress bar
+	m_ctrlWait.SetRange(0, 3);
+	m_ctrlWait.SetStep(1);
+
 	CParseKcbpLog parslog;
 	parslog.ParseLog();
 	parslog.ReadRlt();
@@ -220,6 +233,11 @@ BOOL CIRobotDlg::OnInitDialog()
 	{
 		AfxMessageBox("创建日志类失败!", MB_OK, 0);
 		return FALSE;
+	}
+	else
+	{		
+		g_pLog->SetDlg(this);
+		g_pLog->WriteRunLog(SYS_MODE, LOG_NOTIFY, "========Server Start========");
 	}
 
 	// 必须在g_pLog创建后，再调用这两句
@@ -364,6 +382,8 @@ BOOL CIRobotDlg::ReadCfg()
 		m_ctrlUseKcxp.SetCheck(TRUE);
 	}
 
+	m_nRefreshDBGap = g_pCfg->GetRefreshDBGap();
+
 	m_strDBConnStr = g_pCfg->GetDBConnStr();
 	m_strDBUser = g_pCfg->GetDBUser();
 	m_strDBPwd = g_pCfg->GetDBPwd();
@@ -417,6 +437,7 @@ BOOL CIRobotDlg::SetCfg()
 
 	g_pCfg->SetLogPath(m_strLogPath);
 	g_pCfg->SetTestMode(m_nTestMode);
+	g_pCfg->SetRefreshDBGap(m_nRefreshDBGap);
 
 	g_pCfg->SetDBConnStr(m_strDBConnStr);
 	g_pCfg->SetDBUser(m_strDBUser);
@@ -488,11 +509,36 @@ void CIRobotDlg::OnBnClickedSetCfg()
 		SetCfg();
 
 		// 初始化KCXP连接
-		g_pKcxpConn->InitKcxp();
-		g_pKcxpConn->OpLogin();
+		if (g_pKcxpConn->InitKcxp())
+		{
+			if (g_pKcxpConn->OpLogin())
+			{
+				g_pLog->WriteRunLog(SYS_MODE, LOG_DEBUG, "KCXP连接成功!");
+			}
+			else
+			{
+				g_pLog->WriteRunLog(SYS_MODE, LOG_WARN, "KCXP连接失败!");
+				if (m_nTestMode == KCXP_MODE)
+				{
+					m_ctrlButtonOk.EnableWindow(FALSE);
+				}
+			}
+		}		
 
 		// 初始化MID连接
-		g_pMidConn->Connect();
+		if (g_pMidConn->Connect())
+		{
+			g_pLog->WriteRunLog(SYS_MODE, LOG_DEBUG, "MID连接成功!");
+		}
+		else
+		{
+			g_pLog->WriteRunLog(SYS_MODE, LOG_WARN, "MID连接失败!");
+			if (m_nTestMode == MID_MODE)
+			{
+				m_ctrlButtonOk.EnableWindow(FALSE);
+			}
+		}
+		
 		
 	}
 }
@@ -538,4 +584,17 @@ void CIRobotDlg::InitComboxLogLevel()
 	}
 
 	m_ctrlLogLevel.SetCurSel(LOG_NOTIFY);
+}
+
+void CIRobotDlg::OnBnClickedButtonClean()
+{
+	// TODO: Add your control notification handler code here
+	m_ctrlLogMsg.SetWindowText("");	
+}
+
+void CIRobotDlg::OnBnClickedCancel()
+{
+	// TODO: Add your control notification handler code here
+	g_pLog->WriteRunLog(SYS_MODE, LOG_NOTIFY, "========Server Shutdown========");
+	OnCancel();
 }

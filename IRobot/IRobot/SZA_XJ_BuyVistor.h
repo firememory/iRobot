@@ -2,7 +2,7 @@
 
 #include "IPCKDGateWayVistor.h"
 
-struct MID_ORDER_403
+struct ORDER_403_RET_MSG
 {
 	char szBizNo[11];
 	char szOrderID[11];
@@ -23,12 +23,12 @@ struct MID_ORDER_403
 /************************************************************************/
 /* 深A 限价买入                                                         */
 /************************************************************************/
-class CBuyVistor
+class CSZA_XJ_BuyVistor
 	: public IPCKDGateWayVistor
 {
 public:
-	CBuyVistor(void);
-	virtual ~CBuyVistor(void);
+	CSZA_XJ_BuyVistor(void);
+	virtual ~CSZA_XJ_BuyVistor(void);
 
 	virtual BOOL Vistor();
 	virtual BOOL ResultStrToTable(char *);
@@ -49,7 +49,7 @@ public:
 	void ChkPnt2();
 
 private:
-	MID_ORDER_403 *m_pMsg;
+	ORDER_403_RET_MSG *m_pMsg;
 	int m_nRowNum;
 
 	char m_szSecu_intl[DEFAULT_LEN];		// 证券代码

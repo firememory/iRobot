@@ -34,11 +34,13 @@ protected:
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
-	DECLARE_MESSAGE_MAP()
 
-public:
 	afx_msg void OnBnClickedOk();
 	afx_msg void OnNMCustomdrawProgress1(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnBnClickedButtonClean();
+
+	DECLARE_MESSAGE_MAP()
+	
 private:
 	CEdit m_ctrlKcxpIp;
 	CEdit m_ctrlKcxpPort;
@@ -60,12 +62,15 @@ private:
 
 	CButton m_ctrlUserMid;
 	CButton m_ctrlUseKcxp;
+	CButton m_ctrlButtonOk;
 
-	CEdit m_ctrlTotalCaseNum;	
-	CEdit m_ctrlSuccCaseNum;	
-	CEdit m_ctrlFailCaseNum;
+	CEdit m_ctrlRefreshDbGap; // 刷新数据库数据等待时长
 
-	CComboBoxEx m_ctrlLogLevel;
+	CEdit m_ctrlTotalCaseNum;	// 测试用例总数
+	CEdit m_ctrlSuccCaseNum;	// 测试用例执行成功数
+	CEdit m_ctrlFailCaseNum;	// 测试用例执行失败数
+
+	CComboBoxEx m_ctrlLogLevel;	
 
 	CString m_strKcxpIp;
 	CString m_strKcxpPort;
@@ -90,6 +95,7 @@ private:
 	int m_nSuccCaseNum;
 	int m_nFailCaseNum;
 
+	int m_nRefreshDBGap;	
 	int m_nLogLevel;
 
 	BOOL m_bAllowSetCfg;
@@ -99,6 +105,7 @@ public:
 	afx_msg void OnBnClickedUseMid();
 	afx_msg void OnBnClickedUseKcxp();
 	afx_msg void OnBnClickedSetCfg();
+	afx_msg void OnCbnSelchangeComboboxex1();
 
 	void SetCtrlTotalCaseNum(int);
 	void SetCtrlSuccCaseNum(int);
@@ -106,6 +113,11 @@ public:
 
 	void InitComboxLogLevel();
 	
-public:
-	afx_msg void OnCbnSelchangeComboboxex1();
+public:	
+	CProgressCtrl m_ctrlWait;
+	CEdit m_ctrlLogMsg;		
+
+	int GetRefreshDBGap() const { return m_nRefreshDBGap; }
+	void SetRefreshDBGap(int val) { m_nRefreshDBGap = val; }
+	afx_msg void OnBnClickedCancel();
 };

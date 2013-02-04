@@ -15,10 +15,12 @@ CLoginterface::CLoginterface(char *pLogPath)
 {
 	InitializeCriticalSection(&m_lock);
 	
-	m_nLogLevel = LOG_WARN;
+	m_nLogLevel = LOG_NOTIFY;
 	m_nLogFileCnt = MAX_LOG_FILE_CNT;
 	m_nLogSize = MAX_LOG_SIZE;
 	m_nLogIdx = 0;
+	m_nShowLineCnt = 0;
+	m_pDlg = NULL;
 
 	ZEROMEM(m_szLogFileName, MAX_FILE_PATH);
 	STRNCPY_EX(m_szLogFileName,pLogPath, MAX_FILE_PATH);
@@ -70,13 +72,10 @@ void CLoginterface::SetLogLevel(int nLevel)
 	m_nLogLevel = nLevel;
 }
 
-void CLoginterface::WriteRunLogEx(char* pszFile, int nLineNum, int nLogLevel, const char *msg, ...)
+void CLoginterface::WriteRunLogEx(char* pszFile, int nLineNum, const char *msg, ...)
 {
-	if(nLogLevel < m_nLogLevel)
-	{
-		return;
-	}
-	
+	// 此函数专门用来打印Debug级别的日志
+
 	const int nTmpBufSize = 1024;
 	char msgStr[nTmpBufSize]={0};
 	char bufStr[nTmpBufSize]={0};
@@ -113,23 +112,18 @@ void CLoginterface::WriteRunLogEx(char* pszFile, int nLineNum, int nLogLevel, co
 	sprintf_s( timeStr, "%s.%03hu", timeStr, timebuffer.millitm );
 	
 	// compose the log string
-	_snprintf_s(bufStr, nTmpBufSize, "%s [%s][%s:%d][%s]\n", timeStr, m_stLogLevelDescription[nLogLevel].description, pszFile, nLineNum, msgStr);
+	_snprintf_s(bufStr, nTmpBufSize, "%s [%s][%s:%d][%s]\n", timeStr, m_stLogLevelDescription[LOG_DEBUG].description, pszFile, nLineNum, msgStr);
 
 	// if buf is larger than 10 M
 	
 	EnterCriticalSection(&m_lock);
 	int nBufUsedSize = strlen(m_pBuf);
-	int nLenBufStr = strlen(bufStr);
-	printf("%s:%d $ nBufUsedSize=%d, nLenBufStr=%d, msgStr=%s\n", pszFile, nLineNum, nBufUsedSize, nLenBufStr, bufStr);
+	int nLenBufStr = strlen(bufStr);	
 
 	if (nBufUsedSize >= MAX_LOG_SIZE || (nBufUsedSize+nLenBufStr) >= MAX_LOG_SIZE)
-	{
-		printf("=====%s:%d $ size1 = %d\n", pszFile, nLineNum, nBufUsedSize);
+	{		
 		FlushLogBuf();
 	}
-
-	printf("m_pBuf=%p\n"
-	"%s\n", this, m_pBuf);
 	
 	_snprintf_s(m_pBuf, MAX_LOG_SIZE, _TRUNCATE, "%s%s", m_pBuf, bufStr);
 	LeaveCriticalSection(&m_lock);
@@ -176,7 +170,7 @@ void CLoginterface::FlushLogBuf()
 
 void CLoginterface::WriteRunLog(int nMode, int nLogLevel, const char *msg, ...)
 {
-	if(nLogLevel < m_nLogLevel)
+	if(nLogLevel > m_nLogLevel)
 	{
 		return;
 	}
@@ -195,6 +189,13 @@ void CLoginterface::WriteRunLog(int nMode, int nLogLevel, const char *msg, ...)
 	va_start(arg_ptr, msg);
 	vsprintf_s(msgStr, msg, arg_ptr);
 	va_end(arg_ptr);
+
+	char szMessage[8192] = {0};
+	m_nShowLineCnt++;
+	sprintf_s(szMessage,"%05d %s\n",m_nShowLineCnt, msgStr);
+	int nLength = (int)m_pDlg->m_ctrlLogMsg.SendMessage(WM_GETTEXTLENGTH); 
+	m_pDlg->m_ctrlLogMsg.SetSel(nLength, nLength); 
+	m_pDlg->m_ctrlLogMsg.ReplaceSel(szMessage);
 
 	// get current time
 	time_t 	NowTime;

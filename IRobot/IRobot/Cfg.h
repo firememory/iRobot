@@ -72,6 +72,9 @@ public:
 	char* GetSecu_Acc_SHA() { return &m_szSecu_Acc_SHA[0]; }
 	void SetSecu_Acc_SHA(char *val) { strcpy_s(m_szSecu_Acc_SHA, val); }
 
+	int GetRefreshDBGap() const { return m_nRefreshDBGap; }
+	void SetRefreshDBGap(int val) { m_nRefreshDBGap = val; }
+
 private:
 	CString m_strCfgPath;
 
@@ -85,7 +88,8 @@ private:
 
 	CString m_strLogPath;
 	int m_nTestMode;
-
+	int m_nRefreshDBGap; // 等待数据库数据刷新时长(毫秒)
+	
 	CString m_strDBConnStr;
 	CString m_strDBUser;
 	CString m_strDBPwd;

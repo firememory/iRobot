@@ -98,6 +98,8 @@ BOOL CCfg::ReadCfg()
 	// ȡTest Mode	
 	m_nTestMode = GetPrivateProfileInt( "COMMON", "MODE", 1, pCfgPath);
 
+	m_nRefreshDBGap = GetPrivateProfileInt( "COMMON", "DBREFRESHTIME", 1, pCfgPath);
+
 	return TRUE;
 }
 
@@ -130,5 +132,11 @@ BOOL CCfg::SetCfg()
 	strMode.Format("%d", m_nTestMode);
 
 	WritePrivateProfileString("COMMON", "MODE", strMode.GetBuffer(), pCfgPath);
+
+
+	CString strRefreshDBGap;
+	strRefreshDBGap.Format("%d", m_nRefreshDBGap);
+
+	WritePrivateProfileString("COMMON", "DBREFRESHTIME", strRefreshDBGap.GetBuffer(), pCfgPath);
 	return TRUE;
 }

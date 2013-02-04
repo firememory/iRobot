@@ -11,6 +11,8 @@ extern CLoginterface *g_pLog;
 CLoginVistor::CLoginVistor(void)
 {
 	m_pLoginMsg = NULL;
+
+	strcpy_s(m_szTestCaseName, "客户登录");
 }
 
 CLoginVistor::~CLoginVistor(void)
@@ -42,7 +44,7 @@ BOOL CLoginVistor::Vistor()
 	
 	if (TRUE != SendMsg(szTemp))
 	{
-		
+		return FALSE;
 	}
 
 	// 登录成功后，须将包头的OP_USER改回为客户号码,供后面的业务使用
@@ -149,7 +151,7 @@ void CLoginVistor::GetSession()
 	CKDGateway *pKDGateWay = g_pMidConn->GetKDGateWay();
 	pKDGateWay->SetSession(m_pLoginMsg[0].szSession);
 
-	g_pLog->WriteRunLog(SYS_MODE,LOG_NOTIFY, "[409101] 登录接口, 获取Session:%s", m_pLoginMsg[0].szSession);
+	g_pLog->WriteRunLogEx(__FILE__,__LINE__,"[409101] 登录接口, 获取Session:%s", m_pLoginMsg[0].szSession);
 }
 
 BOOL CLoginVistor::SendMsg( char *szMsg )

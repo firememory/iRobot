@@ -287,10 +287,6 @@
 				Name="业务"
 				>
 				<File
-					RelativePath=".\BuyVistor.cpp"
-					>
-				</File>
-				<File
 					RelativePath=".\LoginVistor.cpp"
 					>
 				</File>
@@ -298,6 +294,22 @@
 					RelativePath=".\QueryShares.cpp"
 					>
 				</File>
+				<File
+					RelativePath=".\SZA_XJ_BuyVistor.cpp"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="LBM"
+				>
+				<Filter
+					Name="L03"
+					>
+					<File
+						RelativePath=".\LBM\L03\L0303001.cpp"
+						>
+					</File>
+				</Filter>
 			</Filter>
 		</Filter>
 		<Filter
@@ -405,10 +417,6 @@
 				Name="业务"
 				>
 				<File
-					RelativePath=".\BuyVistor.h"
-					>
-				</File>
-				<File
 					RelativePath=".\LoginVistor.h"
 					>
 				</File>
@@ -416,6 +424,22 @@
 					RelativePath=".\QueryShares.h"
 					>
 				</File>
+				<File
+					RelativePath=".\SZA_XJ_BuyVistor.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="LBM"
+				>
+				<Filter
+					Name="L03"
+					>
+					<File
+						RelativePath=".\LBM\L03\L0303001.h"
+						>
+					</File>
+				</Filter>
 			</Filter>
 		</Filter>
 		<Filter

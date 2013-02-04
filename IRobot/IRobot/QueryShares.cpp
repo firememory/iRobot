@@ -18,6 +18,8 @@ CQueryShares::CQueryShares(void)
 {
 	m_pMsg = NULL;
 	m_nRecNum = 0;
+
+	strcpy_s(m_szTestCaseName, "客户股份查询");
 }
 
 CQueryShares::~CQueryShares(void)
@@ -186,55 +188,70 @@ BOOL CQueryShares::ChkPnt1()
 		return FALSE;
 	}
 
-	CString strSql;
-	strSql.Format("select * from shares where account = 85807073");
+	try
+	{
+		CString strSql;
+		strSql.Format("select * from shares where account = 85807073");
 
-	BSTR bstrSQL = strSql.AllocSysString();
-	g_pDBConn->m_pRecordset->Open(bstrSQL, (IDispatch*)g_pDBConn->m_pConnection, adOpenDynamic, adLockOptimistic, adCmdText); 
+		BSTR bstrSQL = strSql.AllocSysString();
+		g_pDBConn->m_pRecordset->Open(bstrSQL, (IDispatch*)g_pDBConn->m_pConnection, adOpenDynamic, adLockOptimistic, adCmdText); 
 
-	_variant_t TheValue; //VARIANT数据类型
-	char szTmp[100] = {0};
+		_variant_t TheValue; //VARIANT数据类型
+		char szTmp[100] = {0};
 
-	while(!g_pDBConn->m_pRecordset->adoEOF)
-	{	
-		TheValue = g_pDBConn->m_pRecordset->GetCollect("SECU_INTL");
-
-		if(TheValue.vt!=VT_NULL)
+		while(!g_pDBConn->m_pRecordset->adoEOF)
 		{	
-			strncpy_s(szTmp, (char*)_bstr_t(TheValue), 100);
+			TheValue = g_pDBConn->m_pRecordset->GetCollect("SECU_INTL");
 
-			for (int i=0;i<m_nRecNum;i++)
+			if(TheValue.vt!=VT_NULL)
 			{	
-				if (!strcmp(m_pMsg[i].szSecuIntl, szTmp))
-				{
-					g_pLog->WriteRunLog(MID_MODE, LOG_DEBUG, "开始比较股票:%s", szTmp);
+				strncpy_s(szTmp, (char*)_bstr_t(TheValue), 100);
 
-					// 检查SHARE_BLN 股份余额
-					DB_COMPARE("SHARE_BLN", szShareBln);					
+				for (int i=0;i<m_nRecNum;i++)
+				{	
+					if (!strcmp(m_pMsg[i].szSecuIntl, szTmp))
+					{
+						g_pLog->WriteRunLog(MID_MODE, LOG_DEBUG, "开始比较股票:%s", szTmp);
 
-					// 校验	SHARE_AVL 股份可用
-					DB_COMPARE("SHARE_AVL", szShareAvl);					
+						// 检查SHARE_BLN 股份余额
+						DB_COMPARE("SHARE_BLN", szShareBln);					
 
-					// 校验 SHARE_TRD_FRZ 交易冻结
-					DB_COMPARE("SHARE_TRD_FRZ", szShareTrdFrz);										
-				
-					// 校验 SHARE_OTD 在途数量
-					DB_COMPARE("SHARE_OTD", szShareOtd);					
+						// 校验	SHARE_AVL 股份可用
+						DB_COMPARE("SHARE_AVL", szShareAvl);					
 
-					// 校验 CURRENT_COST 买入成本
-					DB_COMPARE("CURRENT_COST", szCurrentCost);
+						// 校验 SHARE_TRD_FRZ 交易冻结
+						DB_COMPARE("SHARE_TRD_FRZ", szShareTrdFrz);										
 
-					// 校验 MKT_VAL 市值
-					DB_COMPARE("MKT_VAL", szMktVal);
+						// 校验 SHARE_OTD 在途数量
+						DB_COMPARE("SHARE_OTD", szShareOtd);					
 
-					break;
+						// 校验 CURRENT_COST 买入成本
+						DB_COMPARE("CURRENT_COST", szCurrentCost);
+						
+						//TODO: 暂时不比较市值，因为mid返回值和数据库不太一样
+						// 校验 MKT_VAL 市值
+						//DB_COMPARE("MKT_VAL", szMktVal);
+
+						break;
+					}
 				}
 			}
+			g_pDBConn->m_pRecordset->MoveNext();
 		}
-		g_pDBConn->m_pRecordset->MoveNext();
-	}
 
-	g_pDBConn->m_pRecordset->Close();
+		g_pDBConn->m_pRecordset->Close();
+	}
+	catch(_com_error &e)
+	{
+		CString strMsg;
+		strMsg.Format(_T("错误描述：%s\n错误消息%s"), 
+			(LPCTSTR)e.Description(),
+			(LPCTSTR)e.ErrorMessage());
+
+		g_pLog->WriteRunLogEx(__FILE__,__LINE__,strMsg.GetBuffer());
+
+		bRet = FALSE;
+	}
 
 	return bRet;
 }

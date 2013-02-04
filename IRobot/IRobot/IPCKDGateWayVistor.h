@@ -1,5 +1,9 @@
 #pragma once
 
+#include "loginterface.h"
+
+extern CLoginterface *g_pLog;
+
 #define SERVICE_STRNCPY(member)\
 {\
 	strcpy_s(m_pMsg[nRow].member, q);\
@@ -65,4 +69,8 @@ public:
 	virtual BOOL Vistor() = 0;
 	virtual BOOL ResultStrToTable(char *) = 0;
 	virtual BOOL SendMsg(char *) = 0;
+	virtual void BeginTest(){g_pLog->WriteRunLog(SYS_MODE, LOG_NOTIFY, "%s ==========Begin", m_szTestCaseName);};
+	virtual void EndTest(char *pRet){g_pLog->WriteRunLog(SYS_MODE, LOG_NOTIFY, "%s ==========%s", m_szTestCaseName, pRet);};
+protected:
+	char m_szTestCaseName[MAX_PATH];
 };

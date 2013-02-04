@@ -1,5 +1,5 @@
 #include "StdAfx.h"
-#include "BuyVistor.h"
+#include "SZA_XJ_BuyVistor.h"
 #include "Cfg.h"
 #include "MidConn.h"
 #include "KcxpConn.h"
@@ -13,7 +13,7 @@ extern CKcxpConn *g_pKcxpConn;
 extern CLoginterface *g_pLog;
 extern CDBConnect *g_pDBConn;
 
-CBuyVistor::CBuyVistor(void)
+CSZA_XJ_BuyVistor::CSZA_XJ_BuyVistor(void)
 {
 	m_pMsg = NULL;
 	m_nRowNum = 0;
@@ -28,47 +28,38 @@ CBuyVistor::CBuyVistor(void)
 	
 	m_fCptlBln_New = m_fCptlAvl_New = m_fCptlTrdFrz_New = m_fCptlOutstanding_New = m_fCptlOtdAvl_New = 0;
 
+	strcpy_s(m_szTestCaseName, "深圳A股-限价买入");
 	strcpy_s(m_szSecu_intl, "000002");
 	strcpy_s(m_szQty, "100");
 	strcpy_s(m_szPrice, "1");
 }
 
-CBuyVistor::~CBuyVistor(void)
+CSZA_XJ_BuyVistor::~CSZA_XJ_BuyVistor(void)
 {
 	DELCLS(m_pMsg);
 	m_nRowNum = 0;
 }
 
-BOOL CBuyVistor::Vistor()
+BOOL CSZA_XJ_BuyVistor::Vistor()
 {
-	InitUserData();
-	// 正常参数 
-	/*
-		检查一下信息
-		1.matcing表中是否有该记录，获取【持仓成本】
-		2.captial表中【资金余额】不变
-		3.captial表中【资金可用】减少“委托金额+5”
-		4.captial表中【现金可取】 = 【资金可用】
-		5.captial表中【支票可取】 = 【资金可用】
-		4.captial表中【交易冻结】增加【持仓成本】
-		5.如果模拟成交是半数成交的话，shares表中【在途数量】增加“委托数量/2”
-	*/
-	ChkPnt1();
+	BOOL bRet = TRUE;	
 
-	// 买入数量超过最大可买，检查系统是否校验
-	//ChkPnt2();
+	if ((bRet = InitUserData()))
+	{
+		bRet = ChkPnt1();
+	}	
 
-	return TRUE;
+	return bRet;
 }
 
-BOOL CBuyVistor::ResultStrToTable(char *pRetStr)
+BOOL CSZA_XJ_BuyVistor::ResultStrToTable(char *pRetStr)
 {
 	CKDGateway *pKDGateWay = g_pMidConn->GetKDGateWay();
 
 	int nRecNo = pKDGateWay->GetRecNum();
 	
-	m_pMsg = new MID_ORDER_403[nRecNo];
-	memset(m_pMsg, 0x00, sizeof(MID_ORDER_403)*nRecNo);
+	m_pMsg = new ORDER_403_RET_MSG[nRecNo];
+	memset(m_pMsg, 0x00, sizeof(ORDER_403_RET_MSG)*nRecNo);
 
 	int nLen = strlen(pRetStr);
 
@@ -144,7 +135,7 @@ BOOL CBuyVistor::ResultStrToTable(char *pRetStr)
 }
 
 
-BOOL CBuyVistor::ChkPnt1()
+BOOL CSZA_XJ_BuyVistor::ChkPnt1()
 {
 	/*
 		检查以下信息
@@ -162,7 +153,10 @@ BOOL CBuyVistor::ChkPnt1()
 		return FALSE;
 	}
 
-	// 1.1.检查柜台matching表中的数据是否与委托一致
+	// 休眠，等待数据库更新
+	Sleep(g_pCfg->GetRefreshDBGap());
+
+	// 1.1.检查柜台matching表中的数据是否与委托一致	
 	if (!(bRet = GetMatchedData()))
 	{
 		// 获取Matcing表数据失败
@@ -181,7 +175,7 @@ BOOL CBuyVistor::ChkPnt1()
 		if (m_fCptlBln_Old != m_fCptlBln_New)
 		{
 			bRet = FALSE;
-			g_pLog->WriteRunLog(MID_MODE, LOG_WARN, "Chk 1.3 Fail!");
+			g_pLog->WriteRunLog(MID_MODE, LOG_WARN, "Chk 1.2 Fail!");
 		}
 
 		// 1.3.检查captial表中【资金可用】减少 matching表中的【交易冻结金额】
@@ -209,7 +203,7 @@ BOOL CBuyVistor::ChkPnt1()
 	return bRet;
 }
 
-void CBuyVistor::ChkPnt2()
+void CSZA_XJ_BuyVistor::ChkPnt2()
 {
 	char szTemp[512];
 	sprintf_s(szTemp,"403|18798721|00|0123492912|85807073||000002|0B|2.00|200||||||||||||");
@@ -226,26 +220,38 @@ void CBuyVistor::ChkPnt2()
 	strSql.Format("select * from  matching where trd_date = %s and order_id = '%s'",
 		strDate, m_pMsg[0].szOrderID);
 
-	BSTR bstrSQL = strSql.AllocSysString();
-	g_pDBConn->m_pRecordset->Open(bstrSQL, (IDispatch*)g_pDBConn->m_pConnection, adOpenDynamic, adLockOptimistic, adCmdText); 
+	try
+	{
+		BSTR bstrSQL = strSql.AllocSysString();
+		g_pDBConn->m_pRecordset->Open(bstrSQL, (IDispatch*)g_pDBConn->m_pConnection, adOpenDynamic, adLockOptimistic, adCmdText); 
 
-	_variant_t TheValue; //VARIANT数据类型
-	char szTmp[100] = {0};
+		_variant_t TheValue; //VARIANT数据类型
+		char szTmp[100] = {0};
 
-	while(!g_pDBConn->m_pRecordset->adoEOF)
-	{	
-		TheValue = g_pDBConn->m_pRecordset->GetCollect("CUST_CODE");
-		if(TheValue.vt!=VT_NULL)
-		{				
-			strncpy_s(szTmp, (char*)_bstr_t(TheValue), 100);
+		while(!g_pDBConn->m_pRecordset->adoEOF)
+		{	
+			TheValue = g_pDBConn->m_pRecordset->GetCollect("CUST_CODE");
+			if(TheValue.vt!=VT_NULL)
+			{				
+				strncpy_s(szTmp, (char*)_bstr_t(TheValue), 100);
+			}
+			g_pDBConn->m_pRecordset->MoveNext();
 		}
-		g_pDBConn->m_pRecordset->MoveNext();
-	}
 
-	g_pDBConn->m_pRecordset->Close();
+		g_pDBConn->m_pRecordset->Close();
+	}
+	catch(_com_error &e)
+	{
+		CString strMsg;
+		strMsg.Format(_T("错误描述：%s\n错误消息%s"), 
+			(LPCTSTR)e.Description(),
+			(LPCTSTR)e.ErrorMessage());
+
+		g_pLog->WriteRunLogEx(__FILE__,__LINE__,strMsg.GetBuffer());
+	}
 }
 
-BOOL CBuyVistor::SendMsg(char *pMsg)
+BOOL CSZA_XJ_BuyVistor::SendMsg(char *pMsg)
 {
 	BOOL bRet = TRUE;
 
@@ -261,13 +267,13 @@ BOOL CBuyVistor::SendMsg(char *pMsg)
 	return bRet;
 }
 
-BOOL CBuyVistor::SendKcxpMsg()
+BOOL CSZA_XJ_BuyVistor::SendKcxpMsg()
 {
 	CKDMidCli *pKcxpConn = g_pKcxpConn->GetKdMidCli();
 
 	if (NULL == pKcxpConn)
 	{
-		g_pLog->WriteRunLog(KCXP_MODE, LOG_WARN, "获取KCXP连接失败!");
+		g_pLog->WriteRunLog(KCXP_MODE, LOG_DEBUG, "获取KCXP连接失败!");
 		return FALSE;
 	}
 
@@ -296,13 +302,14 @@ BOOL CBuyVistor::SendKcxpMsg()
 		|| (iRetCode = pKcxpConn->SetValue("TRD_ID",   "0B")) != KCBP_MSG_OK
 		|| (iRetCode = pKcxpConn->SetValue("PRICE",   m_szPrice)) != KCBP_MSG_OK)
 	{		
-		g_pLog->WriteRunLog(KCXP_MODE, LOG_WARN, "LBM[L0303001]调用失败,ERRCODE = %ld",iRetCode);
+		g_pLog->WriteRunLog(KCXP_MODE, LOG_DEBUG, "LBM[L0303001]设置参数失败,ERRCODE = %ld",iRetCode);
 		
 		return FALSE;
 	}
+
 	if ((iRetCode = pKcxpConn->CallProgramAndCommit("L0303001")) != KCBP_MSG_OK)
 	{	
-		g_pLog->WriteRunLog(KCXP_MODE, LOG_WARN, "LBM[L0303001]调用失败,ERRCODE = %ld",iRetCode);
+		g_pLog->WriteRunLog(KCXP_MODE, LOG_DEBUG, "LBM[L0303001]调用失败,ERRCODE = %ld",iRetCode);
 		return FALSE;
 	}
 
@@ -317,17 +324,16 @@ BOOL CBuyVistor::SendKcxpMsg()
 		{
 			m_nRowNum = nRow - 1;
 			
-			m_pMsg = new MID_ORDER_403[m_nRowNum];
-			memset(m_pMsg, 0x00, sizeof(MID_ORDER_403)*m_nRowNum);
+			m_pMsg = new ORDER_403_RET_MSG[m_nRowNum];
+			memset(m_pMsg, 0x00, sizeof(ORDER_403_RET_MSG)*m_nRowNum);
 		}
 		else
 		{
-			g_pLog->WriteRunLogEx(__FILE__,__LINE__,LOG_DEBUG,"结果集返回行数异常!");
+			g_pLog->WriteRunLogEx(__FILE__,__LINE__,"结果集返回行数异常!");
 			m_nRowNum = 0;
 			return FALSE;
 		}
-				
-		
+						
 		if ((iRetCode = pKcxpConn->RsFetchRow()) == KCBP_MSG_OK)
 		{
 			if ((iRetCode = pKcxpConn->RsGetCol(1, szTemp)) == KCBP_MSG_OK)
@@ -338,15 +344,14 @@ BOOL CBuyVistor::SendKcxpMsg()
 					{
 						iRetCode = pKcxpConn->RsGetCol(3, szTemp);
 						
-						g_pLog->WriteRunLogEx(__FILE__,__LINE__, LOG_WARN, "获取结果集列信息失败,ERRCODE = %ld", iRetCode);
+						g_pLog->WriteRunLogEx(__FILE__,__LINE__, "获取结果集列信息失败,ERRCODE = %ld", iRetCode);
 						return FALSE;
 					}
-
 				}
 			}
 			else
 			{
-				g_pLog->WriteRunLogEx(__FILE__,__LINE__, LOG_WARN, "获取结果集列信息失败,ERRCODE = %ld", iRetCode);
+				g_pLog->WriteRunLogEx(__FILE__,__LINE__, "获取结果集列信息失败,ERRCODE = %ld", iRetCode);
 				
 				return FALSE;
 			}
@@ -360,6 +365,7 @@ BOOL CBuyVistor::SendKcxpMsg()
 			{
 				if(pKcxpConn->RsFetchRow() != KCBP_MSG_OK)
 				{
+
 					break;
 				}
 
@@ -374,14 +380,14 @@ BOOL CBuyVistor::SendKcxpMsg()
 				SERVICE_KCXP_STRNCPY("EXT_INST", szExtInst);
 				SERVICE_KCXP_STRNCPY("EXT_ACC", szExtAcc);
 				SERVICE_KCXP_STRNCPY("EXT_SUB_ACC", szExtSubAcc);
-				SERVICE_KCXP_STRNCPY("EXT_FRZ_AMT", szExtFrzAmt);				
+				SERVICE_KCXP_STRNCPY("EXT_FRZ_AMT", szExtFrzAmt);		
 				nRow++;
 			}		
 		}
 	}
 	else
 	{	
-		g_pLog->WriteRunLogEx(__FILE__,__LINE__,LOG_WARN, "打开结果集失败,ERRCODE = %ld", iRetCode);
+		g_pLog->WriteRunLogEx(__FILE__,__LINE__,"打开结果集失败,ERRCODE = %ld", iRetCode);
 		
 		return FALSE;
 	}
@@ -403,188 +409,269 @@ BOOL CBuyVistor::SendKcxpMsg()
 		2.4 在途资金
 		2.5 在途可用
  */
-BOOL CBuyVistor::InitUserData()
+BOOL CSZA_XJ_BuyVistor::InitUserData()
 {
+	_variant_t TheValue; //VARIANT数据类型
+	char szTmp[100] = {0};
+
 	// 1. 获取Shares表
 	CString strSql;
 	strSql.Format("select * from  shares where account = %s and secu_intl = %s",
 		g_pCfg->GetAccount().GetBuffer(), m_szSecu_intl);
 
 	BSTR bstrSQL = strSql.AllocSysString();
-	g_pDBConn->m_pRecordset->Open(bstrSQL, (IDispatch*)g_pDBConn->m_pConnection, adOpenDynamic, adLockOptimistic, adCmdText); 
 
-	_variant_t TheValue; //VARIANT数据类型
-	char szTmp[100] = {0};
-
-	while(!g_pDBConn->m_pRecordset->adoEOF)
-	{	
-		// 1.1 股份余额
-		DB_GET_VALUE_INT("SHARE_BLN", m_nShareBln_Old);
-
-		// 1.2 股份可用
-		DB_GET_VALUE_INT("SHARE_AVL", m_nShareAvl_Old);
-
-		// 1.3 交易冻结
-		DB_GET_VALUE_INT("SHARE_TRD_FRZ", m_nShareTrdFrz_Old);
-
-		// 1.4 在途数量
-		DB_GET_VALUE_INT("SHARE_OTD", m_nShareOtd_Old);
-
-		g_pDBConn->m_pRecordset->MoveNext();
-	}
-
-	g_pDBConn->m_pRecordset->Close();
-
-	// 2. 获取Capitals表
-	strSql.Format("select * from  capital where account = %s and currency = 0",
-		g_pCfg->GetAccount().GetBuffer());
-
-	bstrSQL = strSql.AllocSysString();
-	g_pDBConn->m_pRecordset->Open(bstrSQL, (IDispatch*)g_pDBConn->m_pConnection, adOpenDynamic, adLockOptimistic, adCmdText); 
-
-	if (g_pDBConn->m_pRecordset->adoEOF)
+	try
 	{
-		// 数据库返回的结果为空
+		g_pDBConn->m_pRecordset->Open(bstrSQL, (IDispatch*)g_pDBConn->m_pConnection, adOpenDynamic, adLockOptimistic, adCmdText); 
+
+		while(!g_pDBConn->m_pRecordset->adoEOF)
+		{	
+			// 1.1 股份余额
+			DB_GET_VALUE_INT("SHARE_BLN", m_nShareBln_Old);
+
+			// 1.2 股份可用
+			DB_GET_VALUE_INT("SHARE_AVL", m_nShareAvl_Old);
+
+			// 1.3 交易冻结
+			DB_GET_VALUE_INT("SHARE_TRD_FRZ", m_nShareTrdFrz_Old);
+
+			// 1.4 在途数量
+			DB_GET_VALUE_INT("SHARE_OTD", m_nShareOtd_Old);
+
+			g_pDBConn->m_pRecordset->MoveNext();
+		}
+
+		g_pDBConn->m_pRecordset->Close();
+	}
+	catch(_com_error &e)
+	{
+		CString strMsg;
+		strMsg.Format(_T("错误描述：%s\n错误消息%s"), 
+			(LPCTSTR)e.Description(),
+			(LPCTSTR)e.ErrorMessage());
+
+		g_pLog->WriteRunLogEx(__FILE__,__LINE__,strMsg.GetBuffer());
+
 		return FALSE;
 	}
+	
 
-	while(!g_pDBConn->m_pRecordset->adoEOF)
-	{	
-		// 2.1 资金余额
-		DB_GET_VALUE_FLOAT("BALANCE", m_fCptlBln_Old);
+	// 2. 获取Capitals表
+	try
+	{
+		strSql.Format("select * from  capital where account = %s and currency = 0",
+			g_pCfg->GetAccount().GetBuffer());
 
-		// 2.2 资金可用
-		DB_GET_VALUE_FLOAT("AVAILABLE", m_fCptlAvl_Old);
+		bstrSQL = strSql.AllocSysString();
+		g_pDBConn->m_pRecordset->Open(bstrSQL, (IDispatch*)g_pDBConn->m_pConnection, adOpenDynamic, adLockOptimistic, adCmdText); 
 
-		// 2.3 交易冻结
-		DB_GET_VALUE_FLOAT("TRD_FRZ", m_fCptlTrdFrz_Old);
+		if (g_pDBConn->m_pRecordset->adoEOF)
+		{
+			// 数据库返回的结果为空
+			g_pDBConn->m_pRecordset->Close();
 
-		// 2.4 在途资金
-		DB_GET_VALUE_FLOAT("OUTSTANDING", m_fCptlOutstanding_Old);
+			g_pLog->WriteRunLogEx(__FILE__,__LINE__, "获取Capitals表数据失败!");
+			return FALSE;
+		}
 
-		// 2.5 在途可用
-		DB_GET_VALUE_FLOAT("OTD_AVL", m_fCptlOtdAvl_Old);
+		while(!g_pDBConn->m_pRecordset->adoEOF)
+		{	
+			// 2.1 资金余额
+			DB_GET_VALUE_FLOAT("BALANCE", m_fCptlBln_Old);
 
-		g_pDBConn->m_pRecordset->MoveNext();
+			// 2.2 资金可用
+			DB_GET_VALUE_FLOAT("AVAILABLE", m_fCptlAvl_Old);
+
+			// 2.3 交易冻结
+			DB_GET_VALUE_FLOAT("TRD_FRZ", m_fCptlTrdFrz_Old);
+
+			// 2.4 在途资金
+			DB_GET_VALUE_FLOAT("OUTSTANDING", m_fCptlOutstanding_Old);
+
+			// 2.5 在途可用
+			DB_GET_VALUE_FLOAT("OTD_AVL", m_fCptlOtdAvl_Old);
+
+			g_pDBConn->m_pRecordset->MoveNext();
+		}
+
+		g_pDBConn->m_pRecordset->Close();
 	}
+	catch(_com_error &e)
+	{
+		CString strMsg;
+		strMsg.Format(_T("错误描述：%s\n错误消息%s"), 
+			(LPCTSTR)e.Description(),
+			(LPCTSTR)e.ErrorMessage());
 
-	g_pDBConn->m_pRecordset->Close();
+		g_pLog->WriteRunLogEx(__FILE__,__LINE__,strMsg.GetBuffer());
+
+		return FALSE;
+	}
 
 	return TRUE;
 }
 
 
-BOOL CBuyVistor::UpdateUserData()
+BOOL CSZA_XJ_BuyVistor::UpdateUserData()
 {
+	_variant_t TheValue; //VARIANT数据类型
+	char szTmp[100] = {0};
+
 	// 1. 获取Shares表
 	CString strSql;
 	strSql.Format("select * from  shares where account = %s and secu_intl = %s",
 		g_pCfg->GetAccount().GetBuffer(), m_szSecu_intl);
 
 	BSTR bstrSQL = strSql.AllocSysString();
-	g_pDBConn->m_pRecordset->Open(bstrSQL, (IDispatch*)g_pDBConn->m_pConnection, adOpenDynamic, adLockOptimistic, adCmdText); 
 
-	_variant_t TheValue; //VARIANT数据类型
-	char szTmp[100] = {0};
-
-	while(!g_pDBConn->m_pRecordset->adoEOF)
-	{	
-		// 1.1 股份余额
-		DB_GET_VALUE_INT("SHARE_BLN", m_nShareBln_New);
-
-		// 1.2 股份可用
-		DB_GET_VALUE_INT("SHARE_AVL", m_nShareAvl_New);
-
-		// 1.3 交易冻结
-		DB_GET_VALUE_INT("SHARE_TRD_FRZ", m_nShareTrdFrz_New);
-
-		// 1.4 在途数量
-		DB_GET_VALUE_INT("SHARE_OTD", m_nShareOtd_New);
-
-		g_pDBConn->m_pRecordset->MoveNext();
-	}
-
-	g_pDBConn->m_pRecordset->Close();
-
-	// 2. 获取Capitals表
-	strSql.Format("select * from  capital where account = %s and currency = 0",
-		g_pCfg->GetAccount().GetBuffer());
-
-	bstrSQL = strSql.AllocSysString();
-	g_pDBConn->m_pRecordset->Open(bstrSQL, (IDispatch*)g_pDBConn->m_pConnection, adOpenDynamic, adLockOptimistic, adCmdText); 
-
-	if (g_pDBConn->m_pRecordset->adoEOF)
+	try
 	{
-		// 数据库返回的结果为空
+		g_pDBConn->m_pRecordset->Open(bstrSQL, (IDispatch*)g_pDBConn->m_pConnection, adOpenDynamic, adLockOptimistic, adCmdText); 
+
+		while(!g_pDBConn->m_pRecordset->adoEOF)
+		{	
+			// 1.1 股份余额
+			DB_GET_VALUE_INT("SHARE_BLN", m_nShareBln_New);
+
+			// 1.2 股份可用
+			DB_GET_VALUE_INT("SHARE_AVL", m_nShareAvl_New);
+
+			// 1.3 交易冻结
+			DB_GET_VALUE_INT("SHARE_TRD_FRZ", m_nShareTrdFrz_New);
+
+			// 1.4 在途数量
+			DB_GET_VALUE_INT("SHARE_OTD", m_nShareOtd_New);
+
+			g_pDBConn->m_pRecordset->MoveNext();
+		}
+
+		g_pDBConn->m_pRecordset->Close();
+	}
+	catch(_com_error &e)
+	{
+		CString strMsg;
+		strMsg.Format(_T("错误描述：%s\n错误消息%s"), 
+			(LPCTSTR)e.Description(),
+			(LPCTSTR)e.ErrorMessage());
+
+		g_pLog->WriteRunLogEx(__FILE__,__LINE__,strMsg.GetBuffer());
+
 		return FALSE;
 	}
+	
+	
 
-	while(!g_pDBConn->m_pRecordset->adoEOF)
-	{	
-		// 2.1 资金余额
-		DB_GET_VALUE_FLOAT("BALANCE", m_fCptlBln_New);
+	// 2. 获取Capitals表
+	try
+	{
+		strSql.Format("select * from  capital where account = %s and currency = 0",
+			g_pCfg->GetAccount().GetBuffer());
 
-		// 2.2 资金可用
-		DB_GET_VALUE_FLOAT("AVAILABLE", m_fCptlAvl_New);
+		bstrSQL = strSql.AllocSysString();
+		g_pDBConn->m_pRecordset->Open(bstrSQL, (IDispatch*)g_pDBConn->m_pConnection, adOpenDynamic, adLockOptimistic, adCmdText); 
 
-		// 2.3 交易冻结
-		DB_GET_VALUE_FLOAT("TRD_FRZ", m_fCptlTrdFrz_New);
+		if (g_pDBConn->m_pRecordset->adoEOF)
+		{
+			// 数据库返回的结果为空
+			g_pDBConn->m_pRecordset->Close();
+			g_pLog->WriteRunLogEx(__FILE__,__LINE__,"获取Capitals表数据失败!");
+			return FALSE;
+		}
 
-		// 2.4 在途资金
-		DB_GET_VALUE_FLOAT("OUTSTANDING", m_fCptlOutstanding_New);
+		while(!g_pDBConn->m_pRecordset->adoEOF)
+		{	
+			// 2.1 资金余额
+			DB_GET_VALUE_FLOAT("BALANCE", m_fCptlBln_New);
 
-		// 2.5 在途可用
-		DB_GET_VALUE_FLOAT("OTD_AVL", m_fCptlOtdAvl_New);
+			// 2.2 资金可用
+			DB_GET_VALUE_FLOAT("AVAILABLE", m_fCptlAvl_New);
 
-		g_pDBConn->m_pRecordset->MoveNext();
+			// 2.3 交易冻结
+			DB_GET_VALUE_FLOAT("TRD_FRZ", m_fCptlTrdFrz_New);
+
+			// 2.4 在途资金
+			DB_GET_VALUE_FLOAT("OUTSTANDING", m_fCptlOutstanding_New);
+
+			// 2.5 在途可用
+			DB_GET_VALUE_FLOAT("OTD_AVL", m_fCptlOtdAvl_New);
+
+			g_pDBConn->m_pRecordset->MoveNext();
+		}
+
+		g_pDBConn->m_pRecordset->Close();
 	}
+	catch(_com_error &e)
+	{
+		CString strMsg;
+		strMsg.Format(_T("错误描述：%s\n错误消息%s"), 
+			(LPCTSTR)e.Description(),
+			(LPCTSTR)e.ErrorMessage());
 
-	g_pDBConn->m_pRecordset->Close();
+		g_pLog->WriteRunLogEx(__FILE__,__LINE__,strMsg.GetBuffer());
 
+		return FALSE;
+	}
+	
 	return TRUE;
 }
 
-BOOL CBuyVistor::GetMatchedData()
+BOOL CSZA_XJ_BuyVistor::GetMatchedData()
 {
 	CTime tm=CTime::GetCurrentTime();
 	CString strDate = tm.Format("%Y%m%d");
 	BOOL bRet = TRUE;
 
-	// 1.1 检查柜台matching表中的数据是否与委托一致，并获取【持仓成本】
-	CString strSql;
-	strSql.Format("select * from  matching where trd_date = %s and trd_id = '0B'and order_id = '%s'"
-		" and account = %s and secu_intl = %s and order_price = %s and order_qty = %s",
-		strDate, m_pMsg[0].szOrderID, m_pMsg[0].szAccount, m_szSecu_intl, m_szPrice, m_szQty);
-
-	BSTR bstrSQL = strSql.AllocSysString();
-	g_pDBConn->m_pRecordset->Open(bstrSQL, (IDispatch*)g_pDBConn->m_pConnection, adOpenDynamic, adLockOptimistic, adCmdText); 
-
-	_variant_t TheValue; //VARIANT数据类型
-	char szTmp[100] = {0};
-
-	if (g_pDBConn->m_pRecordset->adoEOF)
+	try
 	{
-		// 数据库返回的结果为空
-		g_pLog->WriteRunLog(MID_MODE, LOG_NOTIFY, "Chk 1.1 Fail!");
-		return FALSE;
-	}	
+		// 1.1 检查柜台matching表中的数据是否与委托一致，并获取【持仓成本】
+		CString strSql;
+		strSql.Format("select * from  matching where trd_date = %s and trd_id = '0B'and order_id = '%s'"
+			" and account = %s and secu_intl = %s and order_price = %s and order_qty = %s",
+			strDate, m_pMsg[0].szOrderID, m_pMsg[0].szAccount, m_szSecu_intl, m_szPrice, m_szQty);
 
-	while(!g_pDBConn->m_pRecordset->adoEOF)
-	{								
-		DB_GET_VALUE_FLOAT("ORDER_FRZ_AMT", m_fMatched_OrderFrzAmt);
-		DB_GET_VALUE_FLOAT("MATCHED_PRICE", m_fMatched_Price);
-		DB_GET_VALUE_FLOAT("MATCHED_QTY", m_fMatched_Qty);
-		DB_GET_VALUE_FLOAT("MATCHED_AMT", m_fMatchedAmt);
-		DB_GET_VALUE_FLOAT("SETT_AMT", m_fMatched_SettAmt);
+		BSTR bstrSQL = strSql.AllocSysString();
+		g_pDBConn->m_pRecordset->Open(bstrSQL, (IDispatch*)g_pDBConn->m_pConnection, adOpenDynamic, adLockOptimistic, adCmdText); 
 
-		g_pDBConn->m_pRecordset->MoveNext();
+		_variant_t TheValue; //VARIANT数据类型
+		char szTmp[100] = {0};
+
+		if (g_pDBConn->m_pRecordset->adoEOF)
+		{
+			// 数据库返回的结果为空
+			g_pLog->WriteRunLog(SYS_MODE, LOG_NOTIFY, "Chk 1.1 Fail!");
+			g_pDBConn->m_pRecordset->Close();
+			return FALSE;
+		}	
+
+		while(!g_pDBConn->m_pRecordset->adoEOF)
+		{								
+			DB_GET_VALUE_FLOAT("ORDER_FRZ_AMT", m_fMatched_OrderFrzAmt);
+			DB_GET_VALUE_FLOAT("MATCHED_PRICE", m_fMatched_Price);
+			DB_GET_VALUE_FLOAT("MATCHED_QTY", m_fMatched_Qty);
+			DB_GET_VALUE_FLOAT("MATCHED_AMT", m_fMatchedAmt);
+			DB_GET_VALUE_FLOAT("SETT_AMT", m_fMatched_SettAmt);
+
+			g_pDBConn->m_pRecordset->MoveNext();
+		}
+		g_pDBConn->m_pRecordset->Close();
 	}
-	g_pDBConn->m_pRecordset->Close();
+	catch(_com_error &e)
+	{
+		CString strMsg;
+		strMsg.Format(_T("错误描述：%s\n错误消息%s"), 
+			(LPCTSTR)e.Description(),
+			(LPCTSTR)e.ErrorMessage());
+
+		g_pLog->WriteRunLogEx(__FILE__,__LINE__,strMsg.GetBuffer());
+
+		bRet = FALSE;
+	}
 
 	return bRet;
 }
 
-BOOL CBuyVistor::SendMidMsg()
+BOOL CSZA_XJ_BuyVistor::SendMidMsg()
 {
 	CKDGateway *pKDGateWay = g_pMidConn->GetKDGateWay();
 

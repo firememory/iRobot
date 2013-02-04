@@ -32,7 +32,11 @@
 #define IDC_SUCC_CASE                   1023
 #define IDC_FAIL_CASE                   1024
 #define IDC_COMBOBOXEX_LOG_LEVEL        1025
-#define IDC_HOTKEY1                     1030
+#define IDC_EDIT1                       1031
+#define IDC_EDIT_LOG_MSG                1031
+#define IDC_BUTTON_CLEAN                1032
+#define IDC_EDIT2                       1033
+#define IDC_EDIT_DB_GETDATA_GAP         1033
 
 // Next default values for new objects
 // 
@@ -40,7 +44,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        129
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1031
+#define _APS_NEXT_CONTROL_VALUE         1034
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

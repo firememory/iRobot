@@ -22,6 +22,8 @@ static char THIS_FILE[]=__FILE__;
 
 CDBConnect::CDBConnect()
 {
+	::CoInitialize(NULL);
+
 	m_pConnection.CreateInstance(__uuidof(Connection));
     m_pRecordset.CreateInstance(__uuidof(Recordset));
 }
@@ -60,8 +62,18 @@ BOOL CDBConnect::init()
 		m_pConnection->Open((_bstr_t)m_sConn,"","",adConnectUnspecified);
 		
 		//下面是查询数据的例子
-		CString strSql="select * from  customers where cust_code = 10007887";
+		CString strSql = "update authentication set auth_info = '2EXR8U3TUWYUOWF167PT4W46I4R550H1' where user_code = 9999";
+		//CString strSql = "select authentication.auth_info from authentication where authentication.user_code = 9999";
 		BSTR bstrSQL = strSql.AllocSysString();
+
+		_variant_t RecordsAffected; //VARIANT数据类型
+
+		m_pConnection->BeginTrans();
+		m_pConnection->Execute(bstrSQL,&RecordsAffected,adCmdText);
+		m_pConnection->CommitTrans();
+
+		strSql="select * from  customers where cust_code = 10007887";
+		bstrSQL = strSql.AllocSysString();
 		m_pRecordset->Open(bstrSQL, (IDispatch*)m_pConnection, adOpenDynamic, adLockOptimistic, adCmdText); 
 		
 		_variant_t TheValue; //VARIANT数据类型
@@ -81,10 +93,11 @@ BOOL CDBConnect::init()
 	}
 	catch (_com_error e)//异常处理
 	{
-		AfxMessageBox(e.Description());
-		long errorCode=e.WCode();
-		if(3127==errorCode) AfxMessageBox("表不存在");
-		if(3092==errorCode) AfxMessageBox("表已经存在");
+		CString strMsg;
+		strMsg.Format(_T("错误描述：%s\n错误消息%s"),
+		(LPCTSTR)e.Description(),
+		(LPCTSTR)e.ErrorMessage());
+
 		return FALSE;
 	}
 
