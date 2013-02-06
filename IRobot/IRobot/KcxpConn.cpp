@@ -81,7 +81,7 @@ BOOL CKcxpConn::OpLogin()
 	char szErrMsg[64+1],szTemp[64+1];
 	ZEROMEM(szTemp, sizeof(szTemp));
 
-	lpfnEncrypt(atol(g_pCfg->GetOpId().GetBuffer()), g_pCfg->GetOpPwd().GetBuffer(), szTemp);
+	lpfnEncrypt(atol(g_pCfg->GetOpId().GetBuffer()), g_pCfg->GetOpPwd().GetBuffer(), szTemp);	
 	m_clKdMidCli.BeginWrite();
 
 	if ((nRet = m_clKdMidCli.SetValue("F_OP_USER", g_pCfg->GetOpId().GetBuffer())) != KCBP_MSG_OK

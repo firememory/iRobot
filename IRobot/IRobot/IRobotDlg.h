@@ -120,4 +120,5 @@ public:
 	int GetRefreshDBGap() const { return m_nRefreshDBGap; }
 	void SetRefreshDBGap(int val) { m_nRefreshDBGap = val; }
 	afx_msg void OnBnClickedCancel();
+	afx_msg void OnBnClickedButtonPerformance();
 };

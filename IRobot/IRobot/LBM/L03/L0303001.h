@@ -3,6 +3,8 @@
 #define LBPARANAME_LEN 51
 #define LBPARAVAL_LEN 201
 
+#include "../../KcxpConn.h"
+
 struct L0303001_SEND_MSG
 {
 	char szOPER_FLAG[LBPARAVAL_LEN];
@@ -47,7 +49,7 @@ public:
 	BOOL ExecuteLbm(L0303001_SEND_MSG *pSendMsg);
 	
 	// 获取LBM执行结果
-	BOOL FetchRslt(L0303001_RECV_MSG *pRecvMsg);
+	BOOL FetchRslt(int ,L0303001_RECV_MSG *pRecvMsg);
 
 	// 获取LBM执行结果集的行数
 	int GetRsltRowNum();

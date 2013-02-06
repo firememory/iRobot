@@ -285,15 +285,15 @@ BOOL CSZA_XJ_BuyVistor::SendKcxpMsg()
 	if ((iRetCode = pKcxpConn->SetValue("F_OP_USER",      g_pCfg->GetOpId().GetBuffer())) != KCBP_MSG_OK
 		|| (iRetCode = pKcxpConn->SetValue("F_OP_ROLE",   "2")) != KCBP_MSG_OK
 		|| (iRetCode = pKcxpConn->SetValue("F_OP_SITE",   "999999999999999")) != KCBP_MSG_OK
-		|| (iRetCode = pKcxpConn->SetValue("F_OP_BRANCH", "999")) != KCBP_MSG_OK
+		|| (iRetCode = pKcxpConn->SetValue("F_OP_BRANCH", g_pCfg->GetBranch().GetBuffer())) != KCBP_MSG_OK
 		|| (iRetCode = pKcxpConn->SetValue("F_CHANNEL",   '0')) != KCBP_MSG_OK
 		|| (iRetCode = pKcxpConn->SetValue("F_SESSION", g_pKcxpConn->GetSession())) != KCBP_MSG_OK
 		|| (iRetCode = pKcxpConn->SetValue("OPER_FLAG",   "1")) != KCBP_MSG_OK
 		|| (iRetCode = pKcxpConn->SetValue("CUSTOMER",   g_pCfg->GetCustID().GetBuffer())) != KCBP_MSG_OK
 		|| (iRetCode = pKcxpConn->SetValue("MARKET",   "0")) != KCBP_MSG_OK
 		|| (iRetCode = pKcxpConn->SetValue("BOARD",   "0")) != KCBP_MSG_OK
-		|| (iRetCode = pKcxpConn->SetValue("SECU_ACC",   g_pCfg->GetSecu_Acc_SZA())) != KCBP_MSG_OK
-		|| (iRetCode = pKcxpConn->SetValue("ACCOUNT",   g_pCfg->GetAccount().GetBuffer())) != KCBP_MSG_OK
+		|| (iRetCode = pKcxpConn->SetValue("SECU_ACC",    g_pCfg->GetSecu_Acc_SZA())) != KCBP_MSG_OK
+		|| (iRetCode = pKcxpConn->SetValue("ACCOUNT",    g_pCfg->GetAccount().GetBuffer())) != KCBP_MSG_OK
 		|| (iRetCode = pKcxpConn->SetValue("SECU_INTL",   m_szSecu_intl)) != KCBP_MSG_OK
 		|| (iRetCode = pKcxpConn->SetValue("SEAT",   "002600")) != KCBP_MSG_OK
 		|| (iRetCode = pKcxpConn->SetValue("SERIAL_NO",   "-1")) != KCBP_MSG_OK
@@ -424,6 +424,12 @@ BOOL CSZA_XJ_BuyVistor::InitUserData()
 	try
 	{
 		g_pDBConn->m_pRecordset->Open(bstrSQL, (IDispatch*)g_pDBConn->m_pConnection, adOpenDynamic, adLockOptimistic, adCmdText); 
+
+		// 客户当前没有持仓此股票
+		if (g_pDBConn->m_pRecordset->adoEOF)
+		{
+			m_nShareBln_Old = m_nShareAvl_Old = m_nShareTrdFrz_Old = m_nShareOtd_Old = 0;
+		}
 
 		while(!g_pDBConn->m_pRecordset->adoEOF)
 		{	

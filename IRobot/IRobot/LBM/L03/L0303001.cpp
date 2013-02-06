@@ -1,5 +1,16 @@
 #include "StdAfx.h"
 #include "L0303001.h"
+#include "../../Cfg.h"
+#include "../../MidConn.h"
+#include "../../loginterface.h"
+#include "../../DBConnect.h"
+#include "../../public.h"
+
+extern CCfg *g_pCfg;
+extern CMidConn *g_pMidConn;
+extern CKcxpConn *g_pKcxpConn;
+extern CLoginterface *g_pLog;
+extern CDBConnect *g_pDBConn;
 
 CL0303001::CL0303001(void)
 {
@@ -44,7 +55,7 @@ BOOL CL0303001::ExecuteLbm( L0303001_SEND_MSG *pSendMsg)
 		|| (iRetCode = m_pKcxpConn->SetValue("DELIST_CHANNEL", pSendMsg->szDELIST_CHANNEL)) != KCBP_MSG_OK
 		|| (iRetCode = m_pKcxpConn->SetValue("QTY",   pSendMsg->szQTY)) != KCBP_MSG_OK
 		|| (iRetCode = m_pKcxpConn->SetValue("TRD_ID", pSendMsg->szTRD_ID)) != KCBP_MSG_OK
-		|| (iRetCode = m_pKcxpConn->SetValue("PRICE",   pSendMsg->szPRICE)) != KCBP_MSG_OK)
+		|| (iRetCode = m_pKcxpConn->SetValue("PRICE",   pSendMsg->szPRICE)) != KCBP_MSG_OK))
 	{		
 		g_pLog->WriteRunLog(KCXP_MODE, LOG_DEBUG, "LBM[L0303001]ÉèÖÃ²ÎÊýÊ§°Ü,ERRCODE = %ld",iRetCode);
 
@@ -65,7 +76,7 @@ BOOL CL0303001::FetchRslt( int nRow, L0303001_RECV_MSG *pRecvMsg )
 	int iRetCode = KCBP_MSG_OK;
 	char szTemp[64];
 
-	if ((iRetCode = pKcxpConn->RsOpen()) == KCBP_MSG_OK)
+	if ((iRetCode = m_pKcxpConn->RsOpen()) == KCBP_MSG_OK)
 	{
 		if ((iRetCode = m_pKcxpConn->RsFetchRow()) == KCBP_MSG_OK)
 		{
@@ -100,7 +111,7 @@ BOOL CL0303001::FetchRslt( int nRow, L0303001_RECV_MSG *pRecvMsg )
 				{
 					break;
 				}
-
+/*
 				SERVICE_KCXP_STRNCPY("BIZ_NO", szBizNo);
 				SERVICE_KCXP_STRNCPY("ORDER_ID", szOrderID);
 				SERVICE_KCXP_STRNCPY("ACCOUNT", szAccount);
@@ -113,6 +124,7 @@ BOOL CL0303001::FetchRslt( int nRow, L0303001_RECV_MSG *pRecvMsg )
 				SERVICE_KCXP_STRNCPY("EXT_ACC", szExtAcc);
 				SERVICE_KCXP_STRNCPY("EXT_SUB_ACC", szExtSubAcc);
 				SERVICE_KCXP_STRNCPY("EXT_FRZ_AMT", szExtFrzAmt);		
+				*/
 				nIdx++;
 			}		
 		}
@@ -128,6 +140,7 @@ BOOL CL0303001::FetchRslt( int nRow, L0303001_RECV_MSG *pRecvMsg )
 int CL0303001::GetRsltRowNum()
 {
 	int nRow = 0;
+	int iRetCode = KCBP_MSG_OK;
 
 	if ((iRetCode = m_pKcxpConn->RsOpen()) == KCBP_MSG_OK)
 	{

@@ -1,5 +1,12 @@
 #include "StdAfx.h"
 #include "ParseKcbpLog.h"
+#include "KcxpConn.h"
+#include "Cfg.h"
+#include "loginterface.h"
+
+extern CKcxpConn *g_pKcxpConn;
+extern CCfg *g_pCfg;
+extern CLoginterface *g_pLog;
 
 CParseKcbpLog::CParseKcbpLog(void)
 {
@@ -59,7 +66,7 @@ void CParseKcbpLog::ParseLog()
 			pColon++;
 			pFind = strstr(pColon, "&F_");
 
-			char arr[50][50];
+			char arr[50][MAX_PATH];
 			memset(&arr, 0x00, sizeof(arr));
 
 			int i = 0;
@@ -124,6 +131,75 @@ void CParseKcbpLog::ReadRlt()
 			PARAM_UNIT *pParamUnit = pLBM->arrParams.GetAt(idx);
 			printf("Param %d, Name:%s, Value%s \n", pParamUnit->szName, pParamUnit->szValue);
 		}
+	}
+}
+
+void CParseKcbpLog::Exec()
+{
+	CKDMidCli *pKcxpConn = g_pKcxpConn->GetKdMidCli();
+	int iRetCode = KCBP_MSG_OK;
+	int n = m_arrCmds.GetCount();
+
+	for (int i=0; i<n; i++)
+	{
+		LBM_PARAM_INFO *pLBM = m_arrCmds.GetAt(i);
+
+		int nLBMParamCnt = pLBM->arrParams.GetCount();		
+
+		for (int idx = 0; idx<nLBMParamCnt; idx++)
+		{
+			PARAM_UNIT *pParamUnit = pLBM->arrParams.GetAt(idx);			
+
+			if (strcmp(pParamUnit->szName, "F_OP_ROLE") == 0)
+			{
+				if (strcmp(pParamUnit->szValue, "1") == 0)
+				{
+					// OP_ROLE为2， 通过操作员委托
+					// 需要设置 测试操作员的权限
+
+					// cust_grant
+				}
+				else if(strcmp(pParamUnit->szValue, "2") == 0)
+				{
+					// OP_ROLE为1， 通过MID委托
+					// 需要首先重置客户交易密码为123444，然后登录客户
+
+					// 重置客户密码
+					lpfnEncrypt(atol("85807073"), "123444", szTemp);
+
+				}
+			}			
+
+			if (iRetCode = pKcxpConn->SetValue(pParamUnit->szName, pParamUnit->szValue) != KCBP_MSG_OK)
+			{
+				g_pLog->WriteRunLogEx(__FILE__, __LINE__, "KCXP SET VALUE Failed: LBM:%s, ParamName:%s, ParamVal:%s",
+					pLBM->szLbmId, pParamUnit->szName, pParamUnit->szValue);
+			}
+		}
+
+		// Execute LBM
+		if ((iRetCode = pKcxpConn->CallProgramAndCommit(pLBM->szLbmId)) != KCBP_MSG_OK)
+		{	
+			g_pLog->WriteRunLogEx(__FILE__,__LINE__,"LBM[%s]调用失败,ERRCODE = %ld", pLBM->szLbmId, iRetCode);
+			return;
+		}
+
+
+		// 判断执行结果
+		int nRow = 0;
+
+		if ((iRetCode = pKcxpConn->RsOpen()) == KCBP_MSG_OK)
+		{
+			// 获取结果集行数，注意行数是包括标题的，因此行数要减1
+			pKcxpConn->RsGetRowNum(&nRow);
+
+			if (nRow <= 1)
+			{
+				g_pLog->WriteRunLogEx(__FILE__,__LINE__,"LBM[%s]执行失败,ERRCODE = %ld", pLBM->szLbmId, iRetCode);
+			}
+		}
+
+		Sleep(1000);
 	}
 }
 

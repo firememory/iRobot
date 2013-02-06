@@ -175,6 +175,7 @@ BEGIN_MESSAGE_MAP(CIRobotDlg, CDialog)
 	ON_CBN_SELCHANGE(IDC_COMBOBOXEX_LOG_LEVEL, &CIRobotDlg::OnCbnSelchangeComboboxex1)
 	ON_BN_CLICKED(IDC_BUTTON_CLEAN, &CIRobotDlg::OnBnClickedButtonClean)
 	ON_BN_CLICKED(IDCANCEL, &CIRobotDlg::OnBnClickedCancel)
+	ON_BN_CLICKED(IDC_BUTTON_PERFORMANCE, &CIRobotDlg::OnBnClickedButtonPerformance)
 END_MESSAGE_MAP()
 
 
@@ -214,10 +215,6 @@ BOOL CIRobotDlg::OnInitDialog()
 	// ³õÊ¼»¯ Progress bar
 	m_ctrlWait.SetRange(0, 3);
 	m_ctrlWait.SetStep(1);
-
-	CParseKcbpLog parslog;
-	parslog.ParseLog();
-	parslog.ReadRlt();
 
 	g_pCfg = new CCfg;
 	if (NULL == g_pCfg)
@@ -537,9 +534,7 @@ void CIRobotDlg::OnBnClickedSetCfg()
 			{
 				m_ctrlButtonOk.EnableWindow(FALSE);
 			}
-		}
-		
-		
+		}		
 	}
 }
 
@@ -597,4 +592,13 @@ void CIRobotDlg::OnBnClickedCancel()
 	// TODO: Add your control notification handler code here
 	g_pLog->WriteRunLog(SYS_MODE, LOG_NOTIFY, "========Server Shutdown========");
 	OnCancel();
+}
+
+void CIRobotDlg::OnBnClickedButtonPerformance()
+{
+	// TODO: Add your control notification handler code here
+	CParseKcbpLog parslog;
+	parslog.ParseLog();
+	parslog.ReadRlt();
+	parslog.Exec();
 }

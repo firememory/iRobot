@@ -3,7 +3,7 @@
 struct PARAM_UNIT
 {
 	char szName[50];
-	char szValue[50];
+	char szValue[MAX_PATH];
 };
 
 struct LBM_PARAM_INFO
@@ -20,6 +20,7 @@ public:
 
 	void ParseLog();
 	void ReadRlt();
+	void Exec();
 
 private:
 	char m_szKcbpLogPath[MAX_PATH];
