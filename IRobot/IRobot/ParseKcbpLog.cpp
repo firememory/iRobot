@@ -3,10 +3,13 @@
 #include "KcxpConn.h"
 #include "Cfg.h"
 #include "loginterface.h"
+#include "LoginVistor.h"
 
 extern CKcxpConn *g_pKcxpConn;
 extern CCfg *g_pCfg;
 extern CLoginterface *g_pLog;
+extern LPFNDLLFUNC1 lpfnEncrypt;
+extern LPFNDLLFUNC2 lpfnDecrypt;
 
 CParseKcbpLog::CParseKcbpLog(void)
 {
@@ -89,25 +92,17 @@ void CParseKcbpLog::ParseLog()
 				pFind = arr[idx];
 
 				char *pName = strtok(pFind, "=");
-				char *pValue = strtok(NULL, "=");
-
-				printf("Name = %s, Value = %s \n", pName, pValue);
-				
-				PARAM_UNIT *pParamUnit = new PARAM_UNIT;
-
-				strcpy_s(pParamUnit->szName, pName);
+				char *pValue = strtok(NULL, "=");											
 
 				// 如果Value为空
 				if (NULL == pValue)
 				{
-					strcpy_s(pParamUnit->szValue, "");
+					pLbmInfo->mapParams.SetAt(pName, "");
 				}
 				else
 				{
-					strcpy_s(pParamUnit->szValue, pValue);
-				}				
-				
-				pLbmInfo->arrParams.Add(pParamUnit);
+					pLbmInfo->mapParams.SetAt(pName, pValue);
+				}												
 			}
 
 			m_arrCmds.Add(pLbmInfo);
@@ -118,18 +113,19 @@ void CParseKcbpLog::ParseLog()
 void CParseKcbpLog::ReadRlt()
 {
 	int n = m_arrCmds.GetCount();
+	POSITION pos;
+	CString key, value;
 
 	for (int i=0; i<n; i++)
 	{
 		LBM_PARAM_INFO *pLBM = m_arrCmds.GetAt(i);
 
-		int nLBMParamCnt = pLBM->arrParams.GetCount();
+		int nLBMParamCnt = pLBM->mapParams.GetCount();
 		printf("LBM:%s has %d params \n", pLBM->szLbmId, nLBMParamCnt);
-	
-		for (int idx = 0; idx<nLBMParamCnt; idx++)
+		
+		for( pos = pLBM->mapParams.GetStartPosition(); pos != NULL; )
 		{
-			PARAM_UNIT *pParamUnit = pLBM->arrParams.GetAt(idx);
-			printf("Param %d, Name:%s, Value%s \n", pParamUnit->szName, pParamUnit->szValue);
+			pLBM->mapParams.GetNextAssoc( pos, key, value);
 		}
 	}
 }
@@ -140,40 +136,52 @@ void CParseKcbpLog::Exec()
 	int iRetCode = KCBP_MSG_OK;
 	int n = m_arrCmds.GetCount();
 
+	POSITION pos;
+	CString key, value;	
+
 	for (int i=0; i<n; i++)
 	{
 		LBM_PARAM_INFO *pLBM = m_arrCmds.GetAt(i);
 
-		int nLBMParamCnt = pLBM->arrParams.GetCount();		
+		pLBM->mapParams.Lookup("F_OP_ROLE", value);
 
-		for (int idx = 0; idx<nLBMParamCnt; idx++)
+		if (value.Compare("2") == 0)
 		{
-			PARAM_UNIT *pParamUnit = pLBM->arrParams.GetAt(idx);			
+			// OP_ROLE为2， 通过操作员委托
+			// 需要设置 测试操作员的权限
 
-			if (strcmp(pParamUnit->szName, "F_OP_ROLE") == 0)
+			// cust_grant
+		}
+		else if (value.Compare("3") == 0)
+		{
+			// OP_ROLE为1， 通过MID委托
+			// 需要首先重置客户交易密码为123444，然后登录客户
+
+			// 重置客户密码
+			if (pLBM->mapParams.Lookup("F_OP_USER", value) == TRUE)
 			{
-				if (strcmp(pParamUnit->szValue, "1") == 0)
+				if (ResetUserPwd(value.GetBuffer()) == TRUE)
 				{
-					// OP_ROLE为2， 通过操作员委托
-					// 需要设置 测试操作员的权限
-
-					// cust_grant
+					// 客户登录
+					CLoginVistor login;
+					login.Vistor(value.GetBuffer());
 				}
-				else if(strcmp(pParamUnit->szValue, "2") == 0)
-				{
-					// OP_ROLE为1， 通过MID委托
-					// 需要首先重置客户交易密码为123444，然后登录客户
+				
+			}
+			else
+			{
+				// 可能是登录消息， 不处理
+			}		
+		}
 
-					// 重置客户密码
-					lpfnEncrypt(atol("85807073"), "123444", szTemp);
+		for( pos = pLBM->mapParams.GetStartPosition(); pos != NULL; )
+		{
+			pLBM->mapParams.GetNextAssoc( pos, key, value);
 
-				}
-			}			
-
-			if (iRetCode = pKcxpConn->SetValue(pParamUnit->szName, pParamUnit->szValue) != KCBP_MSG_OK)
+			if (iRetCode = pKcxpConn->SetValue(key.GetBuffer(), value.GetBuffer()) != KCBP_MSG_OK)
 			{
 				g_pLog->WriteRunLogEx(__FILE__, __LINE__, "KCXP SET VALUE Failed: LBM:%s, ParamName:%s, ParamVal:%s",
-					pLBM->szLbmId, pParamUnit->szName, pParamUnit->szValue);
+					pLBM->szLbmId, key.GetBuffer(), value.GetBuffer());
 			}
 		}
 
@@ -183,7 +191,6 @@ void CParseKcbpLog::Exec()
 			g_pLog->WriteRunLogEx(__FILE__,__LINE__,"LBM[%s]调用失败,ERRCODE = %ld", pLBM->szLbmId, iRetCode);
 			return;
 		}
-
 
 		// 判断执行结果
 		int nRow = 0;
@@ -197,9 +204,45 @@ void CParseKcbpLog::Exec()
 			{
 				g_pLog->WriteRunLogEx(__FILE__,__LINE__,"LBM[%s]执行失败,ERRCODE = %ld", pLBM->szLbmId, iRetCode);
 			}
-		}
+		}		
 
 		Sleep(1000);
 	}
+}
+
+BOOL CParseKcbpLog::ResetUserPwd( char *szUserCode )
+{
+	CKDMidCli *pKcxpConn = g_pKcxpConn->GetKdMidCli();
+
+	int iRetCode = KCBP_MSG_OK;
+	char szTemp[MAX_PATH] = {0};
+
+	lpfnEncrypt(atol(szUserCode), "123444", szTemp);
+
+	pKcxpConn->BeginWrite();
+
+	if ((iRetCode = pKcxpConn->SetValue("F_OP_USER",      g_pCfg->GetOpId().GetBuffer())) != KCBP_MSG_OK
+		|| (iRetCode = pKcxpConn->SetValue("F_OP_ROLE",   "2")) != KCBP_MSG_OK
+		|| (iRetCode = pKcxpConn->SetValue("F_OP_SITE",   "999999999999999")) != KCBP_MSG_OK
+		|| (iRetCode = pKcxpConn->SetValue("F_OP_BRANCH", "999")) != KCBP_MSG_OK
+		|| (iRetCode = pKcxpConn->SetValue("F_CHANNEL",   '0')) != KCBP_MSG_OK
+		|| (iRetCode = pKcxpConn->SetValue("F_SESSION", g_pKcxpConn->GetSession())) != KCBP_MSG_OK
+		|| (iRetCode = pKcxpConn->SetValue("USER_CODE",  szUserCode)) != KCBP_MSG_OK
+		|| (iRetCode = pKcxpConn->SetValue("AUTH_TYPE",   "0") != KCBP_MSG_OK
+		|| (iRetCode = pKcxpConn->SetValue("AUTH_INFO",   szTemp)) != KCBP_MSG_OK
+		|| (iRetCode = pKcxpConn->SetValue("USER_ROLE",   "1")) != KCBP_MSG_OK
+		|| (iRetCode = pKcxpConn->SetValue("CHECKPOINT", "0")) != KCBP_MSG_OK
+		|| (iRetCode = pKcxpConn->SetValue("OP_REMARK", "交易密码")) != KCBP_MSG_OK))
+	{
+		g_pLog->WriteRunLogEx(__FILE__, __LINE__, "LBM[L0102017]设置参数失败,ERRCODE = %ld",iRetCode);
+	}
+
+	if ((iRetCode = pKcxpConn->CallProgramAndCommit("L0102017")) != KCBP_MSG_OK)
+	{	
+		g_pLog->WriteRunLogEx(__FILE__,__LINE__, "LBM[L0102017]调用失败,ERRCODE = %ld",iRetCode);
+		return FALSE;
+	}
+
+	return TRUE;
 }
 

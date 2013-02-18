@@ -9,7 +9,7 @@ struct PARAM_UNIT
 struct LBM_PARAM_INFO
 {
 	char szLbmId[20];
-	CArray <PARAM_UNIT*, PARAM_UNIT*> arrParams;
+	CMapStringToString mapParams;
 };
 
 class CParseKcbpLog
@@ -21,6 +21,8 @@ public:
 	void ParseLog();
 	void ReadRlt();
 	void Exec();
+
+	BOOL ResetUserPwd(char *);
 
 private:
 	char m_szKcbpLogPath[MAX_PATH];

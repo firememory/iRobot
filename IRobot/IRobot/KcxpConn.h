@@ -2,6 +2,9 @@
 
 #include "kdmidcli.h"
 
+typedef  void (__cdecl * LPFNDLLFUNC1)(long, const char * , char *);
+typedef  void (__cdecl * LPFNDLLFUNC2)(long, const char * , char *);
+
 class CKcxpConn
 {
 public:

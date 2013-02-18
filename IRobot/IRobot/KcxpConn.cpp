@@ -7,9 +7,6 @@
 extern CCfg *g_pCfg;
 extern CLoginterface *g_pLog;
 
-typedef  void (__cdecl * LPFNDLLFUNC1)(long, const char * , char *);
-typedef  void (__cdecl * LPFNDLLFUNC2)(long, const char * , char *);
-
 LPFNDLLFUNC1 lpfnEncrypt;
 LPFNDLLFUNC2 lpfnDecrypt;
 

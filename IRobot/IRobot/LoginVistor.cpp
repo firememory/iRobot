@@ -55,6 +55,25 @@ BOOL CLoginVistor::Vistor()
 	return TRUE;
 }
 
+BOOL CLoginVistor::Vistor( char *szUserCode )
+{
+	CKDGateway *pKDGateWay = g_pMidConn->GetKDGateWay();
+
+	pKDGateWay->SetOP_USER(szUserCode);
+
+	char szPwd[32] = "123444";
+
+	pKDGateWay->EncryptPassWd((char *)&szPwd);
+
+	char szTemp[512] = {0};
+	sprintf_s(szTemp, "409101|U|%s|%s|", szUserCode, szPwd);
+
+	if (TRUE != SendMsg(szTemp))
+	{
+		return FALSE;
+	}
+}
+
 BOOL CLoginVistor::ResultStrToTable(char *pRetStr)
 {
 	CKDGateway *pKDGateWay = g_pMidConn->GetKDGateWay();
