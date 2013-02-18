@@ -206,7 +206,8 @@ void CParseKcbpLog::Exec()
 			}
 		}		
 
-		Sleep(1000);
+		// 休眠，等待数据库更新
+		Sleep(g_pCfg->GetRefreshDBGap());
 	}
 }
 

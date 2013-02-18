@@ -299,18 +299,6 @@
 					>
 				</File>
 			</Filter>
-			<Filter
-				Name="LBM"
-				>
-				<Filter
-					Name="L03"
-					>
-					<File
-						RelativePath=".\LBM\L03\L0303001.cpp"
-						>
-					</File>
-				</Filter>
-			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -428,18 +416,6 @@
 					RelativePath=".\SZA_XJ_BuyVistor.h"
 					>
 				</File>
-			</Filter>
-			<Filter
-				Name="LBM"
-				>
-				<Filter
-					Name="L03"
-					>
-					<File
-						RelativePath=".\LBM\L03\L0303001.h"
-						>
-					</File>
-				</Filter>
 			</Filter>
 		</Filter>
 		<Filter
