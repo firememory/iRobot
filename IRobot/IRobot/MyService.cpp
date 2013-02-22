@@ -29,6 +29,13 @@ void CMyService::Init()
 	m_nTotalCaseCnt = m_ptServiceArray.GetCount();
 
 	m_pDlg->SetCtrlTotalCaseNum(m_nTotalCaseCnt);
+	m_pDlg->SetCtrlSuccCaseNum(m_nSuccCaseCnt);
+	m_pDlg->SetCtrlFailCaseNum(m_nFailCaseCnt);
+
+	// ³õÊ¼»¯ Progress bar	
+	m_pDlg->m_ctrlWait.SetRange(0, m_nTotalCaseCnt);
+	m_pDlg->m_ctrlWait.SetStep(1);
+	m_pDlg->m_ctrlWait.SetBarColor(COLORREF(RGB(147, 153, 236)));
 
 	m_pDlg->UpdateData(TRUE);
 }
@@ -40,6 +47,8 @@ void CMyService::RegisterProtocal(IPCKDGateWayVistor *pService)
 
 void CMyService::Run()
 {
+	m_pDlg->m_ctrlWait.SetPos(0);
+
 	int nCnt = m_ptServiceArray.GetCount();
 	char szResult[10] = {0};
 
@@ -60,9 +69,7 @@ void CMyService::Run()
 		m_ptServiceArray[i]->EndTest(&szResult[0]);
 
 		m_pDlg->m_ctrlWait.StepIt();
-	}
-
-	m_pDlg->m_ctrlWait.SetPos(0);
+	}	
 
 	m_pDlg->SetCtrlSuccCaseNum(m_nSuccCaseCnt);
 	m_pDlg->SetCtrlFailCaseNum(m_nFailCaseCnt);

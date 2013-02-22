@@ -1,7 +1,7 @@
 #pragma once
 
 #include "IPCKDGateWayVistor.h"
-#include "IRobotDlg.h"
+#include "PageFuncTest.h"
 #include "LoginVistor.h"
 #include "SZA_XJ_BuyVistor.h"
 #include "QueryShares.h"
@@ -17,12 +17,12 @@ public:
 	void RegisterProtocal(IPCKDGateWayVistor *);
 	void Run();
 
-	CIRobotDlg * GetDlg() const { return m_pDlg; }
-	void SetDlg(CIRobotDlg * val) { m_pDlg = val; }
+	CPageFuncTest * GetDlg() const { return m_pDlg; }
+	void SetDlg(CPageFuncTest * val) { m_pDlg = val; }
 
 private:
 	CArray <IPCKDGateWayVistor*, IPCKDGateWayVistor*> m_ptServiceArray;
-	CIRobotDlg *m_pDlg;
+	CPageFuncTest *m_pDlg;
 
 	int m_nTotalCaseCnt;
 	int m_nSuccCaseCnt;

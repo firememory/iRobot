@@ -16,6 +16,7 @@ public:
 	virtual ~CDBConnect();
 
 	BOOL init();
+	void Disconnect();
 
 public:
 	_ConnectionPtr m_pConnection;

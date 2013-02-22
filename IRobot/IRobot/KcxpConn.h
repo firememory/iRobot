@@ -13,6 +13,7 @@ public:
 
 	BOOL InitKcxp();
 	BOOL OpLogin();
+	void DisconnectKcxp();
 
 
 	CKDMidCli *GetKdMidCli() const { return m_pKdMidCli; }

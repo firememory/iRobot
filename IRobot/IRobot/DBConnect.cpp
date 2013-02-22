@@ -104,3 +104,18 @@ BOOL CDBConnect::init()
 	g_pLog->WriteRunLog(SYS_MODE, LOG_DEBUG, "初始化DBConn成功! ConnStr:%s, User:%s, Pwd:%s", m_szConnStr, m_szUser, m_szPwd);
 	return TRUE;
 }
+
+void CDBConnect::Disconnect()
+{
+	if (m_pRecordset)
+	{
+		if (m_pRecordset->State == adStateOpen)
+			m_pRecordset->Close();
+	}
+
+	if (m_pConnection)
+	{
+		if (m_pConnection->GetState() == adStateOpen)
+			m_pConnection->Close();
+	}
+}

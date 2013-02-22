@@ -2,10 +2,17 @@
 // Microsoft Visual C++ generated include file.
 // Used by IRobot.rc
 //
+#define IDOK3                           3
+#define IDCANCEL3                       4
+#define IDOK2                           5
+#define IDCANCEL2                       6
 #define IDM_ABOUTBOX                    0x0010
 #define IDD_ABOUTBOX                    100
 #define IDS_ABOUTBOX                    101
 #define IDD_IROBOT_DIALOG               102
+#define IDD_PAGEFUNCTEST                103
+#define IDD_PAGECFG                     104
+#define IDD_PAGESTRESSTEST              105
 #define IDR_MAINFRAME                   128
 #define IDC_KCXP_IP                     1000
 #define IDC_KCXP_SENDQ                  1001
@@ -28,16 +35,22 @@
 #define IDC_AGENT_OPPWD                 1018
 #define IDC_AGENT_BRANCH                1019
 #define IDC_SET_CFG                     1020
+#define IDC_GET_CFG                     1021
 #define IDC_TOTAL_CASE                  1022
 #define IDC_SUCC_CASE                   1023
 #define IDC_FAIL_CASE                   1024
 #define IDC_COMBOBOXEX_LOG_LEVEL        1025
-#define IDC_EDIT1                       1031
 #define IDC_EDIT_LOG_MSG                1031
 #define IDC_BUTTON_CLEAN                1032
 #define IDC_EDIT_DB_GETDATA_GAP         1033
-#define IDC_BUTTON1                     1034
 #define IDC_BUTTON_PERFORMANCE          1034
+#define IDC_BUTTON_CONNECT              1035
+#define IDC_BUTTON_DISCONNECT           1036
+#define IDC_SLIDER1                     1037
+#define IDC_SLIDER_THREAD_NUM           1037
+#define IDC_EDIT_KCBP_LOG_PATH          1038
+#define IDC_EDIT_THREAD_NUM             1039
+#define IDC_BUTTON_READ_KCBP_LOG        1040
 
 // Next default values for new objects
 // 
@@ -45,7 +58,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        129
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1035
-#define _APS_NEXT_SYMED_VALUE           101
+#define _APS_NEXT_CONTROL_VALUE         1041
+#define _APS_NEXT_SYMED_VALUE           106
 #endif
 #endif

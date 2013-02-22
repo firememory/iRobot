@@ -190,12 +190,15 @@ void CLoginterface::WriteRunLog(int nMode, int nLogLevel, const char *msg, ...)
 	vsprintf_s(msgStr, msg, arg_ptr);
 	va_end(arg_ptr);
 
-	char szMessage[8192] = {0};
-	m_nShowLineCnt++;
-	sprintf_s(szMessage,"%05d %s\n",m_nShowLineCnt, msgStr);
-	int nLength = (int)m_pDlg->m_ctrlLogMsg.SendMessage(WM_GETTEXTLENGTH); 
-	m_pDlg->m_ctrlLogMsg.SetSel(nLength, nLength); 
-	m_pDlg->m_ctrlLogMsg.ReplaceSel(szMessage);
+	if (NULL != m_pDlg)
+	{
+		char szMessage[8192] = {0};
+		m_nShowLineCnt++;
+		sprintf_s(szMessage,"%05d %s\n",m_nShowLineCnt, msgStr);
+		int nLength = (int)m_pDlg->m_ctrlLogMsg.SendMessage(WM_GETTEXTLENGTH); 
+		m_pDlg->m_ctrlLogMsg.SetSel(nLength, nLength); 
+		m_pDlg->m_ctrlLogMsg.ReplaceSel(szMessage);
+	}
 
 	// get current time
 	time_t 	NowTime;

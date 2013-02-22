@@ -185,3 +185,8 @@ BOOL CKcxpConn::OpLogin()
 
 	return TRUE;
 }
+
+void CKcxpConn::DisconnectKcxp()
+{
+	m_clKdMidCli.DisConnectForce();
+}

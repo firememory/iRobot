@@ -19,15 +19,15 @@ CParseKcbpLog::~CParseKcbpLog(void)
 {
 }
 
-void CParseKcbpLog::ParseLog()
+BOOL CParseKcbpLog::ParseLog()
 {
 	// ´ò¿ªlog¡¢
 	FILE *fp = NULL;
-	fopen_s(&fp, "d:/kcbp.log", "r");
+	fopen_s(&fp, m_szKcbpLogPath, "r");
 
 	if (NULL == fp)
 	{		
-		return;
+		return FALSE;
 	}
 
 	char szBuf[1024] = {0};
@@ -108,6 +108,8 @@ void CParseKcbpLog::ParseLog()
 			m_arrCmds.Add(pLbmInfo);
 		}
 	}
+
+	return TRUE;
 }
 
 void CParseKcbpLog::ReadRlt()

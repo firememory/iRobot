@@ -220,11 +220,27 @@
 				>
 			</File>
 			<File
+				RelativePath=".\MainSheet.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\MidConn.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\MyService.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\PageCfg.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\PageFuncTest.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\PageStressTest.cpp"
 				>
 			</File>
 			<File
@@ -295,9 +311,25 @@
 					>
 				</File>
 				<File
+					RelativePath=".\SZA_SJ_BuyVistor.cpp"
+					>
+				</File>
+				<File
 					RelativePath=".\SZA_XJ_BuyVistor.cpp"
 					>
 				</File>
+			</Filter>
+			<Filter
+				Name="LBM"
+				>
+				<Filter
+					Name="L03"
+					>
+					<File
+						RelativePath=".\L0303001.cpp"
+						>
+					</File>
+				</Filter>
 			</Filter>
 		</Filter>
 		<Filter
@@ -342,11 +374,27 @@
 				>
 			</File>
 			<File
+				RelativePath=".\MainSheet.h"
+				>
+			</File>
+			<File
 				RelativePath=".\MidConn.h"
 				>
 			</File>
 			<File
 				RelativePath=".\MyService.h"
+				>
+			</File>
+			<File
+				RelativePath=".\PageCfg.h"
+				>
+			</File>
+			<File
+				RelativePath=".\PageFuncTest.h"
+				>
+			</File>
+			<File
+				RelativePath=".\PageStressTest.h"
 				>
 			</File>
 			<File
@@ -413,9 +461,25 @@
 					>
 				</File>
 				<File
+					RelativePath=".\SZA_SJ_BuyVistor.h"
+					>
+				</File>
+				<File
 					RelativePath=".\SZA_XJ_BuyVistor.h"
 					>
 				</File>
+			</Filter>
+			<Filter
+				Name="LBM"
+				>
+				<Filter
+					Name="L03"
+					>
+					<File
+						RelativePath=".\L0303001.h"
+						>
+					</File>
+				</Filter>
 			</Filter>
 		</Filter>
 		<Filter

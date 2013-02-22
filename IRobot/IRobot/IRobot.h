@@ -19,6 +19,7 @@ class CIRobotApp : public CWinAppEx
 {
 public:
 	CIRobotApp();
+	~CIRobotApp();
 
 // ÖØÐ´
 	public:
