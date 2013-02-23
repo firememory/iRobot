@@ -95,6 +95,9 @@ BOOL CCfg::ReadCfg()
 	GetPrivateProfileString( "COMMON", "LOGPATH", "d:/irobot.ini", szTmp, sizeof(szTmp) - 1, pCfgPath);
 	m_strLogPath = szTmp;
 
+	// Log Level
+	m_nLogLevel = GetPrivateProfileInt( "COMMON", "LOGLEVEL", 0, pCfgPath);
+
 	// ȡTest Mode	
 	m_nTestMode = GetPrivateProfileInt( "COMMON", "MODE", 1, pCfgPath);
 
@@ -128,11 +131,13 @@ BOOL CCfg::SetCfg()
 	
 	WritePrivateProfileString("COMMON", "LOGPATH", m_strLogPath.GetBuffer(), pCfgPath);
 
+	CString strLogLevel;
+	strLogLevel.Format("%d", m_nLogLevel);
+	WritePrivateProfileString("COMMON", "LOGLEVEL", strLogLevel.GetBuffer(), pCfgPath);
+
 	CString strMode;
 	strMode.Format("%d", m_nTestMode);
-
 	WritePrivateProfileString("COMMON", "MODE", strMode.GetBuffer(), pCfgPath);
-
 
 	CString strRefreshDBGap;
 	strRefreshDBGap.Format("%d", m_nRefreshDBGap);

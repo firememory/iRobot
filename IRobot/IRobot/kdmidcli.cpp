@@ -628,4 +628,3 @@ int CKDMidCli::GetSystemParam(int nIndex, char *szValue, int nLen)
 {
   return KCBPCLI_GetSystemParam(m_hHandle, nIndex, szValue, nLen);
 }
-

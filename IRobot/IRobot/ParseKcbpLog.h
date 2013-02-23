@@ -18,13 +18,17 @@ public:
 	CParseKcbpLog(void);
 	~CParseKcbpLog(void);
 
-	BOOL ParseLog();
+	void ParseCmd(char *pCmd);
+	BOOL ReadLog();
 	void ReadRlt();
-	void Exec();
+	BOOL ExecMultiCmds();
+	BOOL ExecSingleCmd();
 
 	BOOL ResetUserPwd(char *);
 
 	void SetKcbpLogPath(char *val) { strcpy_s(m_szKcbpLogPath, val);}
+
+	void Clean();
 
 private:
 	char m_szKcbpLogPath[MAX_PATH];

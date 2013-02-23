@@ -75,6 +75,9 @@ public:
 	int GetRefreshDBGap() const { return m_nRefreshDBGap; }
 	void SetRefreshDBGap(int val) { m_nRefreshDBGap = val; }
 
+	int GetLogLevel() const { return m_nLogLevel; }
+	void SetLogLevel(int val) { m_nLogLevel = val; }
+
 private:
 	CString m_strCfgPath;
 
@@ -87,6 +90,8 @@ private:
 	CString m_strMidPort;
 
 	CString m_strLogPath;
+	int m_nLogLevel;
+	
 	int m_nTestMode;
 	int m_nRefreshDBGap; // 等待数据库数据刷新时长(毫秒)
 	

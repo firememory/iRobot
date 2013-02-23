@@ -26,18 +26,16 @@ CLoginVistor::~CLoginVistor(void)
 
 BOOL CLoginVistor::Vistor()
 {
-	CKDGateway *pKDGateWay = g_pMidConn->GetKDGateWay();
-
 	CString strAccount = g_pCfg->GetAccount();
 	CString strUserCode = g_pCfg->GetCustID();
 	CString strPwd = g_pCfg->GetCustPwd();
 
-	pKDGateWay->SetOP_USER(strAccount.GetBuffer());
+	m_pKDGateWay->SetOP_USER(strAccount.GetBuffer());
 
 	char szPwd[32] = {0};
 	strcpy_s(szPwd, strPwd.GetBuffer());
 
-	pKDGateWay->EncryptPassWd((char *)&szPwd);
+	m_pKDGateWay->EncryptPassWd((char *)&szPwd);
 
 	char szTemp[512] = {0};
 	sprintf_s(szTemp, "409101|Z|%s|%s|", strAccount.GetBuffer(), szPwd);
@@ -48,7 +46,7 @@ BOOL CLoginVistor::Vistor()
 	}
 
 	// 登录成功后，须将包头的OP_USER改回为客户号码,供后面的业务使用
-	pKDGateWay->SetOP_USER(strUserCode.GetBuffer());
+	m_pKDGateWay->SetOP_USER(strUserCode.GetBuffer());
 
 	GetSession();
 
@@ -56,14 +54,12 @@ BOOL CLoginVistor::Vistor()
 }
 
 BOOL CLoginVistor::Vistor( char *szUserCode )
-{
-	CKDGateway *pKDGateWay = g_pMidConn->GetKDGateWay();
-
-	pKDGateWay->SetOP_USER(szUserCode);
+{	
+	m_pKDGateWay->SetOP_USER(szUserCode);
 
 	char szPwd[32] = "123444";
 
-	pKDGateWay->EncryptPassWd((char *)&szPwd);
+	m_pKDGateWay->EncryptPassWd((char *)&szPwd);
 
 	char szTemp[512] = {0};
 	sprintf_s(szTemp, "409101|U|%s|%s|", szUserCode, szPwd);
@@ -76,23 +72,21 @@ BOOL CLoginVistor::Vistor( char *szUserCode )
 
 BOOL CLoginVistor::ResultStrToTable(char *pRetStr)
 {
-	CKDGateway *pKDGateWay = g_pMidConn->GetKDGateWay();
-
-	int nRecNo = pKDGateWay->GetRecNum();
-	m_pLoginMsg = new MID_LOGIN_409101[nRecNo];
-	memset(m_pLoginMsg, 0x00, sizeof(MID_LOGIN_409101)*nRecNo);
+	int nRecNo = m_pKDGateWay->GetRecNum();
+	m_pLoginMsg = new MID_409101_LOGIN_RET_MSG[nRecNo];
+	memset(m_pLoginMsg, 0x00, sizeof(MID_409101_LOGIN_RET_MSG)*nRecNo);
 
 	char *p = (char *)pRetStr;
 
 	// 获得第二行，即数据开始行
-	char *q = pKDGateWay->GetNextLine(p);
+	char *q = m_pKDGateWay->GetNextLine(p);
 	char *tmp = q;
 
 	// 获取每行的数据
-	for (DWORD nRow=0; nRow<pKDGateWay->GetRecNum(); nRow++)
+	for (DWORD nRow=0; nRow<m_pKDGateWay->GetRecNum(); nRow++)
 	{
 		// 获取每列的长度
-		for (DWORD nCol=0; nCol<pKDGateWay->GetFieldNum(); nCol++)
+		for (DWORD nCol=0; nCol<m_pKDGateWay->GetFieldNum(); nCol++)
 		{
 			while(tmp++)
 			{
@@ -167,23 +161,20 @@ BOOL CLoginVistor::ResultStrToTable(char *pRetStr)
 
 void CLoginVistor::GetSession()
 {
-	CKDGateway *pKDGateWay = g_pMidConn->GetKDGateWay();
-	pKDGateWay->SetSession(m_pLoginMsg[0].szSession);
+	m_pKDGateWay->SetSession(m_pLoginMsg[0].szSession);
 
 	g_pLog->WriteRunLogEx(__FILE__,__LINE__,"[409101] 登录接口, 获取Session:%s", m_pLoginMsg[0].szSession);
 }
 
 BOOL CLoginVistor::SendMsg( char *szMsg )
 {
-	CKDGateway *pKDGateWay = g_pMidConn->GetKDGateWay();
-
-	if (TRUE != pKDGateWay->WaitAnswer(szMsg))
+	if (TRUE != m_pKDGateWay->WaitAnswer(szMsg))
 	{
 		g_pLog->WriteRunLog(MID_MODE, LOG_WARN, "[409101] 登录接口, 调用失败!");
 		return FALSE;
 	}
 
-	if (TRUE != ResultStrToTable(pKDGateWay->m_pReturnData))
+	if (TRUE != ResultStrToTable(m_pKDGateWay->m_pReturnData))
 	{
 		g_pLog->WriteRunLog(MID_MODE, LOG_WARN, "[409101] 登录接口, 返回值解析失败!");
 		return FALSE;

@@ -4,6 +4,7 @@
 #include "Cfg.h"
 #include "loginterface.h"
 #include "LoginVistor.h"
+#include "public.h"
 
 extern CKcxpConn *g_pKcxpConn;
 extern CCfg *g_pCfg;
@@ -19,7 +20,7 @@ CParseKcbpLog::~CParseKcbpLog(void)
 {
 }
 
-BOOL CParseKcbpLog::ParseLog()
+BOOL CParseKcbpLog::ReadLog()
 {
 	// 打开log、
 	FILE *fp = NULL;
@@ -35,78 +36,7 @@ BOOL CParseKcbpLog::ParseLog()
 	// 逐行读取日志文件
 	while(NULL != fgets(&szBuf[0], 1024, fp))
 	{
-		int pos = strlen(szBuf);
-
-		// 将行尾变为行结束符
-		if (szBuf[pos - 1] == '\n')
-		{
-			szBuf[pos - 1] = '\0';
-		}		
-
-		LBM_PARAM_INFO *pLbmInfo = new LBM_PARAM_INFO;
-
-		// 取LBM编号
-		char szLbmId[10] = {0};
-		char *pFind = strstr(szBuf, "BEGIN:");
-		if (NULL != pFind)
-		{
-			// 如果找到BEGIN，说明是执行行，则继续查找
-			// 将行尾的] 符号 删除
-			szBuf[pos - 2] = '\0';
-
-			// 查找 LBM ID
-			pFind += 6;
-
-			char *pColon = strstr(pFind, ":");
-
-			*pColon = '\0';
-
-			strcpy_s(szLbmId, pFind);			
-			printf("LBM=%s\n", szLbmId);
-			strcpy_s(pLbmInfo->szLbmId, szLbmId);
-
-			// 查找参数, 默认参数是以F_型参数开始
-			pColon++;
-			pFind = strstr(pColon, "&F_");
-
-			char arr[50][MAX_PATH];
-			memset(&arr, 0x00, sizeof(arr));
-
-			int i = 0;
-
-			char *token = strtok(pFind, "&");
-			while( token != NULL )
-			{
-				// While there are tokens in "string"
-				printf( " %s\n", token );				
-
-				strcpy_s(arr[i], token);
-				i++;
-
-				// Get next token: 
-				token = strtok( NULL, "&" ); 		
-			}
-
-			for (int idx=0;idx<i;idx++)
-			{
-				pFind = arr[idx];
-
-				char *pName = strtok(pFind, "=");
-				char *pValue = strtok(NULL, "=");											
-
-				// 如果Value为空
-				if (NULL == pValue)
-				{
-					pLbmInfo->mapParams.SetAt(pName, "");
-				}
-				else
-				{
-					pLbmInfo->mapParams.SetAt(pName, pValue);
-				}												
-			}
-
-			m_arrCmds.Add(pLbmInfo);
-		}
+		ParseCmd(&szBuf[0]);
 	}
 
 	return TRUE;
@@ -132,7 +62,7 @@ void CParseKcbpLog::ReadRlt()
 	}
 }
 
-void CParseKcbpLog::Exec()
+BOOL CParseKcbpLog::ExecMultiCmds()
 {
 	CKDMidCli *pKcxpConn = g_pKcxpConn->GetKdMidCli();
 	int iRetCode = KCBP_MSG_OK;
@@ -176,22 +106,24 @@ void CParseKcbpLog::Exec()
 			}		
 		}
 
+		pKcxpConn->BeginWrite();
+
 		for( pos = pLBM->mapParams.GetStartPosition(); pos != NULL; )
 		{
 			pLBM->mapParams.GetNextAssoc( pos, key, value);
 
 			if (iRetCode = pKcxpConn->SetValue(key.GetBuffer(), value.GetBuffer()) != KCBP_MSG_OK)
 			{
-				g_pLog->WriteRunLogEx(__FILE__, __LINE__, "KCXP SET VALUE Failed: LBM:%s, ParamName:%s, ParamVal:%s",
-					pLBM->szLbmId, key.GetBuffer(), value.GetBuffer());
+				g_pLog->WriteRunLog(KCXP_MODE, LOG_WARN, "KCXP SET VALUE Failed: LBM:%s, ParamName:%s, ParamVal:%s",
+					pLBM->szLbmId, key.GetBuffer(), value.GetBuffer());				
 			}
 		}
 
 		// Execute LBM
 		if ((iRetCode = pKcxpConn->CallProgramAndCommit(pLBM->szLbmId)) != KCBP_MSG_OK)
 		{	
-			g_pLog->WriteRunLogEx(__FILE__,__LINE__,"LBM[%s]调用失败,ERRCODE = %ld", pLBM->szLbmId, iRetCode);
-			return;
+			g_pLog->WriteRunLog(KCXP_MODE, LOG_WARN, "LBM[%s]调用失败,ERRCODE = %ld", pLBM->szLbmId, iRetCode);
+			return FALSE;
 		}
 
 		// 判断执行结果
@@ -204,13 +136,15 @@ void CParseKcbpLog::Exec()
 
 			if (nRow <= 1)
 			{
-				g_pLog->WriteRunLogEx(__FILE__,__LINE__,"LBM[%s]执行失败,ERRCODE = %ld", pLBM->szLbmId, iRetCode);
+				g_pLog->WriteRunLog(KCXP_MODE, LOG_WARN, "LBM[%s]执行失败,ERRCODE = %ld", pLBM->szLbmId, iRetCode);
 			}
-		}		
+		}
 
 		// 休眠，等待数据库更新
 		Sleep(g_pCfg->GetRefreshDBGap());
 	}
+
+	return TRUE;
 }
 
 BOOL CParseKcbpLog::ResetUserPwd( char *szUserCode )
@@ -243,6 +177,135 @@ BOOL CParseKcbpLog::ResetUserPwd( char *szUserCode )
 	if ((iRetCode = pKcxpConn->CallProgramAndCommit("L0102017")) != KCBP_MSG_OK)
 	{	
 		g_pLog->WriteRunLogEx(__FILE__,__LINE__, "LBM[L0102017]调用失败,ERRCODE = %ld",iRetCode);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+void CParseKcbpLog::ParseCmd(char *pCmd)
+{	
+	LBM_PARAM_INFO *pLbmInfo = new LBM_PARAM_INFO;
+
+	// 取LBM编号
+	char szLbmId[10] = {0};
+	char *pFind = strstr(pCmd, "BEGIN:");
+	if (NULL != pFind)
+	{
+		// 如果找到BEGIN，说明是执行行，则继续查找
+		
+		int pos = strlen(pCmd);
+
+		// 将行尾的] 符号 删除		
+		if (pCmd[pos - 1] == '\n')
+		{	
+			// 是从日志导入，将行尾变为行结束符
+			pCmd[pos - 2] = '\0';			
+		}
+		else
+		{
+			// 是从代码中导入
+			pCmd[pos - 1] = '\0';
+		}
+		
+
+		// 查找 LBM ID
+		pFind += 6;
+
+		char *pColon = strstr(pFind, ":");
+
+		*pColon = '\0';
+
+		strcpy_s(szLbmId, pFind);			
+		printf("LBM=%s\n", szLbmId);
+		strcpy_s(pLbmInfo->szLbmId, szLbmId);
+
+		// 查找参数, 默认参数是以F_型参数开始
+		pColon++;
+		pFind = strstr(pColon, "&F_");
+
+		char arr[50][MAX_PATH];
+		memset(&arr, 0x00, sizeof(arr));
+
+		int i = 0;
+
+		char *token = strtok(pFind, "&");
+		while( token != NULL )
+		{
+			// While there are tokens in "string"						
+			strcpy_s(arr[i], token);
+			i++;
+
+			// Get next token: 
+			token = strtok( NULL, "&" ); 		
+		}
+
+		for (int idx=0;idx<i;idx++)
+		{
+			pFind = arr[idx];
+
+			char *pName = strtok(pFind, "=");
+			char *pValue = strtok(NULL, "=");											
+
+			// 如果Value为空
+			if (NULL == pValue)
+			{
+				pLbmInfo->mapParams.SetAt(pName, "");
+			}
+			else
+			{
+				pLbmInfo->mapParams.SetAt(pName, pValue);
+			}												
+		}
+
+		m_arrCmds.Add(pLbmInfo);
+	}
+}
+
+void CParseKcbpLog::Clean()
+{
+	int n = m_arrCmds.GetCount();
+	POSITION pos;
+	CString key, value;
+
+	for (int i=0; i<n; i++)
+	{
+		// 清理掉节点
+		LBM_PARAM_INFO *pLBM = m_arrCmds.GetAt(i);
+		DELCLS(pLBM);
+	}
+
+	// 清空列表
+	m_arrCmds.RemoveAll();
+}
+
+BOOL CParseKcbpLog::ExecSingleCmd()
+{
+	CKDMidCli *pKcxpConn = g_pKcxpConn->GetKdMidCli();
+	int iRetCode = KCBP_MSG_OK;
+
+	POSITION pos;
+	CString key, value;	
+
+	LBM_PARAM_INFO *pLBM = m_arrCmds.GetAt(0);
+
+	pKcxpConn->BeginWrite();
+
+	for( pos = pLBM->mapParams.GetStartPosition(); pos != NULL; )
+	{
+		pLBM->mapParams.GetNextAssoc( pos, key, value);
+
+		if (iRetCode = pKcxpConn->SetValue(key.GetBuffer(), value.GetBuffer()) != KCBP_MSG_OK)
+		{
+			g_pLog->WriteRunLog(KCXP_MODE, LOG_WARN, "KCXP SET VALUE Failed: LBM:%s, ParamName:%s, ParamVal:%s",
+				pLBM->szLbmId, key.GetBuffer(), value.GetBuffer());
+		}
+	}
+
+	// Execute LBM
+	if ((iRetCode = pKcxpConn->CallProgramAndCommit(pLBM->szLbmId)) != KCBP_MSG_OK)
+	{	
+		g_pLog->WriteRunLog(KCXP_MODE,LOG_WARN,"LBM[%s]调用失败,ERRCODE = %ld", pLBM->szLbmId, iRetCode);
 		return FALSE;
 	}
 

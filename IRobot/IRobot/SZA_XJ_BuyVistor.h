@@ -2,22 +2,6 @@
 
 #include "IPCKDGateWayVistor.h"
 
-struct ORDER_403_RET_MSG
-{
-	char szBizNo[11];
-	char szOrderID[11];
-	char szAccount[21];
-	char szPrice[21]; // 委托价格
-	char szQty[21];		// 委托数量
-	char szOrderAmt[21];	// 委托金额
-	char szOrderFrzAmt[21];	// 交易冻结金额
-	char szSeat[7];
-	char szExtInst[11];
-	char szExtAcc[33];
-	char szExtSubAcc[33];
-	char szExtFrzAmt[21];
-};
-
 #define DEFAULT_LEN 30
 
 /************************************************************************/
@@ -49,7 +33,7 @@ public:
 	void ChkPnt2();
 
 private:
-	ORDER_403_RET_MSG *m_pMsg;
+	MID_403_ORDER_RET_MSG *m_pMsg;
 	int m_nRowNum;
 
 	char m_szSecu_intl[DEFAULT_LEN];		// 证券代码

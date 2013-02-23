@@ -72,8 +72,6 @@ private:
 	int m_nRefreshDBGap;	
 	int m_nLogLevel;
 
-	BOOL m_bAllowSetCfg;
-
 public:
 	
 	int GetRefreshDBGap() const { return m_nRefreshDBGap; }
@@ -84,4 +82,7 @@ public:
 	BOOL SetCfg();
 
 	void Init();
+private:
+	CButton m_ctrlBtnGetCfg;
+	CButton m_ctrlBtnSetCfg;
 };

@@ -1,6 +1,10 @@
 #pragma once
 
+#include "MsgDef.h"
 #include "loginterface.h"
+#include "KcxpConn.h"
+#include "MidConn.h"
+
 
 extern CLoginterface *g_pLog;
 
@@ -11,7 +15,7 @@ extern CLoginterface *g_pLog;
 
 #define SERVICE_KCXP_STRNCPY(key, member)\
 {\
-	pKcxpConn->RsGetColByName(key, szTemp);\
+	m_pKcxpConn->RsGetColByName(key, szTemp);\
 	strcpy_s(m_pMsg[nRow].member, szTemp);\
 }
 
@@ -66,6 +70,9 @@ extern CLoginterface *g_pLog;
 class IPCKDGateWayVistor
 {
 public:
+	IPCKDGateWayVistor();
+	~IPCKDGateWayVistor(){};
+
 	virtual BOOL Vistor() = 0;
 	virtual BOOL ResultStrToTable(char *) = 0;
 	virtual BOOL SendMsg(char *) = 0;
@@ -73,4 +80,6 @@ public:
 	virtual void EndTest(char *pRet){g_pLog->WriteRunLog(SYS_MODE, LOG_NOTIFY, "%s ==========%s", m_szTestCaseName, pRet);};
 protected:
 	char m_szTestCaseName[MAX_PATH];
+	CKDGateway *m_pKDGateWay; // MID连接指针
+	CKDMidCli *m_pKcxpConn; // KXCP连接指针
 };

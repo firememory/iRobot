@@ -113,7 +113,7 @@ void CPageStressTest::OnBnClickedButtonReadKcbpLog()
 	if (m_pParsKcbplog != NULL)
 	{
 		m_pParsKcbplog->SetKcbpLogPath(m_strKcbpLogPath.GetBuffer());
-		if (TRUE == m_pParsKcbplog->ParseLog())
+		if (TRUE == m_pParsKcbplog->ReadLog())
 		{			
 			m_ctrlBtnInit.EnableWindow(FALSE);
 			m_ctrlKcbpLogPath.EnableWindow(FALSE);

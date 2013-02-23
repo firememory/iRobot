@@ -13,6 +13,7 @@
 #include "MidConn.h"
 #include "DBConnect.h"
 #include "MyService.h"
+#include "ParseKcbpLog.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -27,7 +28,7 @@ CKcxpConn *g_pKcxpConn = NULL;
 CMidConn *g_pMidConn = NULL;
 CDBConnect *g_pDBConn = NULL;
 CMyService *g_pMyService = NULL;
-
+CParseKcbpLog *g_pParseKcbpLog = NULL;
 
 // CIRobotApp
 
@@ -114,6 +115,13 @@ BOOL CIRobotApp::InitInstance()
 	if (NULL == g_pDBConn)
 	{
 		AfxMessageBox("创建DB连接类失败!", MB_OK, 0);		
+		return FALSE;
+	}
+
+	g_pParseKcbpLog = new CParseKcbpLog;
+	if (NULL == g_pParseKcbpLog)
+	{
+		AfxMessageBox("创建ParseKcbpLog类失败!", MB_OK, 0);		
 		return FALSE;
 	}
 

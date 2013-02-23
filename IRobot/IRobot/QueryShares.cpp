@@ -29,20 +29,19 @@ CQueryShares::~CQueryShares(void)
 
 BOOL CQueryShares::Vistor()
 {
-	ChkPnt1();
+	BOOL bRet = TRUE;
+	bRet = ChkPnt1();
 
-	return TRUE;
+	return bRet;
 }
 
 BOOL CQueryShares::ResultStrToTable( char *pRetStr )
-{
-	CKDGateway *pKDGateWay = g_pMidConn->GetKDGateWay();
-
-	int nRecNo = pKDGateWay->GetRecNum();
+{	
+	int nRecNo = m_pKDGateWay->GetRecNum();
 	m_nRecNum = nRecNo;
 
-	m_pMsg = new MID_QUERY_SHARES_504[nRecNo];
-	memset(m_pMsg, 0x00, sizeof(MID_QUERY_SHARES_504)*nRecNo);
+	m_pMsg = new MID_504_QUERY_SHARES_RET_MSG[nRecNo];
+	memset(m_pMsg, 0x00, sizeof(MID_504_QUERY_SHARES_RET_MSG)*nRecNo);
 
 	int nLen = strlen(pRetStr);
 
@@ -52,14 +51,14 @@ BOOL CQueryShares::ResultStrToTable( char *pRetStr )
 	p[nLen] = '\0';
 
 	// 获得第二行，即数据开始行
-	char *q = pKDGateWay->GetNextLine(p);
+	char *q = m_pKDGateWay->GetNextLine(p);
 	char *tmp = q;
 
 	// 获取每行的数据
-	for (DWORD nRow=0; nRow<pKDGateWay->GetRecNum(); nRow++)
+	for (DWORD nRow=0; nRow<m_pKDGateWay->GetRecNum(); nRow++)
 	{
 		// 获取每列的长度
-		for (DWORD nCol=0; nCol<pKDGateWay->GetFieldNum(); nCol++)
+		for (DWORD nCol=0; nCol<m_pKDGateWay->GetFieldNum(); nCol++)
 		{
 			while(tmp++)
 			{
@@ -158,30 +157,27 @@ BOOL CQueryShares::ResultStrToTable( char *pRetStr )
 
 BOOL CQueryShares::SendMsg( char *pMsg )
 {
-	CKDGateway *pKDGateWay = g_pMidConn->GetKDGateWay();
-
-	if (pKDGateWay->WaitAnswer(pMsg)!=TRUE)
+	if (m_pKDGateWay->WaitAnswer(pMsg)!=TRUE)
 	{
 		g_pLog->WriteRunLog(MID_MODE, LOG_WARN, "[403] 委托接口, 调用失败!");
 		return FALSE;
 	}
 
 	// 对柜台返回的值进行解析
-	if (ResultStrToTable(pKDGateWay->m_pReturnData) != TRUE)
+	if (ResultStrToTable(m_pKDGateWay->m_pReturnData) != TRUE)
 	{
 		g_pLog->WriteRunLog(MID_MODE, LOG_WARN, "[403] 委托接口, 解析失败!");
 		return FALSE;
 	}
 
 	return TRUE;
-
 }
 
 BOOL CQueryShares::ChkPnt1()
 {
 	BOOL bRet = TRUE;
 	char szMsg[512];
-	sprintf_s(szMsg,"504|18798721|85807073|||||");
+	sprintf_s(szMsg,"504|%s|%s|||||", g_pCfg->GetCustID(), g_pCfg->GetAccount());
 
 	if (TRUE != SendMsg(szMsg))
 	{
@@ -191,7 +187,7 @@ BOOL CQueryShares::ChkPnt1()
 	try
 	{
 		CString strSql;
-		strSql.Format("select * from shares where account = 85807073");
+		strSql.Format("select * from shares where account = %s", g_pCfg->GetAccount());
 
 		BSTR bstrSQL = strSql.AllocSysString();
 		g_pDBConn->m_pRecordset->Open(bstrSQL, (IDispatch*)g_pDBConn->m_pConnection, adOpenDynamic, adLockOptimistic, adCmdText); 

@@ -46,7 +46,6 @@ CPageCfg::CPageCfg()
 	, m_nRefreshDBGap(1000)
 {
 	m_nTestMode = USE_MID;
-	m_bAllowSetCfg = TRUE;
 }
 
 CPageCfg::~CPageCfg()
@@ -60,6 +59,34 @@ void CPageCfg::OnBnClickedGetCfg()
 	// 必须在g_pLog创建后，再调用这两句
 	InitComboxLogLevel();
 	UpdateData(FALSE);
+
+	m_ctrlKcxpIp.EnableWindow(TRUE);
+	m_ctrlKcxpPort.EnableWindow(TRUE);
+	m_ctrlKcxpSendQ.EnableWindow(TRUE);
+	m_ctrlKcxpRecvQ.EnableWindow(TRUE);
+
+	m_ctrlMidIp.EnableWindow(TRUE);
+	m_ctrlMidPort.EnableWindow(TRUE);
+
+	m_ctrlLogPath.EnableWindow(TRUE);
+
+	m_ctrlUserMid.EnableWindow(TRUE);
+	m_ctrlUseKcxp.EnableWindow(TRUE);
+
+	m_ctrlDBConStr.EnableWindow(TRUE);
+	m_ctrlDBUser.EnableWindow(TRUE);
+	m_ctrlDBPwd.EnableWindow(TRUE);
+
+	m_ctrlCustID.EnableWindow(TRUE);
+	m_ctrlAccount.EnableWindow(TRUE);
+	m_ctrlCustPwd.EnableWindow(TRUE);
+
+	m_ctrlOpId.EnableWindow(TRUE);
+	m_ctrlOpPwd.EnableWindow(TRUE);
+	m_ctrlBranch.EnableWindow(TRUE);
+
+	m_ctrlBtnGetCfg.EnableWindow(FALSE);
+	m_ctrlBtnSetCfg.EnableWindow();
 }
 
 void CPageCfg::DoDataExchange(CDataExchange* pDX)
@@ -89,7 +116,7 @@ void CPageCfg::DoDataExchange(CDataExchange* pDX)
 
 
 	DDX_Control(pDX, IDC_COMBOBOXEX_LOG_LEVEL, m_ctrlLogLevel);		
-	
+
 	DDX_Control(pDX, IDC_EDIT_DB_GETDATA_GAP, m_ctrlRefreshDbGap);
 	DDX_Text(pDX, IDC_EDIT_DB_GETDATA_GAP, m_nRefreshDBGap);
 
@@ -112,6 +139,8 @@ void CPageCfg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_AGENT_OPID, m_strOpId);
 	DDX_Text(pDX, IDC_AGENT_OPPWD, m_strOpPwd);
 	DDX_Text(pDX, IDC_AGENT_BRANCH, m_strBranch);
+	DDX_Control(pDX, IDC_GET_CFG, m_ctrlBtnGetCfg);
+	DDX_Control(pDX, IDC_SET_CFG, m_ctrlBtnSetCfg);
 }
 
 
@@ -141,6 +170,7 @@ void CPageCfg::OnCbnSelchangeComboboxex1()
 {
 	// TODO: Add your control notification handler code here
 	int nSel = m_ctrlLogLevel.GetCurSel();
+	m_nLogLevel = nSel;
 
 	g_pLog->SetLogLevel(nSel);
 }
@@ -156,7 +186,7 @@ void CPageCfg::InitComboxLogLevel()
 		m_ctrlLogLevel.InsertItem(&Item);
 	}
 
-	m_ctrlLogLevel.SetCurSel(LOG_NOTIFY);
+	m_ctrlLogLevel.SetCurSel(m_nLogLevel);
 }
 
 void CPageCfg::OnBnClickedSetCfg()
@@ -164,46 +194,15 @@ void CPageCfg::OnBnClickedSetCfg()
 	g_pLog->WriteRunLog(SYS_MODE, LOG_NOTIFY, "========Server Start========");
 
 	// TODO: Add your control notification handler code here
-	if (FALSE == m_bAllowSetCfg)
-	{
-		m_ctrlKcxpIp.EnableWindow(TRUE);
-		m_ctrlKcxpPort.EnableWindow(TRUE);
-		m_ctrlKcxpSendQ.EnableWindow(TRUE);
-		m_ctrlKcxpRecvQ.EnableWindow(TRUE);
+	
+	// 获取设置的参数
+	UpdateData(TRUE);
 
-		m_ctrlMidIp.EnableWindow(TRUE);
-		m_ctrlMidPort.EnableWindow(TRUE);
+	// 保存配置到配置文件
+	SetCfg();
 
-		m_ctrlLogPath.EnableWindow(TRUE);
-
-		m_ctrlUserMid.EnableWindow(TRUE);
-		m_ctrlUseKcxp.EnableWindow(TRUE);
-
-		m_ctrlDBConStr.EnableWindow(TRUE);
-		m_ctrlDBUser.EnableWindow(TRUE);
-		m_ctrlDBPwd.EnableWindow(TRUE);
-
-		m_ctrlCustID.EnableWindow(TRUE);
-		m_ctrlAccount.EnableWindow(TRUE);
-		m_ctrlCustPwd.EnableWindow(TRUE);
-
-		m_ctrlOpId.EnableWindow(TRUE);
-		m_ctrlOpPwd.EnableWindow(TRUE);
-		m_ctrlBranch.EnableWindow(TRUE);
-
-		m_bAllowSetCfg = TRUE;
-
-		g_pMidConn->DisConnect();
-	}
-	else
-	{
-		// 获取设置的参数
-		UpdateData(TRUE);
-
-		// 保存配置到配置文件
-		m_bAllowSetCfg = FALSE;
-		SetCfg();
-	}
+	m_ctrlBtnSetCfg.EnableWindow(FALSE);
+	m_ctrlBtnGetCfg.EnableWindow();
 }
 
 BOOL CPageCfg::ReadCfg()
@@ -245,6 +244,7 @@ BOOL CPageCfg::ReadCfg()
 	m_strOpId = g_pCfg->GetOpId();
 	m_strOpPwd = g_pCfg->GetOpPwd();
 	m_strBranch = g_pCfg->GetBranch();
+	m_nLogLevel = g_pCfg->GetLogLevel();
 
 	return TRUE;
 }
@@ -300,6 +300,7 @@ BOOL CPageCfg::SetCfg()
 	g_pCfg->SetOpId(m_strOpId);
 	g_pCfg->SetOpPwd(m_strOpPwd);
 	g_pCfg->SetBranch(m_strBranch);
+	g_pCfg->SetLogLevel(m_nLogLevel);
 
 	g_pCfg->SetCfg();
 
