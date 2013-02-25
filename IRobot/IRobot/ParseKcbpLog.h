@@ -30,6 +30,12 @@ public:
 
 	void Clean();
 
+	// 给操作员授权
+	void OpGrant(char *pCust);
+
+	// 根据客户的资金帐号，查找对应的客户号
+	void GetCustCodeViaAccount(char *pAccount, char* pCustCode);
+
 private:
 	char m_szKcbpLogPath[MAX_PATH];
 	

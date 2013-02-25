@@ -6,7 +6,7 @@
 #include "PageStressTest.h"
 #include "ParseKcbpLog.h"
 
-#define  MAX_THREAD_NUM 30
+#define  MAX_THREAD_NUM 2
 HANDLE g_Event;
 DWORD WINAPI RunThread(LPVOID);
 CRITICAL_SECTION ca;
@@ -25,12 +25,8 @@ CPageStressTest::CPageStressTest()
 
 	InitializeCriticalSection(&ca);
 
-	g_Event =  CreateEvent(NULL, TRUE, FALSE, NULL);
-
-	for (int i=0;i<MAX_THREAD_NUM;i++)
-	{
-		::CreateThread(NULL, 0, RunThread, this, 0, NULL); 
-	}
+	// 注意Event一定要设置成自动模式
+	g_Event =  CreateEvent(NULL, FALSE, FALSE, NULL);
 }
 
 CPageStressTest::~CPageStressTest()
@@ -69,10 +65,7 @@ void CPageStressTest::OnBnClickedButtonPerformance()
 
 	if (m_pParsKcbplog != NULL)
 	{
-		for (int i=0; i<m_nThreadNum; i++)
-		{
-			SetEvent(g_Event);
-		}
+		SetEvent(g_Event);
 	}	
 }
 void CPageStressTest::OnNMCustomdrawSlider1(NMHDR *pNMHDR, LRESULT *pResult)
@@ -127,7 +120,13 @@ void CPageStressTest::OnBnClickedButtonReadKcbpLog()
 			//每10个单位画一刻度
 			m_ctrlSlider.SetTicFreq(10);
 			m_ctrlSlider.SetTic(10);
-			m_ctrlSlider.SetPos(0);
+			m_ctrlSlider.SetPos(1);
+			UpdateData(FALSE);
+
+			for (int i=0;i<MAX_THREAD_NUM;i++)
+			{
+				::CreateThread(NULL, 0, RunThread, this, 0, NULL); 
+			}
 		}		
 	}
 }
@@ -137,21 +136,20 @@ DWORD WINAPI RunThread(LPVOID pParam)
 	DWORD dwThreadId = 0;
 	DWORD dwCnt = 0;
 
+	CParseKcbpLog *pParsKcbplog = ((CPageStressTest *)pParam)->m_pParsKcbplog;
+
 	while(1)
 	{		
 		::WaitForSingleObject(g_Event, INFINITE);
 
 		dwThreadId = GetCurrentThreadId();
 
-		EnterCriticalSection(&ca);
-		//m_pParsKcbplog->ReadRlt();
-		//m_pParsKcbplog->Exec();
+		EnterCriticalSection(&ca);		
+		pParsKcbplog->ExecMultiCmds();
 	
 		printf("Thread:%d, Cnt:%d\n", dwThreadId, dwCnt);
 		dwCnt++;
-		LeaveCriticalSection(&ca);
-
-		ResetEvent(g_Event);	
+		LeaveCriticalSection(&ca);		
 	}
 
 	return 1;

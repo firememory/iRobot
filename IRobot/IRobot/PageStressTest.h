@@ -30,10 +30,12 @@ private:
 	CEdit m_ctrlKcbpLogPath;
 	CString m_strKcbpLogPath;
 	CButton m_ctrlBtnRun;
-	CButton m_ctrlBtnPause;
-	CParseKcbpLog *m_pParsKcbplog;
+	CButton m_ctrlBtnPause;	
 	CEdit m_ctrlThreadNum;
 	int m_nThreadNum;
 	CButton m_ctrlBtnInit;
 	CSliderCtrl m_ctrlSlider;
+
+public:
+	CParseKcbpLog *m_pParsKcbplog;
 };

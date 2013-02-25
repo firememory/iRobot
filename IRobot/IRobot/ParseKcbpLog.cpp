@@ -4,11 +4,14 @@
 #include "Cfg.h"
 #include "loginterface.h"
 #include "LoginVistor.h"
+#include "DBConnect.h"
 #include "public.h"
 
 extern CKcxpConn *g_pKcxpConn;
 extern CCfg *g_pCfg;
 extern CLoginterface *g_pLog;
+extern CDBConnect *g_pDBConn;
+
 extern LPFNDLLFUNC1 lpfnEncrypt;
 extern LPFNDLLFUNC2 lpfnDecrypt;
 
@@ -82,7 +85,27 @@ BOOL CParseKcbpLog::ExecMultiCmds()
 			// OP_ROLE为2， 通过操作员委托
 			// 需要设置 测试操作员的权限
 
+			char szCustCode[50] = {0};
+
 			// cust_grant
+			pLBM->mapParams.Lookup("CUSTOMER", value);
+			if (value.IsEmpty() == TRUE)
+			{
+				pLBM->mapParams.Lookup("CUST_CODE", value);
+				if (value.IsEmpty() == TRUE)
+				{
+					pLBM->mapParams.Lookup("ACCOUNT", value);
+					if (value.IsEmpty() == TRUE)
+					{
+						// 根据资金帐号查找客户的客户号
+						GetCustCodeViaAccount(value.GetBuffer(), &szCustCode[0]);
+						value.Format("%s", szCustCode);
+					}
+				}
+			}
+
+			// 设置 测试操作员的权限
+			OpGrant(value.GetBuffer());
 		}
 		else if (value.Compare("3") == 0)
 		{
@@ -97,8 +120,7 @@ BOOL CParseKcbpLog::ExecMultiCmds()
 					// 客户登录
 					CLoginVistor login;
 					login.Vistor(value.GetBuffer());
-				}
-				
+				}				
 			}
 			else
 			{
@@ -265,7 +287,6 @@ void CParseKcbpLog::ParseCmd(char *pCmd)
 void CParseKcbpLog::Clean()
 {
 	int n = m_arrCmds.GetCount();
-	POSITION pos;
 	CString key, value;
 
 	for (int i=0; i<n; i++)
@@ -310,5 +331,84 @@ BOOL CParseKcbpLog::ExecSingleCmd()
 	}
 
 	return TRUE;
+}
+
+void CParseKcbpLog::OpGrant( char *pCust )
+{	
+	try
+	{
+		CString strSql;
+		// 查找该客户是否已经在CUST_GRANT表中
+		strSql.Format("select * from cust_grant where cust_code = %s", pCust);
+		BSTR bstrSQL = strSql.AllocSysString();
+		g_pDBConn->m_pRecordset->Open(bstrSQL, (IDispatch*)g_pDBConn->m_pConnection, adOpenDynamic, adLockOptimistic, adCmdText); 
+
+		if (g_pDBConn->m_pRecordset->adoEOF)
+		{
+			// 不存在，则新增授权
+			strSql.Format("insert into CUST_GRANT (CUST_CODE, OP_CODE, LOGIN_SITE, BGN_TIME, END_TIME)"
+				"values (%s, %s, '0016768a2e43', '06:00:00 ', '23:59:00')", pCust, g_pCfg->GetOpId());
+		}
+		else
+		{
+			// 存在，则update授权给测试用的OP
+			strSql.Format("update CUST_GRANT set op_code = %s where cust_code = %s", g_pCfg->GetOpId(), pCust);
+		}
+
+		g_pDBConn->m_pRecordset->Close();
+		_variant_t RecordsAffected; //VARIANT数据类型
+
+		bstrSQL = strSql.AllocSysString();	
+
+		g_pDBConn->m_pConnection->BeginTrans();
+		g_pDBConn->m_pConnection->Execute(bstrSQL, &RecordsAffected, adCmdText);
+		g_pDBConn->m_pConnection->CommitTrans();
+	}
+	catch (_com_error e)//异常处理
+	{
+		CString strMsg;
+		strMsg.Format(_T("错误描述：%s\n错误消息%s"),
+			(LPCTSTR)e.Description(),
+			(LPCTSTR)e.ErrorMessage());
+
+		return;
+	}
+}
+
+void CParseKcbpLog::GetCustCodeViaAccount( char *pAccount, char *pCustCode )
+{
+	try
+	{
+		CString strSql;
+		strSql.Format("select * from accounts where account = %s", pAccount);
+		BSTR bstrSQL = strSql.AllocSysString();
+		g_pDBConn->m_pRecordset->Open(bstrSQL, (IDispatch*)g_pDBConn->m_pConnection, adOpenDynamic, adLockOptimistic, adCmdText); 
+
+		_variant_t TheValue; //VARIANT数据类型
+		char szTmp[50] = {0};
+
+		while(!g_pDBConn->m_pRecordset->adoEOF)
+		{				
+			TheValue = g_pDBConn->m_pRecordset->GetCollect("USER_CODE");
+			if(TheValue.vt!=VT_NULL)
+			{				
+				strncpy_s(szTmp, (char*)_bstr_t(TheValue), 100);
+			}
+			g_pDBConn->m_pRecordset->MoveNext();
+		}
+
+		g_pDBConn->m_pRecordset->Close();
+
+		strncpy(pCustCode, szTmp, 50);
+	}
+	catch (_com_error e)//异常处理
+	{
+		CString strMsg;
+		strMsg.Format(_T("错误描述：%s\n错误消息%s"),
+			(LPCTSTR)e.Description(),
+			(LPCTSTR)e.ErrorMessage());
+
+		return;
+	}
 }
 
