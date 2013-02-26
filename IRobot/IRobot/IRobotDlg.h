@@ -38,6 +38,9 @@ protected:
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
 	afx_msg void OnBnClickedCancel();
+	afx_msg void OnBnClickedButtonClean();
+	DECLARE_MESSAGE_MAP()
 
-	DECLARE_MESSAGE_MAP()	
+public:
+	CEdit m_ctrlLogMsg;
 };

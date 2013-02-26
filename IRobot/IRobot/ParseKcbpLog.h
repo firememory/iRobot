@@ -1,5 +1,7 @@
 #pragma once
 
+#include "KcxpConn.h"
+
 struct PARAM_UNIT
 {
 	char szName[50];
@@ -36,8 +38,12 @@ public:
 	// 根据客户的资金帐号，查找对应的客户号
 	void GetCustCodeViaAccount(char *pAccount, char* pCustCode);
 
+	void SetKcxpConn(CKDMidCli * val) { m_pKcxpConn = val; }
+
 private:
 	char m_szKcbpLogPath[MAX_PATH];
 	
 	CArray <LBM_PARAM_INFO*, LBM_PARAM_INFO*> m_arrCmds;
+
+	CKDMidCli *m_pKcxpConn;
 };

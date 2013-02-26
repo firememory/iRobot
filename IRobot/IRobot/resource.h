@@ -2,10 +2,8 @@
 // Microsoft Visual C++ generated include file.
 // Used by IRobot.rc
 //
-#define IDOK3                           3
-#define IDCANCEL3                       4
-#define IDOK2                           5
-#define IDCANCEL2                       6
+#define IDOK                            1
+#define IDCANCEL                        2
 #define IDM_ABOUTBOX                    0x0010
 #define IDD_ABOUTBOX                    100
 #define IDS_ABOUTBOX                    101
@@ -53,7 +51,9 @@
 #define IDC_BUTTON_READ_KCBP_LOG        1040
 #define IDC_STATIC_ACTIVE_THREAD_NUM    1041
 #define IDC_EDIT_ACTIVE_THREAD_NUM      1042
-#define IDC_STATIC_                     1043
+#define IDC_BUTTON_FUNC_TEST_RUN        1043
+#define IDC_BUTTON_EXIT                 1044
+#define IDC_BUTTON_PAUSE_THREAD         1045
 
 // Next default values for new objects
 // 
@@ -61,7 +61,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        129
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1044
+#define _APS_NEXT_CONTROL_VALUE         1046
 #define _APS_NEXT_SYMED_VALUE           106
 #endif
 #endif

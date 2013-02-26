@@ -1,7 +1,7 @@
 #ifndef LOGINTERFACE_H
 #define LOGINTERFACE_H
 
-#include "PageFuncTest.h"
+#include "IRobotDlg.h"
 
 #ifndef WIN32
 #include <pthread.h>
@@ -91,7 +91,7 @@ public:
 	LEVEL_DESCRIPTION m_stLogLevelDescription[4];
 	FILE* m_pFp;
 	CRITICAL_SECTION m_lock;
-	CPageFuncTest *m_pDlg;
+	CIRobotDlg *m_pDlg;
 	
 public:
 	CLoginterface(char *);
@@ -102,7 +102,7 @@ public:
 	void WriteRunLog(int, int, const char *, ...);
 	void FlushLogBuf();
 
-	CPageFuncTest * GetDlg() const { return m_pDlg; }
-	void SetDlg(CPageFuncTest * val) { m_pDlg = val; }
+	CIRobotDlg * GetDlg() const { return m_pDlg; }
+	void SetDlg(CIRobotDlg * val) { m_pDlg = val; }
 };
 #endif

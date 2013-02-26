@@ -6,12 +6,13 @@
 #include "PageStressTest.h"
 #include "ParseKcbpLog.h"
 
-#define  MAX_THREAD_NUM 2
+#define  MAX_THREAD_NUM 3
 HANDLE g_Event;
 DWORD WINAPI RunThread(LPVOID);
 CRITICAL_SECTION ca;
 
 extern BOOL g_bThreadExit;
+extern CParseKcbpLog *g_pParseKcbpLog;
 
 // CPageStressTest dialog
 
@@ -23,14 +24,10 @@ CPageStressTest::CPageStressTest()
 	, m_nThreadNum(1)
 	, m_nActiveThreadNum(0)
 {
-	m_pParsKcbplog = NULL;
-
 	InitializeCriticalSection(&ca);
 
 	// 注意Event一定要设置成自动模式
 	g_Event =  CreateEvent(NULL, FALSE, FALSE, NULL);
-
-
 }
 
 CPageStressTest::~CPageStressTest()
@@ -43,7 +40,7 @@ void CPageStressTest::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT_KCBP_LOG_PATH, m_ctrlKcbpLogPath);
 	DDX_Text(pDX,IDC_EDIT_KCBP_LOG_PATH, m_strKcbpLogPath);
 	DDX_Control(pDX, IDC_BUTTON_PERFORMANCE, m_ctrlBtnRun);
-	DDX_Control(pDX, IDCANCEL, m_ctrlBtnPause);
+	DDX_Control(pDX, IDC_BUTTON_PAUSE_THREAD, m_ctrlBtnPause);
 	DDX_Control(pDX, IDC_EDIT_THREAD_NUM, m_ctrlThreadNum);
 	DDX_Text(pDX,IDC_EDIT_THREAD_NUM, m_nThreadNum);
 	DDX_Control(pDX, IDC_BUTTON_READ_KCBP_LOG, m_ctrlBtnInit);
@@ -57,7 +54,7 @@ void CPageStressTest::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(CPageStressTest, CPropertyPage)
 	ON_BN_CLICKED(IDC_BUTTON_PERFORMANCE, &CPageStressTest::OnBnClickedButtonPerformance)
 	ON_NOTIFY(NM_CUSTOMDRAW, IDC_SLIDER1, &CPageStressTest::OnNMCustomdrawSlider1)
-	ON_BN_CLICKED(IDCANCEL, &CPageStressTest::OnBnClickedPauseThread)
+	ON_BN_CLICKED(IDC_BUTTON_PAUSE_THREAD, &CPageStressTest::OnBnClickedPauseThread)
 	ON_BN_CLICKED(IDC_BUTTON_READ_KCBP_LOG, &CPageStressTest::OnBnClickedButtonReadKcbpLog)
 	ON_MESSAGE(WM_STATUS_UPDATE, &CPageStressTest::OnStatusUpdate)
 END_MESSAGE_MAP()
@@ -69,15 +66,17 @@ void CPageStressTest::OnBnClickedButtonPerformance()
 	// TODO: Add your control notification handler code here
 	m_ctrlSlider.EnableWindow(FALSE);
 	m_ctrlBtnRun.EnableWindow(FALSE);
-	m_ctrlBtnPause.EnableWindow();	
+	m_ctrlBtnPause.EnableWindow();
 
-	if (m_pParsKcbplog != NULL)
+	g_bThreadExit = FALSE;
+	m_nActiveThreadNum = m_nThreadNum;
+	UpdateData(FALSE);
+
+	for (int n=0;n<m_nThreadNum;n++)
 	{
-		g_bThreadExit = FALSE;
+		// 激活线程
 		SetEvent(g_Event);
-		m_nActiveThreadNum = m_nThreadNum;
-		UpdateData(FALSE);
-	}	
+	}
 }
 void CPageStressTest::OnNMCustomdrawSlider1(NMHDR *pNMHDR, LRESULT *pResult)
 {
@@ -107,37 +106,29 @@ void CPageStressTest::OnBnClickedButtonReadKcbpLog()
 	// TODO: Add your control notification handler code here
 	UpdateData(TRUE);
 
-	if (NULL == m_pParsKcbplog)
-	{
-		m_pParsKcbplog = new CParseKcbpLog;
-	}
-	
-	if (m_pParsKcbplog != NULL)
-	{
-		m_pParsKcbplog->SetKcbpLogPath(m_strKcbpLogPath.GetBuffer());
-		if (TRUE == m_pParsKcbplog->ReadLog())
-		{			
-			m_ctrlBtnInit.EnableWindow(FALSE);
-			m_ctrlKcbpLogPath.EnableWindow(FALSE);
+	g_pParseKcbpLog->SetKcbpLogPath(m_strKcbpLogPath.GetBuffer());
+	if (TRUE == g_pParseKcbpLog->ReadLog())
+	{			
+		m_ctrlBtnInit.EnableWindow(FALSE);
+		m_ctrlKcbpLogPath.EnableWindow(FALSE);
 
-			m_ctrlBtnRun.EnableWindow();
-			m_ctrlSlider.EnableWindow();
+		m_ctrlBtnRun.EnableWindow();
+		m_ctrlSlider.EnableWindow();
 
-			//设置滑动范围
-			m_ctrlSlider.SetRange(1, MAX_THREAD_NUM);
+		//设置滑动范围
+		m_ctrlSlider.SetRange(1, MAX_THREAD_NUM);
 
-			//每10个单位画一刻度
-			m_ctrlSlider.SetTicFreq(10);
-			m_ctrlSlider.SetTic(10);
-			m_ctrlSlider.SetPos(1);
-			UpdateData(FALSE);
+		//每10个单位画一刻度
+		m_ctrlSlider.SetTicFreq(10);
+		m_ctrlSlider.SetTic(10);
+		m_ctrlSlider.SetPos(1);
+		UpdateData(FALSE);
 
-			for (int i=0;i<MAX_THREAD_NUM;i++)
-			{
-				::CreateThread(NULL, 0, RunThread, this, 0, NULL); 
-			}
-		}		
-	}
+		for (int i=0;i<MAX_THREAD_NUM;i++)
+		{
+			::CreateThread(NULL, 0, RunThread, this, 0, NULL); 
+		}
+	}		
 }
 
 LRESULT CPageStressTest::OnStatusUpdate( WPARAM wParam, LPARAM lParam )
@@ -161,15 +152,15 @@ DWORD WINAPI RunThread(LPVOID pParam)
 	DWORD dwThreadId = 0;
 	DWORD dwCnt = 0;
 
-	CPageStressTest *pPageStressTest = (CPageStressTest *)pParam;
-	CParseKcbpLog *pParsKcbplog = pPageStressTest->m_pParsKcbplog;
+	CPageStressTest *pPageStressTest = (CPageStressTest *)pParam;	
 
 	while(WAIT_OBJECT_0 == ::WaitForSingleObject(g_Event, INFINITE))
 	{			
 		EnterCriticalSection(&ca);
-		pParsKcbplog->ExecMultiCmds();		
+		
 		LeaveCriticalSection(&ca);
-
+		
+		g_pParseKcbpLog->ExecMultiCmds();
 		pPageStressTest->PostMessage(WM_STATUS_UPDATE, 0, 0);
 	}
 

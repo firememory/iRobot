@@ -39,8 +39,4 @@ private:
 
 	CEdit m_ctrlActiveThreadNum;
 	int m_nActiveThreadNum;
-
-
-public:
-	CParseKcbpLog *m_pParsKcbplog;
 };

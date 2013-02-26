@@ -19,9 +19,9 @@ protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 
 	afx_msg void OnBnClickedOk();
-	afx_msg void OnNMCustomdrawProgress1(NMHDR *pNMHDR, LRESULT *pResult);
-	afx_msg void OnBnClickedButtonClean();
-
+	afx_msg void OnNMCustomdrawProgress1(NMHDR *pNMHDR, LRESULT *pResult);	
+	afx_msg void OnBnClickedButtonInit();
+	afx_msg void OnBnClickedButtonDisconnect();
 	DECLARE_MESSAGE_MAP()
 
 private:
@@ -42,8 +42,5 @@ public:
 	void SetCtrlSuccCaseNum(int);
 	void SetCtrlFailCaseNum(int);
 
-	CProgressCtrl m_ctrlWait;
-	CEdit m_ctrlLogMsg;
-	afx_msg void OnBnClickedButtonInit();
-	afx_msg void OnBnClickedButtonDisconnect();
+	CProgressCtrl m_ctrlWait;	
 };

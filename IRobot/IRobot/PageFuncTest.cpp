@@ -11,6 +11,7 @@
 #include "MidConn.h"
 #include "DBConnect.h"
 #include "MyService.h"
+#include "ParseKcbpLog.h"
 
 /************************************************************************/
 /* 全局变量                                                             */
@@ -21,6 +22,7 @@ extern CKcxpConn *g_pKcxpConn;
 extern CMidConn *g_pMidConn;
 extern CDBConnect *g_pDBConn;
 extern CMyService *g_pMyService;
+extern CParseKcbpLog *g_pParseKcbpLog;
 
 // CPageFuncTest dialog
 
@@ -42,19 +44,16 @@ void CPageFuncTest::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_TOTAL_CASE, m_ctrlTotalCaseNum);
 	DDX_Control(pDX, IDC_SUCC_CASE, m_ctrlSuccCaseNum);
 	DDX_Control(pDX, IDC_FAIL_CASE, m_ctrlFailCaseNum);
-
 	DDX_Control(pDX, IDC_PROGRESS1, m_ctrlWait);
-	DDX_Control(pDX, IDC_EDIT_LOG_MSG, m_ctrlLogMsg);
-	DDX_Control(pDX, IDOK3, m_ctrlBtnRun);
+	DDX_Control(pDX, IDC_BUTTON_FUNC_TEST_RUN, m_ctrlBtnRun);
 	DDX_Control(pDX, IDC_BUTTON_CONNECT, m_ctrlBtnConn);
 	DDX_Control(pDX, IDC_BUTTON_DISCONNECT, m_ctrlBtnDisConn);
 }
 
 
 BEGIN_MESSAGE_MAP(CPageFuncTest, CPropertyPage)
-	ON_BN_CLICKED(IDOK3, &CPageFuncTest::OnBnClickedOk)
-	ON_NOTIFY(NM_CUSTOMDRAW, IDC_PROGRESS1, &CPageFuncTest::OnNMCustomdrawProgress1)			
-	ON_BN_CLICKED(IDC_BUTTON_CLEAN, &CPageFuncTest::OnBnClickedButtonClean)
+	ON_BN_CLICKED(IDC_BUTTON_FUNC_TEST_RUN, &CPageFuncTest::OnBnClickedOk)
+	ON_NOTIFY(NM_CUSTOMDRAW, IDC_PROGRESS1, &CPageFuncTest::OnNMCustomdrawProgress1)				
 	ON_BN_CLICKED(IDC_BUTTON_CONNECT, &CPageFuncTest::OnBnClickedButtonInit)
 	ON_BN_CLICKED(IDC_BUTTON_DISCONNECT, &CPageFuncTest::OnBnClickedButtonDisconnect)
 END_MESSAGE_MAP()
@@ -74,7 +73,6 @@ void CPageFuncTest::OnNMCustomdrawProgress1(NMHDR *pNMHDR, LRESULT *pResult)
 	// TODO: Add your control notification handler code here
 	*pResult = 0;
 }
-
 
 void CPageFuncTest::SetCtrlTotalCaseNum( int nCnt)
 {
@@ -97,20 +95,9 @@ void CPageFuncTest::SetCtrlFailCaseNum( int nCnt)
 	m_ctrlFailCaseNum.SetWindowText(strTmp.GetBuffer());
 }
 
-
-void CPageFuncTest::OnBnClickedButtonClean()
-{
-	// TODO: Add your control notification handler code here
-	m_ctrlLogMsg.SetWindowText("");	
-
-	SetCtrlSuccCaseNum(0);
-	SetCtrlFailCaseNum(0);
-
-}
 void CPageFuncTest::OnBnClickedButtonInit()
 {
 	// TODO: Add your control notification handler code here
-	g_pLog->SetDlg(this);
 
 	// 初始化MID连接
 	if (!g_pMidConn->Init())
@@ -129,7 +116,7 @@ void CPageFuncTest::OnBnClickedButtonInit()
 		{
 			return;
 		}
-	}			
+	} 
 
 	// 初始化KCXP连接
 	if (g_pKcxpConn->InitKcxp())
@@ -165,6 +152,8 @@ void CPageFuncTest::OnBnClickedButtonInit()
 		g_pMyService->SetDlg(this);
 		g_pMyService->Init();
 	}
+
+	g_pParseKcbpLog->SetKcxpConn(g_pKcxpConn->GetKdMidCli());
 
 	m_ctrlBtnRun.EnableWindow();
 	m_ctrlBtnDisConn.EnableWindow();

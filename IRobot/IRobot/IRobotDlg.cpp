@@ -5,10 +5,13 @@
 #include "stdafx.h"
 #include "IRobot.h"
 #include "IRobotDlg.h"
+#include "loginterface.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
+
+extern CLoginterface *g_pLog;
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
@@ -37,7 +40,7 @@ void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 	CDialog::DoDataExchange(pDX);
 }
 
-BEGIN_MESSAGE_MAP(CAboutDlg, CDialog)
+BEGIN_MESSAGE_MAP(CAboutDlg, CDialog)	
 END_MESSAGE_MAP()
 
 
@@ -54,7 +57,9 @@ CIRobotDlg::~CIRobotDlg()
 
 void CIRobotDlg::DoDataExchange(CDataExchange* pDX)
 {
-	CDialog::DoDataExchange(pDX);	
+	CDialog::DoDataExchange(pDX);
+
+	DDX_Control(pDX, IDC_EDIT_LOG_MSG, m_ctrlLogMsg);
 }
 
 BEGIN_MESSAGE_MAP(CIRobotDlg, CDialog)
@@ -62,7 +67,8 @@ BEGIN_MESSAGE_MAP(CIRobotDlg, CDialog)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	//}}AFX_MSG_MAP	
-	ON_BN_CLICKED(IDCANCEL, &CIRobotDlg::OnBnClickedCancel)
+	ON_BN_CLICKED(IDC_BUTTON_EXIT, &CIRobotDlg::OnBnClickedCancel)
+	ON_BN_CLICKED(IDC_BUTTON_CLEAN, &CIRobotDlg::OnBnClickedButtonClean)
 END_MESSAGE_MAP()
 
 
@@ -98,6 +104,8 @@ BOOL CIRobotDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	// TODO: 在此添加额外的初始化代码
+	g_pLog->SetDlg(this);
+
 	// 生成展示页面
 	m_sheet.Create(this, WS_CHILD | WS_VISIBLE, WS_EX_CONTROLPARENT);
 	RECT rect;
@@ -162,5 +170,12 @@ HCURSOR CIRobotDlg::OnQueryDragIcon()
 void CIRobotDlg::OnBnClickedCancel()
 {
 	// TODO: Add your control notification handler code here
+	g_pLog->WriteRunLog(SYS_MODE, LOG_NOTIFY, "========Server Shutdown========");
 	OnCancel();
+}
+
+void CIRobotDlg::OnBnClickedButtonClean()
+{
+	// TODO: Add your control notification handler code here
+	m_ctrlLogMsg.SetWindowText("");
 }

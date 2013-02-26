@@ -146,8 +146,7 @@ BOOL CIRobotApp::InitInstance()
 }
 
 CIRobotApp::~CIRobotApp()
-{
-	g_pLog->WriteRunLog(SYS_MODE, LOG_NOTIFY, "========Server Shutdown========");
+{	
 	DELCLS(g_pCfg);
 	DELCLS(g_pLog);
 	DELCLS(g_pMyService);
