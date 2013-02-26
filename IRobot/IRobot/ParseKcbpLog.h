@@ -21,7 +21,7 @@ public:
 	void ParseCmd(char *pCmd);
 	BOOL ReadLog();
 	void ReadRlt();
-	BOOL ExecMultiCmds();
+	void ExecMultiCmds();
 	BOOL ExecSingleCmd();
 
 	BOOL ResetUserPwd(char *);

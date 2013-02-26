@@ -29,6 +29,7 @@ CMidConn *g_pMidConn = NULL;
 CDBConnect *g_pDBConn = NULL;
 CMyService *g_pMyService = NULL;
 CParseKcbpLog *g_pParseKcbpLog = NULL;
+BOOL g_bThreadExit = FALSE;
 
 // CIRobotApp
 

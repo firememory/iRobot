@@ -19,7 +19,7 @@ public:
 	CPageFuncTest m_pageFuncTest;
 	CPageStressTest m_pageStressTest;
 
-protected:
+protected:	
 	DECLARE_MESSAGE_MAP()
 };
 

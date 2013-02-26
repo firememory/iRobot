@@ -5,7 +5,6 @@
 #include "IRobot.h"
 #include "MainSheet.h"
 
-
 // CMainSheet
 
 IMPLEMENT_DYNAMIC(CMainSheet, CPropertySheet)

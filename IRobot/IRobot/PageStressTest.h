@@ -24,6 +24,7 @@ protected:
 	afx_msg void OnBnClickedPauseThread();
 	afx_msg void OnNMCustomdrawSlider1(NMHDR *pNMHDR, LRESULT *pResult);	
 	afx_msg void OnBnClickedButtonReadKcbpLog();
+	afx_msg LRESULT OnStatusUpdate(WPARAM wParam, LPARAM lParam);
 	DECLARE_MESSAGE_MAP()	
 
 private:
@@ -35,6 +36,10 @@ private:
 	int m_nThreadNum;
 	CButton m_ctrlBtnInit;
 	CSliderCtrl m_ctrlSlider;
+
+	CEdit m_ctrlActiveThreadNum;
+	int m_nActiveThreadNum;
+
 
 public:
 	CParseKcbpLog *m_pParsKcbplog;

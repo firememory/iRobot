@@ -11,6 +11,7 @@ extern CKcxpConn *g_pKcxpConn;
 extern CCfg *g_pCfg;
 extern CLoginterface *g_pLog;
 extern CDBConnect *g_pDBConn;
+extern BOOL g_bThreadExit;
 
 extern LPFNDLLFUNC1 lpfnEncrypt;
 extern LPFNDLLFUNC2 lpfnDecrypt;
@@ -65,8 +66,12 @@ void CParseKcbpLog::ReadRlt()
 	}
 }
 
-BOOL CParseKcbpLog::ExecMultiCmds()
+void CParseKcbpLog::ExecMultiCmds()
 {
+	DWORD dwThreadId = GetCurrentThreadId();
+
+	g_pLog->WriteRunLog(KCXP_MODE, LOG_WARN, "Begin thread %d", dwThreadId);
+
 	CKDMidCli *pKcxpConn = g_pKcxpConn->GetKdMidCli();
 	int iRetCode = KCBP_MSG_OK;
 	int n = m_arrCmds.GetCount();
@@ -76,6 +81,12 @@ BOOL CParseKcbpLog::ExecMultiCmds()
 
 	for (int i=0; i<n; i++)
 	{
+		if (g_bThreadExit == TRUE)
+		{
+			// 线程挂起
+			break; 
+		}
+
 		LBM_PARAM_INFO *pLBM = m_arrCmds.GetAt(i);
 
 		pLBM->mapParams.Lookup("F_OP_ROLE", value);
@@ -144,8 +155,7 @@ BOOL CParseKcbpLog::ExecMultiCmds()
 		// Execute LBM
 		if ((iRetCode = pKcxpConn->CallProgramAndCommit(pLBM->szLbmId)) != KCBP_MSG_OK)
 		{	
-			g_pLog->WriteRunLog(KCXP_MODE, LOG_WARN, "LBM[%s]调用失败,ERRCODE = %ld", pLBM->szLbmId, iRetCode);
-			return FALSE;
+			g_pLog->WriteRunLog(KCXP_MODE, LOG_WARN, "LBM[%s]调用失败,ERRCODE = %ld", pLBM->szLbmId, iRetCode);			
 		}
 
 		// 判断执行结果
@@ -164,9 +174,9 @@ BOOL CParseKcbpLog::ExecMultiCmds()
 
 		// 休眠，等待数据库更新
 		Sleep(g_pCfg->GetRefreshDBGap());
-	}
 
-	return TRUE;
+		g_pLog->WriteRunLog(KCXP_MODE, LOG_WARN, "End thread %d", dwThreadId);
+	}
 }
 
 BOOL CParseKcbpLog::ResetUserPwd( char *szUserCode )

@@ -51,6 +51,9 @@
 #define IDC_EDIT_KCBP_LOG_PATH          1038
 #define IDC_EDIT_THREAD_NUM             1039
 #define IDC_BUTTON_READ_KCBP_LOG        1040
+#define IDC_STATIC_ACTIVE_THREAD_NUM    1041
+#define IDC_EDIT_ACTIVE_THREAD_NUM      1042
+#define IDC_STATIC_                     1043
 
 // Next default values for new objects
 // 
@@ -58,7 +61,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        129
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1041
+#define _APS_NEXT_CONTROL_VALUE         1044
 #define _APS_NEXT_SYMED_VALUE           106
 #endif
 #endif
