@@ -245,6 +245,7 @@ BOOL CPageCfg::ReadCfg()
 	m_strOpPwd = g_pCfg->GetOpPwd();
 	m_strBranch = g_pCfg->GetBranch();
 	m_nLogLevel = g_pCfg->GetLogLevel();
+	g_pLog->SetLogLevel(m_nLogLevel);
 
 	return TRUE;
 }

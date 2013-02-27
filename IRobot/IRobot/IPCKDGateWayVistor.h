@@ -77,7 +77,8 @@ public:
 	virtual BOOL ResultStrToTable(char *) = 0;
 	virtual BOOL SendMsg(char *) = 0;
 	virtual void BeginTest(){g_pLog->WriteRunLog(SYS_MODE, LOG_NOTIFY, "%s ==========Begin", m_szTestCaseName);};
-	virtual void EndTest(char *pRet){g_pLog->WriteRunLog(SYS_MODE, LOG_NOTIFY, "%s ==========%s", m_szTestCaseName, pRet);};
+	virtual void EndTestSucc(char *pRet){g_pLog->WriteRunLog(SYS_MODE, LOG_NOTIFY, "%s ==========%s", m_szTestCaseName, pRet);};
+	virtual void EndTestFail(char *pRet){g_pLog->WriteRunLog(FAIL_MODE, LOG_NOTIFY, "%s ==========%s", m_szTestCaseName, pRet);};
 protected:
 	char m_szTestCaseName[MAX_PATH];
 	CKDGateway *m_pKDGateWay; // MID¡¨Ω”÷∏’Î

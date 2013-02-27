@@ -197,7 +197,23 @@ void CLoginterface::WriteRunLog(int nMode, int nLogLevel, const char *msg, ...)
 		sprintf_s(szMessage,"%05d %s\n",m_nShowLineCnt, msgStr);
 		int nLength = (int)m_pDlg->m_ctrlLogMsg.SendMessage(WM_GETTEXTLENGTH); 
 		m_pDlg->m_ctrlLogMsg.SetSel(nLength, nLength); 
-		m_pDlg->m_ctrlLogMsg.ReplaceSel(szMessage);		
+
+		if (nMode == FAIL_MODE)
+		{
+			CHARFORMAT cf;
+			
+			ZeroMemory(&cf, sizeof(CHARFORMAT));
+			cf.cbSize = sizeof(CHARFORMAT);
+			cf.dwMask = CFM_COLOR| CFM_SIZE;
+			cf.dwEffects = 0;
+			cf.yHeight = 15*15;//文字高度
+			cf.crTextColor = RGB(252, 12, 48); //文字颜色
+			strcpy(cf.szFaceName ,_T("FAIL"));//设置字体
+
+			m_pDlg->m_ctrlLogMsg.SetSelectionCharFormat(cf);
+		}
+
+		m_pDlg->m_ctrlLogMsg.ReplaceSel(szMessage);
 	}
 
 	// get current time

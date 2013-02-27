@@ -368,7 +368,7 @@ BOOL CSHA_SJ_BuyVistor::InitUserData()
 
 	// 1. »ñÈ¡Shares±í
 	CString strSql;
-	strSql.Format("select * from  shares where account = %s and secu_intl = %s",
+	strSql.Format("select round(SHARE_BLN, 2), round(SHARE_AVL, 2), round(SHARE_OTD, 2), round(SHARE_TRD_FRZ, 2) from  shares where account = %s and secu_intl = %s",
 		g_pCfg->GetAccount().GetBuffer(), m_szSecu_intl);
 
 	BSTR bstrSQL = strSql.AllocSysString();

@@ -27,11 +27,11 @@ void CMyService::Init()
 	RegisterProtocal(&QueryShares);
 	RegisterProtocal(&QuerySecuAcc);
 
-	RegisterProtocal(&SZA_XJ_BuyVistor);
-	RegisterProtocal(&SZA_SJ_BuyVistor);
+	//RegisterProtocal(&SZA_XJ_BuyVistor);
+	//RegisterProtocal(&SZA_SJ_BuyVistor);
 
 	RegisterProtocal(&SHA_XJ_BuyVistor);
-	RegisterProtocal(&SHA_SJ_BuyVistor);
+	//RegisterProtocal(&SHA_SJ_BuyVistor);
 	
 
 	m_nTotalCaseCnt = m_ptServiceArray.GetCount();
@@ -67,14 +67,16 @@ void CMyService::Run()
 		{
 			strcpy_s(szResult, "Failed");
 			m_nFailCaseCnt++;
+
+			m_ptServiceArray[i]->EndTestFail(&szResult[0]);
 		}
 		else
 		{
 			strcpy_s(szResult, "Succeed");
 			m_nSuccCaseCnt++;
-		}
 
-		m_ptServiceArray[i]->EndTest(&szResult[0]);
+			m_ptServiceArray[i]->EndTestSucc(&szResult[0]);
+		}
 
 		m_pDlg->m_ctrlWait.StepIt();
 	}	

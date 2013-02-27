@@ -31,7 +31,8 @@ CSHA_XJ_BuyVistor::CSHA_XJ_BuyVistor(void)
 	m_fCptlBln_New = m_fCptlAvl_New = m_fCptlTrdFrz_New = m_fCptlOutstanding_New = m_fCptlOtdAvl_New = 0;
 
 	strcpy_s(m_szTestCaseName, "上海A股-限价买入");
-	strcpy_s(m_szSecu_intl, "600036");
+	strcpy_s(m_szSecu_Code, "601600");
+	strcpy_s(m_szSecu_Intl, "1601600");
 	strcpy_s(m_szQty, "100");
 	strcpy_s(m_szPrice, "1");
 
@@ -141,6 +142,8 @@ BOOL CSHA_XJ_BuyVistor::ResultStrToTable(char *pRetStr)
 // 限价买入
 BOOL CSHA_XJ_BuyVistor::ChkPnt1()
 {
+	g_pLog->WriteRunLog(CHKPNT_MODE, LOG_NOTIFY, "===TestCase==上海A-限价买入");
+
 	BOOL bRet = TRUE;
 	strcpy_s(m_szTrdId, "0B");
 
@@ -149,7 +152,7 @@ BOOL CSHA_XJ_BuyVistor::ChkPnt1()
 	if (g_pCfg->GetTestMode() == USE_MID)
 	{
 		sprintf_s(szTemp,"403|%s|%s|%s|%s||%s|%s|%s|%s||||||||||||",
-			g_pCfg->GetCustID(), m_szMarket_Board, g_pCfg->GetSecu_Acc_SHA(), g_pCfg->GetAccount(), m_szSecu_intl, m_szTrdId, m_szPrice, m_szQty);
+			g_pCfg->GetCustID(), m_szMarket_Board, g_pCfg->GetSecu_Acc_SHA(), g_pCfg->GetAccount(), m_szSecu_Code, m_szTrdId, m_szPrice, m_szQty);
 
 		bRet = SendMidMsg(&szTemp[0]);
 	}
@@ -160,7 +163,7 @@ BOOL CSHA_XJ_BuyVistor::ChkPnt1()
 			"&CUSTOMER=%s&MARKET=%s&BOARD=%s&SECU_ACC=%s&ACCOUNT=%s&SECU_INTL=%s&SERIAL_NO=-1&DELIST_CHANNEL=0&TRD_ID=%s&PRICE=%s&QTY=%s&SEAT=%s]",
 			g_pCfg->GetOpId().GetBuffer(), g_pKcxpConn->GetSession(), g_pCfg->GetBranch().GetBuffer(), 
 			g_pCfg->GetCustID().GetBuffer(), m_szMarket_Board[0], m_szMarket_Board[1], g_pCfg->GetSecu_Acc_SHA(), g_pCfg->GetAccount().GetBuffer(),
-			m_szSecu_intl, m_szTrdId, m_szPrice, m_szQty, g_pCfg->GetSHA_BIND_SEAT());
+			m_szSecu_Code, m_szTrdId, m_szPrice, m_szQty, g_pCfg->GetSHA_BIND_SEAT());
 
 		bRet = SendKcxpMsg(&szTemp[0]);
 
@@ -184,6 +187,8 @@ BOOL CSHA_XJ_BuyVistor::ChkPnt1()
 // 市价买入
 BOOL CSHA_XJ_BuyVistor::ChkPnt2()
 {
+	g_pLog->WriteRunLog(CHKPNT_MODE, LOG_NOTIFY, "===TestCase==上海A-市价买入");
+
 	BOOL bRet = TRUE;
 	strcpy_s(m_szTrdId, "2B");
 
@@ -192,7 +197,7 @@ BOOL CSHA_XJ_BuyVistor::ChkPnt2()
 	if (g_pCfg->GetTestMode() == USE_MID)
 	{
 		sprintf_s(szTemp,"403|%s|%s|%s|%s||%s|%s|%s|%s||||||||||||",
-			g_pCfg->GetCustID(), m_szMarket_Board, g_pCfg->GetSecu_Acc_SHA(), g_pCfg->GetAccount(), m_szSecu_intl, m_szTrdId, m_szPrice, m_szQty);
+			g_pCfg->GetCustID(), m_szMarket_Board, g_pCfg->GetSecu_Acc_SHA(), g_pCfg->GetAccount(), m_szSecu_Code, m_szTrdId, m_szPrice, m_szQty);
 
 		bRet = SendMidMsg(&szTemp[0]);
 	}
@@ -203,7 +208,7 @@ BOOL CSHA_XJ_BuyVistor::ChkPnt2()
 			"&CUSTOMER=%s&MARKET=%s&BOARD=%s&SECU_ACC=%s&ACCOUNT=%s&SECU_INTL=%s&SERIAL_NO=-1&DELIST_CHANNEL=0&TRD_ID=%s&PRICE=%s&QTY=%s&SEAT=%s]",
 			g_pCfg->GetOpId().GetBuffer(), g_pKcxpConn->GetSession(), g_pCfg->GetBranch().GetBuffer(), 
 			g_pCfg->GetCustID().GetBuffer(), m_szMarket_Board[0], m_szMarket_Board[1], g_pCfg->GetSecu_Acc_SHA(), g_pCfg->GetAccount().GetBuffer(),
-			m_szSecu_intl, m_szTrdId, m_szPrice, m_szQty, g_pCfg->GetSHA_BIND_SEAT());
+			m_szSecu_Code, m_szTrdId, m_szPrice, m_szQty, g_pCfg->GetSHA_BIND_SEAT());
 
 		bRet = SendKcxpMsg(&szTemp[0]);
 
@@ -369,7 +374,7 @@ BOOL CSHA_XJ_BuyVistor::InitUserData()
 	// 1. 获取Shares表
 	CString strSql;
 	strSql.Format("select * from  shares where account = %s and secu_intl = %s",
-		g_pCfg->GetAccount().GetBuffer(), m_szSecu_intl);
+		g_pCfg->GetAccount().GetBuffer(), m_szSecu_Intl);
 
 	BSTR bstrSQL = strSql.AllocSysString();
 
@@ -418,7 +423,7 @@ BOOL CSHA_XJ_BuyVistor::InitUserData()
 	// 2. 获取Capitals表
 	try
 	{
-		strSql.Format("select * from  capital where account = %s and currency = 0",
+		strSql.Format("select round(BALANCE, 2) BALANCE, round(AVAILABLE, 2) AVAILABLE, round(TRD_FRZ, 2) TRD_FRZ, round(OUTSTANDING, 2) OUTSTANDING, round(OTD_AVL, 2) OTD_AVL from  capital where account = %s and currency = 0",
 			g_pCfg->GetAccount().GetBuffer());
 
 		bstrSQL = strSql.AllocSysString();
@@ -478,8 +483,8 @@ BOOL CSHA_XJ_BuyVistor::UpdateUserData()
 
 	// 1. 获取Shares表
 	CString strSql;
-	strSql.Format("select * from  shares where account = %s and secu_intl = %s",
-		g_pCfg->GetAccount().GetBuffer(), m_szSecu_intl);
+	strSql.Format("select round(SHARE_BLN, 2), round(SHARE_AVL, 2), round(SHARE_OTD, 2), round(SHARE_TRD_FRZ, 2) from  shares where account = %s and secu_intl = %s",
+		g_pCfg->GetAccount().GetBuffer(), m_szSecu_Intl);
 
 	BSTR bstrSQL = strSql.AllocSysString();
 
@@ -523,7 +528,7 @@ BOOL CSHA_XJ_BuyVistor::UpdateUserData()
 	// 2. 获取Capitals表
 	try
 	{
-		strSql.Format("select * from  capital where account = %s and currency = 0",
+		strSql.Format("select round(BALANCE, 2), round(AVAILABLE, 2), round(TRD_FRZ, 2), round(OUTSTANDING, 2), round(OTD_AVL, 2) from  capital where account = %s and currency = 0",
 			g_pCfg->GetAccount().GetBuffer());
 
 		bstrSQL = strSql.AllocSysString();
@@ -584,9 +589,9 @@ BOOL CSHA_XJ_BuyVistor::GetMatchedData()
 	{
 		// 1.1 检查柜台matching表中的数据是否与委托一致，并获取【持仓成本】
 		CString strSql;
-		strSql.Format("select * from  matching where trd_date = %s and trd_id = '0B'and order_id = '%s'"
+		strSql.Format("select * from  matching where trd_date = %s and trd_id = '%s'and order_id = '%s'"
 			" and account = %s and secu_intl = %s and order_price = %s and order_qty = %s",
-			strDate, m_pMsg[0].szOrderID, m_pMsg[0].szAccount, m_szSecu_intl, m_szPrice, m_szQty);
+			strDate, m_szTrdId, m_pMsg[0].szOrderID, m_pMsg[0].szAccount, m_szSecu_Intl, m_szPrice, m_szQty);
 
 		BSTR bstrSQL = strSql.AllocSysString();
 		g_pDBConn->m_pRecordset->Open(bstrSQL, (IDispatch*)g_pDBConn->m_pConnection, adOpenDynamic, adLockOptimistic, adCmdText); 
@@ -597,7 +602,7 @@ BOOL CSHA_XJ_BuyVistor::GetMatchedData()
 		if (g_pDBConn->m_pRecordset->adoEOF)
 		{
 			// 数据库返回的结果为空
-			g_pLog->WriteRunLog(SYS_MODE, LOG_NOTIFY, "Chk 1.1 Fail!");
+			g_pLog->WriteRunLog(CHKPNT_MODE, LOG_WARN, "Chk 1.1 Fail!");
 			g_pDBConn->m_pRecordset->Close();
 			return FALSE;
 		}	
@@ -631,7 +636,7 @@ BOOL CSHA_XJ_BuyVistor::GetMatchedData()
 
 BOOL CSHA_XJ_BuyVistor::SendMidMsg(char *pCmd)
 {
-	g_pLog->WriteRunLog(MID_MODE, LOG_DEBUG, pCmd);
+	g_pLog->WriteRunLog(MID_MODE, LOG_DEBUG, "Send:%s", pCmd);
 	if (m_pKDGateWay->WaitAnswer(pCmd)!=TRUE)
 	{
 		g_pLog->WriteRunLog(MID_MODE, LOG_WARN, "[403] 委托接口, 调用失败!");
@@ -639,6 +644,7 @@ BOOL CSHA_XJ_BuyVistor::SendMidMsg(char *pCmd)
 	}
 
 	// 对柜台返回的值进行解析
+	g_pLog->WriteRunLog(MID_MODE, LOG_DEBUG, "Recv:%s", m_pKDGateWay->m_pReturnData);
 	if (ResultStrToTable(m_pKDGateWay->m_pReturnData) != TRUE)
 	{
 		g_pLog->WriteRunLog(MID_MODE, LOG_WARN, "[403] 委托接口, 解析失败!");
@@ -671,7 +677,7 @@ BOOL CSHA_XJ_BuyVistor::ChkData()
 	// 获取客户最新的股份和资金数据
 	if (!UpdateUserData())
 	{
-		g_pLog->WriteRunLog(MID_MODE, LOG_WARN, "更新测试数据失败!");
+		g_pLog->WriteRunLog(CHKPNT_MODE, LOG_WARN, "更新测试数据失败!");
 		bRet = FALSE;
 	}
 	else
@@ -680,28 +686,28 @@ BOOL CSHA_XJ_BuyVistor::ChkData()
 		if (m_fCptlBln_Old != m_fCptlBln_New)
 		{
 			bRet = FALSE;
-			g_pLog->WriteRunLog(MID_MODE, LOG_WARN, "Chk 1.2 Fail!");
+			g_pLog->WriteRunLog(CHKPNT_MODE, LOG_WARN, "Chk 1.2 Fail!");
 		}
 
 		// 1.3.检查captial表中【资金可用】减少 matching表中的【交易冻结金额】
 		if (m_fCptlAvl_Old - m_fCptlAvl_New != m_fMatched_OrderFrzAmt)
 		{
 			bRet = FALSE;
-			g_pLog->WriteRunLog(MID_MODE, LOG_WARN, "Chk 1.3 Fail!");
+			g_pLog->WriteRunLog(CHKPNT_MODE, LOG_WARN, "Chk 1.3 Fail!");
 		}
 
 		// 1.4.检查captial表中【交易冻结】增加matching表中的【清算金额】
 		if (m_fCptlTrdFrz_New - m_fCptlTrdFrz_Old != m_fMatched_SettAmt)
 		{
 			bRet = FALSE;
-			g_pLog->WriteRunLog(MID_MODE, LOG_WARN, "Chk 1.4 Fail!");
+			g_pLog->WriteRunLog(CHKPNT_MODE, LOG_WARN, "Chk 1.4 Fail!");
 		}
 
 		// 1.5 检查Shares表中【在途股份】增加matching表中的【成交数量】
 		if (m_nShareOtd_New - m_nShareOtd_Old != m_fMatched_Qty)
 		{
 			bRet = FALSE;
-			g_pLog->WriteRunLog(MID_MODE, LOG_WARN, "Chk 1.5 Fail!");
+			g_pLog->WriteRunLog(CHKPNT_MODE, LOG_WARN, "Chk 1.5 Fail!");
 		}
 	}
 

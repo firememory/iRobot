@@ -38,7 +38,8 @@ private:
 	MID_403_ORDER_RET_MSG *m_pMsg;
 	int m_nRowNum;
 
-	char m_szSecu_intl[DEFAULT_LEN];		// 证券代码
+	char m_szSecu_Intl[DEFAULT_LEN];		// 证券代码
+	char m_szSecu_Code[DEFAULT_LEN];		// 证券代码
 	char m_szPrice[DEFAULT_LEN];			// 委托价格
 	char m_szQty[DEFAULT_LEN];				// 委托数量
 

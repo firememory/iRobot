@@ -69,7 +69,8 @@ enum LOG_MODE
 	SYS_MODE = 0, // 系统日志
 	CHKPNT_MODE, // 业务日志
 	MID_MODE, // MID 接口日志
-	KCXP_MODE // KCXP接口日志
+	KCXP_MODE, // KCXP接口日志
+	FAIL_MODE  // 业务执行失败
 };
 
 struct LEVEL_DESCRIPTION
