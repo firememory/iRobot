@@ -1,19 +1,21 @@
 #include "StdAfx.h"
-#include "SZA_XJ_BuyVistor.h"
+#include "SHA_XJ_BuyVistor.h"
 #include "Cfg.h"
 #include "MidConn.h"
 #include "KcxpConn.h"
 #include "loginterface.h"
 #include "DBConnect.h"
 #include "public.h"
+#include "ParseKcbpLog.h"
 
 extern CCfg *g_pCfg;
 extern CMidConn *g_pMidConn;
 extern CKcxpConn *g_pKcxpConn;
 extern CLoginterface *g_pLog;
 extern CDBConnect *g_pDBConn;
+extern CParseKcbpLog *g_pParseKcbpLog;
 
-CSZA_XJ_BuyVistor::CSZA_XJ_BuyVistor(void)
+CSHA_XJ_BuyVistor::CSHA_XJ_BuyVistor(void)
 {
 	m_pMsg = NULL;
 	m_nRowNum = 0;
@@ -28,19 +30,23 @@ CSZA_XJ_BuyVistor::CSZA_XJ_BuyVistor(void)
 	
 	m_fCptlBln_New = m_fCptlAvl_New = m_fCptlTrdFrz_New = m_fCptlOutstanding_New = m_fCptlOtdAvl_New = 0;
 
-	strcpy_s(m_szTestCaseName, "深圳A股-限价买入");
-	strcpy_s(m_szSecu_intl, "000002");
+	strcpy_s(m_szTestCaseName, "上海A股-限价买入");
+	strcpy_s(m_szSecu_intl, "600036");
 	strcpy_s(m_szQty, "100");
 	strcpy_s(m_szPrice, "1");
+
+	// 沪A
+	strcpy_s(m_szMarket_Board, "10");	
+	strcpy_s(m_szTrdId, "0B");
 }
 
-CSZA_XJ_BuyVistor::~CSZA_XJ_BuyVistor(void)
+CSHA_XJ_BuyVistor::~CSHA_XJ_BuyVistor(void)
 {
 	DELCLS(m_pMsg);
 	m_nRowNum = 0;
 }
 
-BOOL CSZA_XJ_BuyVistor::Vistor()
+BOOL CSHA_XJ_BuyVistor::Vistor()
 {
 	BOOL bRet = TRUE;	
 
@@ -52,10 +58,10 @@ BOOL CSZA_XJ_BuyVistor::Vistor()
 	return bRet;
 }
 
-BOOL CSZA_XJ_BuyVistor::ResultStrToTable(char *pRetStr)
+BOOL CSHA_XJ_BuyVistor::ResultStrToTable(char *pRetStr)
 {
 	m_nRowNum = m_pKDGateWay->GetRecNum();
-
+	
 	m_pMsg = new MID_403_ORDER_RET_MSG[m_nRowNum];
 	memset(m_pMsg, 0x00, sizeof(MID_403_ORDER_RET_MSG)*m_nRowNum);
 
@@ -132,218 +138,211 @@ BOOL CSZA_XJ_BuyVistor::ResultStrToTable(char *pRetStr)
 	return TRUE;
 }
 
-
-BOOL CSZA_XJ_BuyVistor::ChkPnt1()
+// 限价买入
+BOOL CSHA_XJ_BuyVistor::ChkPnt1()
 {
-	/*
-		检查以下信息
-		1.1.检查柜台matching表中的数据是否与委托一致	
-		1.2.检查captial表中【资金余额】不变
-		1.3.检查captial表中【资金可用】减少 matching表中的【交易冻结金额】
-		1.4.检查captial表中【交易冻结】增加【持仓成本】
-		1.5 检查Shares表中【在途股份】增加matching表中的【成交数量】
-	*/
 	BOOL bRet = TRUE;
+	strcpy_s(m_szTrdId, "0B");
 
 	// 发送数据
-	if (TRUE != SendMsg(NULL))
+	char szTemp[2048] = {0};
+	if (g_pCfg->GetTestMode() == USE_MID)
 	{
-		return FALSE;
+		sprintf_s(szTemp,"403|%s|%s|%s|%s||%s|%s|%s|%s||||||||||||",
+			g_pCfg->GetCustID(), m_szMarket_Board, g_pCfg->GetSecu_Acc_SHA(), g_pCfg->GetAccount(), m_szSecu_intl, m_szTrdId, m_szPrice, m_szQty);
+
+		bRet = SendMidMsg(&szTemp[0]);
+	}
+	else
+	{
+		// 拼接发送给KCXP的命令字符串		
+		sprintf_s(szTemp,"BEGIN:L0303001:23-11:00:22-576498  [_CA=2.3&_ENDIAN=0&F_OP_USER=%s&F_OP_ROLE=2&F_SESSION=%s&F_OP_SITE=999999999999999&F_OP_BRANCH=%s&F_CHANNEL=0"
+			"&CUSTOMER=%s&MARKET=%s&BOARD=%s&SECU_ACC=%s&ACCOUNT=%s&SECU_INTL=%s&SERIAL_NO=-1&DELIST_CHANNEL=0&TRD_ID=%s&PRICE=%s&QTY=%s&SEAT=%s]",
+			g_pCfg->GetOpId().GetBuffer(), g_pKcxpConn->GetSession(), g_pCfg->GetBranch().GetBuffer(), 
+			g_pCfg->GetCustID().GetBuffer(), m_szMarket_Board[0], m_szMarket_Board[1], g_pCfg->GetSecu_Acc_SHA(), g_pCfg->GetAccount().GetBuffer(),
+			m_szSecu_intl, m_szTrdId, m_szPrice, m_szQty, g_pCfg->GetSHA_BIND_SEAT());
+
+		bRet = SendKcxpMsg(&szTemp[0]);
+
+		// 清空日志解析，便于下一次操作
+		g_pParseKcbpLog->Clean();
+	}
+
+	if (bRet == FALSE)
+	{
+		return FALSE;	
 	}
 
 	// 休眠，等待数据库更新
 	Sleep(g_pCfg->GetRefreshDBGap());
 
-	// 1.1.检查柜台matching表中的数据是否与委托一致	
-	if (!(bRet = GetMatchedData()))
-	{
-		// 获取Matcing表数据失败
-		return bRet;
-	}	
+	bRet = ChkData();
+	
+	return bRet;
+}
 
-	// 获取客户最新的股份和资金数据
-	if (!UpdateUserData())
+// 市价买入
+BOOL CSHA_XJ_BuyVistor::ChkPnt2()
+{
+	BOOL bRet = TRUE;
+	strcpy_s(m_szTrdId, "2B");
+
+	// 发送数据
+	char szTemp[2048] = {0};
+	if (g_pCfg->GetTestMode() == USE_MID)
 	{
-		g_pLog->WriteRunLog(MID_MODE, LOG_WARN, "更新测试数据失败!");
-		bRet = FALSE;
+		sprintf_s(szTemp,"403|%s|%s|%s|%s||%s|%s|%s|%s||||||||||||",
+			g_pCfg->GetCustID(), m_szMarket_Board, g_pCfg->GetSecu_Acc_SHA(), g_pCfg->GetAccount(), m_szSecu_intl, m_szTrdId, m_szPrice, m_szQty);
+
+		bRet = SendMidMsg(&szTemp[0]);
 	}
 	else
 	{
-		// 1.2.检查captial表中【资金余额】不变
-		if (m_fCptlBln_Old != m_fCptlBln_New)
-		{
-			bRet = FALSE;
-			g_pLog->WriteRunLog(MID_MODE, LOG_WARN, "Chk 1.2 Fail!");
-		}
+		// 拼接发送给KCXP的命令字符串		
+		sprintf_s(szTemp,"BEGIN:L0303001:23-11:00:22-576498  [_CA=2.3&_ENDIAN=0&F_OP_USER=%s&F_OP_ROLE=2&F_SESSION=%s&F_OP_SITE=999999999999999&F_OP_BRANCH=%s&F_CHANNEL=0"
+			"&CUSTOMER=%s&MARKET=%s&BOARD=%s&SECU_ACC=%s&ACCOUNT=%s&SECU_INTL=%s&SERIAL_NO=-1&DELIST_CHANNEL=0&TRD_ID=%s&PRICE=%s&QTY=%s&SEAT=%s]",
+			g_pCfg->GetOpId().GetBuffer(), g_pKcxpConn->GetSession(), g_pCfg->GetBranch().GetBuffer(), 
+			g_pCfg->GetCustID().GetBuffer(), m_szMarket_Board[0], m_szMarket_Board[1], g_pCfg->GetSecu_Acc_SHA(), g_pCfg->GetAccount().GetBuffer(),
+			m_szSecu_intl, m_szTrdId, m_szPrice, m_szQty, g_pCfg->GetSHA_BIND_SEAT());
 
-		// 1.3.检查captial表中【资金可用】减少 matching表中的【交易冻结金额】
-		if (m_fCptlAvl_Old - m_fCptlAvl_New != m_fMatched_OrderFrzAmt)
-		{
-			bRet = FALSE;
-			g_pLog->WriteRunLog(MID_MODE, LOG_WARN, "Chk 1.3 Fail!");
-		}
+		bRet = SendKcxpMsg(&szTemp[0]);
 
-		// 1.4.检查captial表中【交易冻结】增加matching表中的【清算金额】
-		if (m_fCptlTrdFrz_New - m_fCptlTrdFrz_Old != m_fMatched_SettAmt)
-		{
-			bRet = FALSE;
-			g_pLog->WriteRunLog(MID_MODE, LOG_WARN, "Chk 1.4 Fail!");
-		}
-
-		// 1.5 检查Shares表中【在途股份】增加matching表中的【成交数量】
-		if (m_nShareOtd_New - m_nShareOtd_Old != m_fMatched_Qty)
-		{
-			bRet = FALSE;
-			g_pLog->WriteRunLog(MID_MODE, LOG_WARN, "Chk 1.5 Fail!");
-		}
+		// 清空日志解析，便于下一次操作
+		g_pParseKcbpLog->Clean();
 	}
+
+	if (bRet == FALSE)
+	{
+		return FALSE;	
+	}
+
+	// 休眠，等待数据库更新
+	Sleep(g_pCfg->GetRefreshDBGap());
+
+	bRet = ChkData();
 
 	return bRet;
 }
 
-void CSZA_XJ_BuyVistor::ChkPnt2()
-{
-	
-}
-
-BOOL CSZA_XJ_BuyVistor::SendMsg(char *pMsg)
+BOOL CSHA_XJ_BuyVistor::SendMsg(char *pMsg)
 {
 	BOOL bRet = TRUE;
 
-	if (g_pCfg->GetTestMode() == USE_MID)
-	{
-		bRet = SendMidMsg();
-	}
-	else
-	{
-		bRet = SendKcxpMsg();	
-	}
-
 	return bRet;
 }
 
-BOOL CSZA_XJ_BuyVistor::SendKcxpMsg()
+BOOL CSHA_XJ_BuyVistor::SendKcxpMsg(char *pCmd)
 {
+	g_pLog->WriteRunLog(KCXP_MODE, LOG_DEBUG, pCmd);
+
+	int iRetCode = KCBP_MSG_OK;
+	char szTemp[512] = {0};
+
 	if (NULL == m_pKcxpConn)
 	{
 		g_pLog->WriteRunLog(KCXP_MODE, LOG_DEBUG, "获取KCXP连接失败!");
 		return FALSE;
-	}
+	}	
 
-	int iRetCode = KCBP_MSG_OK;
-	char szTemp[64];
-
-	m_pKcxpConn->BeginWrite();
-
-	if ((iRetCode = m_pKcxpConn->SetValue("F_OP_USER",      g_pCfg->GetOpId().GetBuffer())) != KCBP_MSG_OK
-		|| (iRetCode = m_pKcxpConn->SetValue("F_OP_ROLE",   "2")) != KCBP_MSG_OK
-		|| (iRetCode = m_pKcxpConn->SetValue("F_OP_SITE",   "999999999999999")) != KCBP_MSG_OK
-		|| (iRetCode = m_pKcxpConn->SetValue("F_OP_BRANCH", g_pCfg->GetBranch().GetBuffer())) != KCBP_MSG_OK
-		|| (iRetCode = m_pKcxpConn->SetValue("F_CHANNEL",   '0')) != KCBP_MSG_OK
-		|| (iRetCode = m_pKcxpConn->SetValue("F_SESSION", g_pKcxpConn->GetSession())) != KCBP_MSG_OK
-		|| (iRetCode = m_pKcxpConn->SetValue("OPER_FLAG",   "1")) != KCBP_MSG_OK
-		|| (iRetCode = m_pKcxpConn->SetValue("CUSTOMER",   g_pCfg->GetCustID().GetBuffer())) != KCBP_MSG_OK
-		|| (iRetCode = m_pKcxpConn->SetValue("MARKET",   "0")) != KCBP_MSG_OK
-		|| (iRetCode = m_pKcxpConn->SetValue("BOARD",   "0")) != KCBP_MSG_OK
-		|| (iRetCode = m_pKcxpConn->SetValue("SECU_ACC",    g_pCfg->GetSecu_Acc_SZA())) != KCBP_MSG_OK
-		|| (iRetCode = m_pKcxpConn->SetValue("ACCOUNT",    g_pCfg->GetAccount().GetBuffer())) != KCBP_MSG_OK
-		|| (iRetCode = m_pKcxpConn->SetValue("SECU_INTL",   m_szSecu_intl)) != KCBP_MSG_OK
-		|| (iRetCode = m_pKcxpConn->SetValue("SEAT",   "002600")) != KCBP_MSG_OK
-		|| (iRetCode = m_pKcxpConn->SetValue("SERIAL_NO",   "-1")) != KCBP_MSG_OK
-		|| (iRetCode = m_pKcxpConn->SetValue("DELIST_CHANNEL",   "0")) != KCBP_MSG_OK
-		|| (iRetCode = m_pKcxpConn->SetValue("QTY",   m_szQty)) != KCBP_MSG_OK
-		|| (iRetCode = m_pKcxpConn->SetValue("TRD_ID",   "0B")) != KCBP_MSG_OK
-		|| (iRetCode = m_pKcxpConn->SetValue("PRICE",   m_szPrice)) != KCBP_MSG_OK)
-	{		
-		g_pLog->WriteRunLog(KCXP_MODE, LOG_DEBUG, "LBM[L0303001]设置参数失败,ERRCODE = %ld",iRetCode);
-		
-		return FALSE;
-	}
-
-	if ((iRetCode = m_pKcxpConn->CallProgramAndCommit("L0303001")) != KCBP_MSG_OK)
-	{	
-		g_pLog->WriteRunLog(KCXP_MODE, LOG_DEBUG, "LBM[L0303001]调用失败,ERRCODE = %ld",iRetCode);
-		return FALSE;
-	}
-
-	int nRow = 0;				
-
-	if ((iRetCode = m_pKcxpConn->RsOpen()) == KCBP_MSG_OK)
+	// 发送消息
+	try
 	{
-		// 获取结果集行数，注意行数是包括标题的，因此行数要减1
-		m_pKcxpConn->RsGetRowNum(&nRow);
-		
-		if (nRow>1)
+		// 解析命令
+		g_pParseKcbpLog->ParseCmd(pCmd);
+
+		// 向KCXP发送命令
+		if (FALSE != g_pParseKcbpLog->ExecSingleCmd())
 		{
-			m_nRowNum = nRow - 1;
-			
-			m_pMsg = new MID_403_ORDER_RET_MSG[m_nRowNum];
-			memset(m_pMsg, 0x00, sizeof(MID_403_ORDER_RET_MSG)*m_nRowNum);
-		}
-		else
-		{
-			g_pLog->WriteRunLogEx(__FILE__,__LINE__,"结果集返回行数异常!");
-			m_nRowNum = 0;
-			return FALSE;
-		}
-						
-		if ((iRetCode = m_pKcxpConn->RsFetchRow()) == KCBP_MSG_OK)
-		{
-			if ((iRetCode = m_pKcxpConn->RsGetCol(1, szTemp)) == KCBP_MSG_OK)
+			// 获取执行结果
+			int nRow = 0;				
+
+			if ((iRetCode = m_pKcxpConn->RsOpen()) == KCBP_MSG_OK)
 			{
-				if ((iRetCode = m_pKcxpConn->RsGetCol(2, szTemp)) == KCBP_MSG_OK)
+				// 获取结果集行数，注意行数是包括标题的，因此行数要减1
+				m_pKcxpConn->RsGetRowNum(&nRow);
+
+				if (nRow>1)
 				{
-					if(strcmp(szTemp,"0") != 0)
+					m_nRowNum = nRow - 1;
+
+					m_pMsg = new MID_403_ORDER_RET_MSG[m_nRowNum];
+					memset(m_pMsg, 0x00, sizeof(MID_403_ORDER_RET_MSG)*m_nRowNum);
+				}
+				else
+				{
+					g_pLog->WriteRunLogEx(__FILE__,__LINE__,"结果集返回行数异常!");
+					m_nRowNum = 0;
+					return FALSE;
+				}
+
+				if ((iRetCode = m_pKcxpConn->RsFetchRow()) == KCBP_MSG_OK)
+				{
+					if ((iRetCode = m_pKcxpConn->RsGetCol(1, szTemp)) == KCBP_MSG_OK)
 					{
-						iRetCode = m_pKcxpConn->RsGetCol(3, szTemp);
-						
+						if ((iRetCode = m_pKcxpConn->RsGetCol(2, szTemp)) == KCBP_MSG_OK)
+						{
+							if(strcmp(szTemp,"0") != 0)
+							{
+								iRetCode = m_pKcxpConn->RsGetCol(3, szTemp);
+
+								g_pLog->WriteRunLogEx(__FILE__,__LINE__, "获取结果集列信息失败,ERRCODE = %ld", iRetCode);
+								return FALSE;
+							}
+						}
+					}
+					else
+					{
 						g_pLog->WriteRunLogEx(__FILE__,__LINE__, "获取结果集列信息失败,ERRCODE = %ld", iRetCode);
+
 						return FALSE;
 					}
 				}
+
+				//取第二结果集数据		
+				if (iRetCode = m_pKcxpConn->RsMore() == KCBP_MSG_OK)
+				{
+					int nRow = 0;
+					while(nRow < m_nRowNum)
+					{
+						if(m_pKcxpConn->RsFetchRow() != KCBP_MSG_OK)
+						{
+
+							break;
+						}
+
+						SERVICE_KCXP_STRNCPY("BIZ_NO", szBizNo);
+						SERVICE_KCXP_STRNCPY("ORDER_ID", szOrderID);
+						SERVICE_KCXP_STRNCPY("ACCOUNT", szAccount);
+						SERVICE_KCXP_STRNCPY("PRICE", szPrice);
+						SERVICE_KCXP_STRNCPY("QTY", szQty);
+						SERVICE_KCXP_STRNCPY("ORDER_AMT", szOrderAmt);
+						SERVICE_KCXP_STRNCPY("ORDER_FRZ_AMT", szOrderFrzAmt);
+						SERVICE_KCXP_STRNCPY("SEAT", szSeat);
+						SERVICE_KCXP_STRNCPY("EXT_INST", szExtInst);
+						SERVICE_KCXP_STRNCPY("EXT_ACC", szExtAcc);
+						SERVICE_KCXP_STRNCPY("EXT_SUB_ACC", szExtSubAcc);
+						SERVICE_KCXP_STRNCPY("EXT_FRZ_AMT", szExtFrzAmt);		
+						nRow++;
+					}		
+				}
 			}
 			else
-			{
-				g_pLog->WriteRunLogEx(__FILE__,__LINE__, "获取结果集列信息失败,ERRCODE = %ld", iRetCode);
-				
+			{	
+				g_pLog->WriteRunLogEx(__FILE__,__LINE__,"打开结果集失败,ERRCODE = %ld", iRetCode);
+
 				return FALSE;
 			}
 		}
-
-		//取第二结果集数据		
-		if (iRetCode = m_pKcxpConn->RsMore() == KCBP_MSG_OK)
+		else
 		{
-			int nRow = 0;
-			while(nRow < m_nRowNum)
-			{
-				if(m_pKcxpConn->RsFetchRow() != KCBP_MSG_OK)
-				{
-
-					break;
-				}
-
-				SERVICE_KCXP_STRNCPY("BIZ_NO", szBizNo);
-				SERVICE_KCXP_STRNCPY("ORDER_ID", szOrderID);
-				SERVICE_KCXP_STRNCPY("ACCOUNT", szAccount);
-				SERVICE_KCXP_STRNCPY("PRICE", szPrice);
-				SERVICE_KCXP_STRNCPY("QTY", szQty);
-				SERVICE_KCXP_STRNCPY("ORDER_AMT", szOrderAmt);
-				SERVICE_KCXP_STRNCPY("ORDER_FRZ_AMT", szOrderFrzAmt);
-				SERVICE_KCXP_STRNCPY("SEAT", szSeat);
-				SERVICE_KCXP_STRNCPY("EXT_INST", szExtInst);
-				SERVICE_KCXP_STRNCPY("EXT_ACC", szExtAcc);
-				SERVICE_KCXP_STRNCPY("EXT_SUB_ACC", szExtSubAcc);
-				SERVICE_KCXP_STRNCPY("EXT_FRZ_AMT", szExtFrzAmt);		
-				nRow++;
-			}		
+			return FALSE;
 		}
 	}
-	else
-	{	
-		g_pLog->WriteRunLogEx(__FILE__,__LINE__,"打开结果集失败,ERRCODE = %ld", iRetCode);
-		
+	catch(...)
+	{
+		g_pLog->WriteRunLog(KCXP_MODE, LOG_DEBUG, "LBM[L0303001]调用异常！");
 		return FALSE;
-	}
+	}	
 
 	return TRUE;
 }
@@ -362,7 +361,7 @@ BOOL CSZA_XJ_BuyVistor::SendKcxpMsg()
 		2.4 在途资金
 		2.5 在途可用
  */
-BOOL CSZA_XJ_BuyVistor::InitUserData()
+BOOL CSHA_XJ_BuyVistor::InitUserData()
 {
 	_variant_t TheValue; //VARIANT数据类型
 	char szTmp[100] = {0};
@@ -472,7 +471,7 @@ BOOL CSZA_XJ_BuyVistor::InitUserData()
 }
 
 
-BOOL CSZA_XJ_BuyVistor::UpdateUserData()
+BOOL CSHA_XJ_BuyVistor::UpdateUserData()
 {
 	_variant_t TheValue; //VARIANT数据类型
 	char szTmp[100] = {0};
@@ -575,7 +574,7 @@ BOOL CSZA_XJ_BuyVistor::UpdateUserData()
 	return TRUE;
 }
 
-BOOL CSZA_XJ_BuyVistor::GetMatchedData()
+BOOL CSHA_XJ_BuyVistor::GetMatchedData()
 {
 	CTime tm=CTime::GetCurrentTime();
 	CString strDate = tm.Format("%Y%m%d");
@@ -630,13 +629,10 @@ BOOL CSZA_XJ_BuyVistor::GetMatchedData()
 	return bRet;
 }
 
-BOOL CSZA_XJ_BuyVistor::SendMidMsg()
+BOOL CSHA_XJ_BuyVistor::SendMidMsg(char *pCmd)
 {
-	char szTemp[512];		
-	sprintf_s(szTemp,"403|%s|00|%s|%s||%s|0B|%s|%s||||||||||||",
-		g_pCfg->GetCustID(), g_pCfg->GetSecu_Acc_SZA(), g_pCfg->GetAccount(), m_szSecu_intl, m_szPrice, m_szQty);
-
-	if (m_pKDGateWay->WaitAnswer(&szTemp[0])!=TRUE)
+	g_pLog->WriteRunLog(MID_MODE, LOG_DEBUG, pCmd);
+	if (m_pKDGateWay->WaitAnswer(pCmd)!=TRUE)
 	{
 		g_pLog->WriteRunLog(MID_MODE, LOG_WARN, "[403] 委托接口, 调用失败!");
 		return FALSE;
@@ -650,4 +646,64 @@ BOOL CSZA_XJ_BuyVistor::SendMidMsg()
 	}
 
 	return TRUE;
+}
+
+BOOL CSHA_XJ_BuyVistor::ChkData()
+{
+	/*
+		检查以下信息
+		1.1.检查柜台matching表中的数据是否与委托一致	
+		1.2.检查captial表中【资金余额】不变
+		1.3.检查captial表中【资金可用】减少 matching表中的【交易冻结金额】
+		1.4.检查captial表中【交易冻结】增加【持仓成本】
+		1.5 检查Shares表中【在途股份】增加matching表中的【成交数量】
+	*/
+
+	BOOL bRet = TRUE;
+
+	// 1.1.检查柜台matching表中的数据是否与委托一致	
+	if (!(bRet = GetMatchedData()))
+	{
+		// 获取Matcing表数据失败
+		return bRet;
+	}	
+
+	// 获取客户最新的股份和资金数据
+	if (!UpdateUserData())
+	{
+		g_pLog->WriteRunLog(MID_MODE, LOG_WARN, "更新测试数据失败!");
+		bRet = FALSE;
+	}
+	else
+	{
+		// 1.2.检查captial表中【资金余额】不变
+		if (m_fCptlBln_Old != m_fCptlBln_New)
+		{
+			bRet = FALSE;
+			g_pLog->WriteRunLog(MID_MODE, LOG_WARN, "Chk 1.2 Fail!");
+		}
+
+		// 1.3.检查captial表中【资金可用】减少 matching表中的【交易冻结金额】
+		if (m_fCptlAvl_Old - m_fCptlAvl_New != m_fMatched_OrderFrzAmt)
+		{
+			bRet = FALSE;
+			g_pLog->WriteRunLog(MID_MODE, LOG_WARN, "Chk 1.3 Fail!");
+		}
+
+		// 1.4.检查captial表中【交易冻结】增加matching表中的【清算金额】
+		if (m_fCptlTrdFrz_New - m_fCptlTrdFrz_Old != m_fMatched_SettAmt)
+		{
+			bRet = FALSE;
+			g_pLog->WriteRunLog(MID_MODE, LOG_WARN, "Chk 1.4 Fail!");
+		}
+
+		// 1.5 检查Shares表中【在途股份】增加matching表中的【成交数量】
+		if (m_nShareOtd_New - m_nShareOtd_Old != m_fMatched_Qty)
+		{
+			bRet = FALSE;
+			g_pLog->WriteRunLog(MID_MODE, LOG_WARN, "Chk 1.5 Fail!");
+		}
+	}
+
+	return bRet;
 }

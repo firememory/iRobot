@@ -1,19 +1,21 @@
 #include "StdAfx.h"
-#include "SZA_XJ_BuyVistor.h"
+#include "SHA_SJ_BuyVistor.h"
 #include "Cfg.h"
 #include "MidConn.h"
 #include "KcxpConn.h"
 #include "loginterface.h"
 #include "DBConnect.h"
 #include "public.h"
+#include "ParseKcbpLog.h"
 
 extern CCfg *g_pCfg;
 extern CMidConn *g_pMidConn;
 extern CKcxpConn *g_pKcxpConn;
 extern CLoginterface *g_pLog;
 extern CDBConnect *g_pDBConn;
+extern CParseKcbpLog *g_pParseKcbpLog;
 
-CSZA_XJ_BuyVistor::CSZA_XJ_BuyVistor(void)
+CSHA_SJ_BuyVistor::CSHA_SJ_BuyVistor(void)
 {
 	m_pMsg = NULL;
 	m_nRowNum = 0;
@@ -28,19 +30,19 @@ CSZA_XJ_BuyVistor::CSZA_XJ_BuyVistor(void)
 	
 	m_fCptlBln_New = m_fCptlAvl_New = m_fCptlTrdFrz_New = m_fCptlOutstanding_New = m_fCptlOtdAvl_New = 0;
 
-	strcpy_s(m_szTestCaseName, "深圳A股-限价买入");
+	strcpy_s(m_szTestCaseName, "上海A股-限价买入");
 	strcpy_s(m_szSecu_intl, "000002");
 	strcpy_s(m_szQty, "100");
 	strcpy_s(m_szPrice, "1");
 }
 
-CSZA_XJ_BuyVistor::~CSZA_XJ_BuyVistor(void)
+CSHA_SJ_BuyVistor::~CSHA_SJ_BuyVistor(void)
 {
 	DELCLS(m_pMsg);
 	m_nRowNum = 0;
 }
 
-BOOL CSZA_XJ_BuyVistor::Vistor()
+BOOL CSHA_SJ_BuyVistor::Vistor()
 {
 	BOOL bRet = TRUE;	
 
@@ -52,10 +54,10 @@ BOOL CSZA_XJ_BuyVistor::Vistor()
 	return bRet;
 }
 
-BOOL CSZA_XJ_BuyVistor::ResultStrToTable(char *pRetStr)
+BOOL CSHA_SJ_BuyVistor::ResultStrToTable(char *pRetStr)
 {
-	m_nRowNum = m_pKDGateWay->GetRecNum();
-
+	m_nRowNum = m_pKDGateWay->GetRecNum();	
+	
 	m_pMsg = new MID_403_ORDER_RET_MSG[m_nRowNum];
 	memset(m_pMsg, 0x00, sizeof(MID_403_ORDER_RET_MSG)*m_nRowNum);
 
@@ -133,7 +135,7 @@ BOOL CSZA_XJ_BuyVistor::ResultStrToTable(char *pRetStr)
 }
 
 
-BOOL CSZA_XJ_BuyVistor::ChkPnt1()
+BOOL CSHA_SJ_BuyVistor::ChkPnt1()
 {
 	/*
 		检查以下信息
@@ -201,12 +203,12 @@ BOOL CSZA_XJ_BuyVistor::ChkPnt1()
 	return bRet;
 }
 
-void CSZA_XJ_BuyVistor::ChkPnt2()
+void CSHA_SJ_BuyVistor::ChkPnt2()
 {
 	
 }
 
-BOOL CSZA_XJ_BuyVistor::SendMsg(char *pMsg)
+BOOL CSHA_SJ_BuyVistor::SendMsg(char *pMsg)
 {
 	BOOL bRet = TRUE;
 
@@ -222,128 +224,125 @@ BOOL CSZA_XJ_BuyVistor::SendMsg(char *pMsg)
 	return bRet;
 }
 
-BOOL CSZA_XJ_BuyVistor::SendKcxpMsg()
+BOOL CSHA_SJ_BuyVistor::SendKcxpMsg()
 {
+	int iRetCode = KCBP_MSG_OK;
+
 	if (NULL == m_pKcxpConn)
 	{
 		g_pLog->WriteRunLog(KCXP_MODE, LOG_DEBUG, "获取KCXP连接失败!");
 		return FALSE;
 	}
 
-	int iRetCode = KCBP_MSG_OK;
-	char szTemp[64];
+	// 拼接发送给KCXP的命令字符串
+	char szTemp[2048] = {0};		
+	sprintf_s(szTemp,"BEGIN:L0303001:23-11:00:22-576498  [_CA=2.3&_ENDIAN=0&F_OP_USER=%s&F_OP_ROLE=2&F_SESSION=%s&F_OP_SITE=999999999999999&F_OP_BRANCH=%s&F_CHANNEL=0"
+		"&CUSTOMER=%s&MARKET=%s&BOARD=%s&SECU_ACC=%s&ACCOUNT=%s&SECU_INTL=%s&SERIAL_NO=-1&DELIST_CHANNEL=0&TRD_ID=2B&PRICE=%s&QTY=%s&SEAT=%s]",
+		g_pCfg->GetOpId().GetBuffer(), g_pKcxpConn->GetSession(), g_pCfg->GetBranch().GetBuffer(), 
+		g_pCfg->GetCustID().GetBuffer(), m_szMarket, m_szBoard, g_pCfg->GetSecu_Acc_SHA(), g_pCfg->GetAccount().GetBuffer(),
+		m_szSecu_intl, m_szPrice, m_szQty, g_pCfg->GetSHA_BIND_SEAT());
 
-	m_pKcxpConn->BeginWrite();
+	g_pLog->WriteRunLog(KCXP_MODE, LOG_DEBUG, szTemp);
 
-	if ((iRetCode = m_pKcxpConn->SetValue("F_OP_USER",      g_pCfg->GetOpId().GetBuffer())) != KCBP_MSG_OK
-		|| (iRetCode = m_pKcxpConn->SetValue("F_OP_ROLE",   "2")) != KCBP_MSG_OK
-		|| (iRetCode = m_pKcxpConn->SetValue("F_OP_SITE",   "999999999999999")) != KCBP_MSG_OK
-		|| (iRetCode = m_pKcxpConn->SetValue("F_OP_BRANCH", g_pCfg->GetBranch().GetBuffer())) != KCBP_MSG_OK
-		|| (iRetCode = m_pKcxpConn->SetValue("F_CHANNEL",   '0')) != KCBP_MSG_OK
-		|| (iRetCode = m_pKcxpConn->SetValue("F_SESSION", g_pKcxpConn->GetSession())) != KCBP_MSG_OK
-		|| (iRetCode = m_pKcxpConn->SetValue("OPER_FLAG",   "1")) != KCBP_MSG_OK
-		|| (iRetCode = m_pKcxpConn->SetValue("CUSTOMER",   g_pCfg->GetCustID().GetBuffer())) != KCBP_MSG_OK
-		|| (iRetCode = m_pKcxpConn->SetValue("MARKET",   "0")) != KCBP_MSG_OK
-		|| (iRetCode = m_pKcxpConn->SetValue("BOARD",   "0")) != KCBP_MSG_OK
-		|| (iRetCode = m_pKcxpConn->SetValue("SECU_ACC",    g_pCfg->GetSecu_Acc_SZA())) != KCBP_MSG_OK
-		|| (iRetCode = m_pKcxpConn->SetValue("ACCOUNT",    g_pCfg->GetAccount().GetBuffer())) != KCBP_MSG_OK
-		|| (iRetCode = m_pKcxpConn->SetValue("SECU_INTL",   m_szSecu_intl)) != KCBP_MSG_OK
-		|| (iRetCode = m_pKcxpConn->SetValue("SEAT",   "002600")) != KCBP_MSG_OK
-		|| (iRetCode = m_pKcxpConn->SetValue("SERIAL_NO",   "-1")) != KCBP_MSG_OK
-		|| (iRetCode = m_pKcxpConn->SetValue("DELIST_CHANNEL",   "0")) != KCBP_MSG_OK
-		|| (iRetCode = m_pKcxpConn->SetValue("QTY",   m_szQty)) != KCBP_MSG_OK
-		|| (iRetCode = m_pKcxpConn->SetValue("TRD_ID",   "0B")) != KCBP_MSG_OK
-		|| (iRetCode = m_pKcxpConn->SetValue("PRICE",   m_szPrice)) != KCBP_MSG_OK)
-	{		
-		g_pLog->WriteRunLog(KCXP_MODE, LOG_DEBUG, "LBM[L0303001]设置参数失败,ERRCODE = %ld",iRetCode);
-		
-		return FALSE;
-	}
-
-	if ((iRetCode = m_pKcxpConn->CallProgramAndCommit("L0303001")) != KCBP_MSG_OK)
-	{	
-		g_pLog->WriteRunLog(KCXP_MODE, LOG_DEBUG, "LBM[L0303001]调用失败,ERRCODE = %ld",iRetCode);
-		return FALSE;
-	}
-
-	int nRow = 0;				
-
-	if ((iRetCode = m_pKcxpConn->RsOpen()) == KCBP_MSG_OK)
+	// 发送消息
+	try
 	{
-		// 获取结果集行数，注意行数是包括标题的，因此行数要减1
-		m_pKcxpConn->RsGetRowNum(&nRow);
-		
-		if (nRow>1)
+		// 解析命令
+		g_pParseKcbpLog->ParseCmd(&szTemp[0]);
+
+		// 向KCXP发送命令
+		if (FALSE != g_pParseKcbpLog->ExecSingleCmd())
 		{
-			m_nRowNum = nRow - 1;
-			
-			m_pMsg = new MID_403_ORDER_RET_MSG[m_nRowNum];
-			memset(m_pMsg, 0x00, sizeof(MID_403_ORDER_RET_MSG)*m_nRowNum);
-		}
-		else
-		{
-			g_pLog->WriteRunLogEx(__FILE__,__LINE__,"结果集返回行数异常!");
-			m_nRowNum = 0;
-			return FALSE;
-		}
-						
-		if ((iRetCode = m_pKcxpConn->RsFetchRow()) == KCBP_MSG_OK)
-		{
-			if ((iRetCode = m_pKcxpConn->RsGetCol(1, szTemp)) == KCBP_MSG_OK)
+			// 获取执行结果
+			int nRow = 0;				
+
+			if ((iRetCode = m_pKcxpConn->RsOpen()) == KCBP_MSG_OK)
 			{
-				if ((iRetCode = m_pKcxpConn->RsGetCol(2, szTemp)) == KCBP_MSG_OK)
+				// 获取结果集行数，注意行数是包括标题的，因此行数要减1
+				m_pKcxpConn->RsGetRowNum(&nRow);
+
+				if (nRow>1)
 				{
-					if(strcmp(szTemp,"0") != 0)
+					m_nRowNum = nRow - 1;
+
+					m_pMsg = new MID_403_ORDER_RET_MSG[m_nRowNum];
+					memset(m_pMsg, 0x00, sizeof(MID_403_ORDER_RET_MSG)*m_nRowNum);
+				}
+				else
+				{
+					g_pLog->WriteRunLogEx(__FILE__,__LINE__,"结果集返回行数异常!");
+					m_nRowNum = 0;
+					return FALSE;
+				}
+
+				if ((iRetCode = m_pKcxpConn->RsFetchRow()) == KCBP_MSG_OK)
+				{
+					if ((iRetCode = m_pKcxpConn->RsGetCol(1, szTemp)) == KCBP_MSG_OK)
 					{
-						iRetCode = m_pKcxpConn->RsGetCol(3, szTemp);
-						
+						if ((iRetCode = m_pKcxpConn->RsGetCol(2, szTemp)) == KCBP_MSG_OK)
+						{
+							if(strcmp(szTemp,"0") != 0)
+							{
+								iRetCode = m_pKcxpConn->RsGetCol(3, szTemp);
+
+								g_pLog->WriteRunLogEx(__FILE__,__LINE__, "获取结果集列信息失败,ERRCODE = %ld", iRetCode);
+								return FALSE;
+							}
+						}
+					}
+					else
+					{
 						g_pLog->WriteRunLogEx(__FILE__,__LINE__, "获取结果集列信息失败,ERRCODE = %ld", iRetCode);
+
 						return FALSE;
 					}
 				}
+
+				//取第二结果集数据		
+				if (iRetCode = m_pKcxpConn->RsMore() == KCBP_MSG_OK)
+				{
+					int nRow = 0;
+					while(nRow < m_nRowNum)
+					{
+						if(m_pKcxpConn->RsFetchRow() != KCBP_MSG_OK)
+						{
+
+							break;
+						}
+
+						SERVICE_KCXP_STRNCPY("BIZ_NO", szBizNo);
+						SERVICE_KCXP_STRNCPY("ORDER_ID", szOrderID);
+						SERVICE_KCXP_STRNCPY("ACCOUNT", szAccount);
+						SERVICE_KCXP_STRNCPY("PRICE", szPrice);
+						SERVICE_KCXP_STRNCPY("QTY", szQty);
+						SERVICE_KCXP_STRNCPY("ORDER_AMT", szOrderAmt);
+						SERVICE_KCXP_STRNCPY("ORDER_FRZ_AMT", szOrderFrzAmt);
+						SERVICE_KCXP_STRNCPY("SEAT", szSeat);
+						SERVICE_KCXP_STRNCPY("EXT_INST", szExtInst);
+						SERVICE_KCXP_STRNCPY("EXT_ACC", szExtAcc);
+						SERVICE_KCXP_STRNCPY("EXT_SUB_ACC", szExtSubAcc);
+						SERVICE_KCXP_STRNCPY("EXT_FRZ_AMT", szExtFrzAmt);		
+						nRow++;
+					}		
+				}
 			}
 			else
-			{
-				g_pLog->WriteRunLogEx(__FILE__,__LINE__, "获取结果集列信息失败,ERRCODE = %ld", iRetCode);
-				
+			{	
+				g_pLog->WriteRunLogEx(__FILE__,__LINE__,"打开结果集失败,ERRCODE = %ld", iRetCode);
+
 				return FALSE;
 			}
 		}
-
-		//取第二结果集数据		
-		if (iRetCode = m_pKcxpConn->RsMore() == KCBP_MSG_OK)
+		else
 		{
-			int nRow = 0;
-			while(nRow < m_nRowNum)
-			{
-				if(m_pKcxpConn->RsFetchRow() != KCBP_MSG_OK)
-				{
-
-					break;
-				}
-
-				SERVICE_KCXP_STRNCPY("BIZ_NO", szBizNo);
-				SERVICE_KCXP_STRNCPY("ORDER_ID", szOrderID);
-				SERVICE_KCXP_STRNCPY("ACCOUNT", szAccount);
-				SERVICE_KCXP_STRNCPY("PRICE", szPrice);
-				SERVICE_KCXP_STRNCPY("QTY", szQty);
-				SERVICE_KCXP_STRNCPY("ORDER_AMT", szOrderAmt);
-				SERVICE_KCXP_STRNCPY("ORDER_FRZ_AMT", szOrderFrzAmt);
-				SERVICE_KCXP_STRNCPY("SEAT", szSeat);
-				SERVICE_KCXP_STRNCPY("EXT_INST", szExtInst);
-				SERVICE_KCXP_STRNCPY("EXT_ACC", szExtAcc);
-				SERVICE_KCXP_STRNCPY("EXT_SUB_ACC", szExtSubAcc);
-				SERVICE_KCXP_STRNCPY("EXT_FRZ_AMT", szExtFrzAmt);		
-				nRow++;
-			}		
+			return FALSE;
 		}
 	}
-	else
-	{	
-		g_pLog->WriteRunLogEx(__FILE__,__LINE__,"打开结果集失败,ERRCODE = %ld", iRetCode);
-		
+	catch(...)
+	{
+		g_pLog->WriteRunLog(KCXP_MODE, LOG_DEBUG, "LBM[L0303001]调用异常！");
 		return FALSE;
-	}
+	}	
 
 	return TRUE;
 }
@@ -362,7 +361,7 @@ BOOL CSZA_XJ_BuyVistor::SendKcxpMsg()
 		2.4 在途资金
 		2.5 在途可用
  */
-BOOL CSZA_XJ_BuyVistor::InitUserData()
+BOOL CSHA_SJ_BuyVistor::InitUserData()
 {
 	_variant_t TheValue; //VARIANT数据类型
 	char szTmp[100] = {0};
@@ -472,7 +471,7 @@ BOOL CSZA_XJ_BuyVistor::InitUserData()
 }
 
 
-BOOL CSZA_XJ_BuyVistor::UpdateUserData()
+BOOL CSHA_SJ_BuyVistor::UpdateUserData()
 {
 	_variant_t TheValue; //VARIANT数据类型
 	char szTmp[100] = {0};
@@ -575,7 +574,7 @@ BOOL CSZA_XJ_BuyVistor::UpdateUserData()
 	return TRUE;
 }
 
-BOOL CSZA_XJ_BuyVistor::GetMatchedData()
+BOOL CSHA_SJ_BuyVistor::GetMatchedData()
 {
 	CTime tm=CTime::GetCurrentTime();
 	CString strDate = tm.Format("%Y%m%d");
@@ -630,7 +629,7 @@ BOOL CSZA_XJ_BuyVistor::GetMatchedData()
 	return bRet;
 }
 
-BOOL CSZA_XJ_BuyVistor::SendMidMsg()
+BOOL CSHA_SJ_BuyVistor::SendMidMsg()
 {
 	char szTemp[512];		
 	sprintf_s(szTemp,"403|%s|00|%s|%s||%s|0B|%s|%s||||||||||||",

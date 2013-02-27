@@ -62,3 +62,18 @@ struct MID_409101_LOGIN_RET_MSG
 	char szCertDays[3];
 	char szEtokenDays[3];
 };
+
+
+// 查询客户股东信息返回结果消息
+struct MID_501_QUERY_SECU_ACC_RET_MSG
+{
+	char szUserCode[11];
+	char szMarket[3];
+	char szSecuAcc[11];
+	char szSecuAccName[20];
+	char szAccount[20];
+	char szMainFlag[2];
+	char szBindSeat[10];
+	char szBindStatus[10];
+	char szStatus[3];
+};

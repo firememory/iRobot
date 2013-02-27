@@ -307,7 +307,19 @@
 					>
 				</File>
 				<File
+					RelativePath=".\QuerySecuAccVistor.cpp"
+					>
+				</File>
+				<File
 					RelativePath=".\QueryShares.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\SHA_SJ_BuyVistor.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\SHA_XJ_BuyVistor.cpp"
 					>
 				</File>
 				<File
@@ -318,18 +330,6 @@
 					RelativePath=".\SZA_XJ_BuyVistor.cpp"
 					>
 				</File>
-			</Filter>
-			<Filter
-				Name="LBM"
-				>
-				<Filter
-					Name="L03"
-					>
-					<File
-						RelativePath=".\L0303001.cpp"
-						>
-					</File>
-				</Filter>
 			</Filter>
 		</Filter>
 		<Filter
@@ -457,7 +457,19 @@
 					>
 				</File>
 				<File
+					RelativePath=".\QuerySecuAccVistor.h"
+					>
+				</File>
+				<File
 					RelativePath=".\QueryShares.h"
+					>
+				</File>
+				<File
+					RelativePath=".\SHA_SJ_BuyVistor.h"
+					>
+				</File>
+				<File
+					RelativePath=".\SHA_XJ_BuyVistor.h"
 					>
 				</File>
 				<File
@@ -468,18 +480,6 @@
 					RelativePath=".\SZA_XJ_BuyVistor.h"
 					>
 				</File>
-			</Filter>
-			<Filter
-				Name="LBM"
-				>
-				<Filter
-					Name="L03"
-					>
-					<File
-						RelativePath=".\L0303001.h"
-						>
-					</File>
-				</Filter>
 			</Filter>
 		</Filter>
 		<Filter

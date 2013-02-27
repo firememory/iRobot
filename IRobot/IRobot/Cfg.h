@@ -78,6 +78,22 @@ public:
 	int GetLogLevel() const { return m_nLogLevel; }
 	void SetLogLevel(int val) { m_nLogLevel = val; }
 
+
+	char* GetSZA_BIND_SEAT() { return &m_szSZA_BIND_SEAT[0]; }
+	void SetSZA_BIND_SEAT(char *val) { strcpy_s(m_szSZA_BIND_SEAT ,val); }
+
+	char* GetSHA_BIND_SEAT() { return &m_szSHA_BIND_SEAT[0]; }
+	void SetSHA_BIND_SEAT(char *val) { strcpy_s(m_szSHA_BIND_SEAT ,val); }
+
+	char* GetSZB_BIND_SEAT() { return &m_szSZB_BIND_SEAT[0]; }
+	void SetSZB_BIND_SEAT(char* val) { strcpy_s(m_szSZB_BIND_SEAT ,val); }
+
+	char* GetSHB_BIND_SEAT() { return &m_szSHB_BIND_SEAT[0]; }
+	void SetSHB_BIND_SEAT(char* val) { strcpy_s(m_szSHB_BIND_SEAT ,val); }
+
+	char* GetSB_BIND_SEAT() { return &m_szSB_BIND_SEAT[0]; }
+	void SetSB_BIND_SEAT(char* val) { strcpy_s(m_szSB_BIND_SEAT ,val); }
+
 private:
 	CString m_strCfgPath;
 
@@ -108,4 +124,10 @@ private:
 
 	char m_szSecu_Acc_SZA[15]; // 深圳A股 股东代码
 	char m_szSecu_Acc_SHA[15]; // 上海A股 股东代码
+
+	char m_szSZA_BIND_SEAT[10]; // 深A席位
+	char m_szSHA_BIND_SEAT[10]; // 沪A席位
+	char m_szSZB_BIND_SEAT[10]; // 深B席位
+	char m_szSHB_BIND_SEAT[10]; // 沪B席位
+	char m_szSB_BIND_SEAT[10]; // 三板席位
 };

@@ -2,9 +2,14 @@
 
 #include "IPCKDGateWayVistor.h"
 #include "PageFuncTest.h"
+
 #include "LoginVistor.h"
 #include "SZA_XJ_BuyVistor.h"
 #include "SZA_SJ_BuyVistor.h"
+#include "SHA_SJ_BuyVistor.h"
+#include "SHA_XJ_BuyVistor.h"
+
+#include "QuerySecuAccVistor.h"
 #include "QueryShares.h"
 
 
@@ -32,5 +37,10 @@ private:
 	CLoginVistor LoginVistor;
 	CSZA_XJ_BuyVistor SZA_XJ_BuyVistor; // 深圳A股限价委托
 	CSZA_SJ_BuyVistor SZA_SJ_BuyVistor; // 深圳A股市价委托
-	CQueryShares QueryShares;
+	
+	CSHA_XJ_BuyVistor SHA_XJ_BuyVistor; // 上海A股限价委托
+	CSHA_SJ_BuyVistor SHA_SJ_BuyVistor; // 上海A股市价委托
+
+	CQueryShares QueryShares; // 查询股份
+	CQuerySecuAccVistor QuerySecuAcc; // 查询股东
 };

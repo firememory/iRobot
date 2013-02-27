@@ -197,7 +197,7 @@ void CLoginterface::WriteRunLog(int nMode, int nLogLevel, const char *msg, ...)
 		sprintf_s(szMessage,"%05d %s\n",m_nShowLineCnt, msgStr);
 		int nLength = (int)m_pDlg->m_ctrlLogMsg.SendMessage(WM_GETTEXTLENGTH); 
 		m_pDlg->m_ctrlLogMsg.SetSel(nLength, nLength); 
-		m_pDlg->m_ctrlLogMsg.ReplaceSel(szMessage);
+		m_pDlg->m_ctrlLogMsg.ReplaceSel(szMessage);		
 	}
 
 	// get current time
@@ -226,6 +226,9 @@ void CLoginterface::WriteRunLog(int nMode, int nLogLevel, const char *msg, ...)
 	{
 	case SYS_MODE:
 		strcpy_s(szLogMode, "SYS");
+		break;
+	case CHKPNT_MODE:
+		strcpy_s(szLogMode, "CHK");
 		break;
 	case MID_MODE:
 		strcpy_s(szLogMode, "MID");

@@ -67,120 +67,6 @@ void CParseKcbpLog::ReadRlt()
 	}
 }
 
-void CParseKcbpLog::ExecMultiCmds()
-{
-	DWORD dwThreadId = GetCurrentThreadId();
-
-	g_pLog->WriteRunLog(KCXP_MODE, LOG_WARN, "Begin thread %d", dwThreadId);
-
-	int iRetCode = KCBP_MSG_OK;
-	int n = m_arrCmds.GetCount();
-
-	POSITION pos;
-	CString key, value;	
-
-	EnterCriticalSection(&ca);
-	for (int i=0; i<n; i++)
-	{
-		if (g_bThreadExit == TRUE)
-		{
-			// 线程挂起
-			break; 
-		}
-
-		LBM_PARAM_INFO *pLBM = m_arrCmds.GetAt(i);
-
-		pLBM->mapParams.Lookup("F_OP_ROLE", value);
-
-		if (value.Compare("2") == 0)
-		{
-			// OP_ROLE为2， 通过操作员委托
-			// 需要设置 测试操作员的权限
-
-			char szCustCode[50] = {0};
-
-			// cust_grant
-			pLBM->mapParams.Lookup("CUSTOMER", value);
-			if (value.IsEmpty() == TRUE)
-			{
-				pLBM->mapParams.Lookup("CUST_CODE", value);
-				if (value.IsEmpty() == TRUE)
-				{
-					pLBM->mapParams.Lookup("ACCOUNT", value);
-					if (value.IsEmpty() == TRUE)
-					{
-						// 根据资金帐号查找客户的客户号
-						GetCustCodeViaAccount(value.GetBuffer(), &szCustCode[0]);
-						value.Format("%s", szCustCode);
-					}
-				}
-			}
-
-			// 设置 测试操作员的权限
-			OpGrant(value.GetBuffer());
-		}
-		else if (value.Compare("3") == 0)
-		{
-			// OP_ROLE为1， 通过MID委托
-			// 需要首先重置客户交易密码为123444，然后登录客户
-
-			// 重置客户密码
-			if (pLBM->mapParams.Lookup("F_OP_USER", value) == TRUE)
-			{
-				if (ResetUserPwd(value.GetBuffer()) == TRUE)
-				{
-					// 客户登录
-					CLoginVistor login;
-					login.Vistor(value.GetBuffer());
-				}				
-			}
-			else
-			{
-				// 可能是登录消息， 不处理
-			}		
-		}
-		LeaveCriticalSection(&ca);
-
-		m_pKcxpConn->BeginWrite();
-
-		for( pos = pLBM->mapParams.GetStartPosition(); pos != NULL; )
-		{
-			pLBM->mapParams.GetNextAssoc( pos, key, value);
-
-			if (iRetCode = m_pKcxpConn->SetValue(key.GetBuffer(), value.GetBuffer()) != KCBP_MSG_OK)
-			{
-				g_pLog->WriteRunLog(KCXP_MODE, LOG_WARN, "KCXP SET VALUE Failed: LBM:%s, ParamName:%s, ParamVal:%s",
-					pLBM->szLbmId, key.GetBuffer(), value.GetBuffer());				
-			}
-		}
-
-		// Execute LBM
-		if ((iRetCode = m_pKcxpConn->CallProgramAndCommit(pLBM->szLbmId)) != KCBP_MSG_OK)
-		{	
-			g_pLog->WriteRunLog(KCXP_MODE, LOG_WARN, "LBM[%s]调用失败,ERRCODE = %ld", pLBM->szLbmId, iRetCode);			
-		}
-
-		// 判断执行结果
-		int nRow = 0;
-
-		if ((iRetCode = m_pKcxpConn->RsOpen()) == KCBP_MSG_OK)
-		{
-			// 获取结果集行数，注意行数是包括标题的，因此行数要减1
-			m_pKcxpConn->RsGetRowNum(&nRow);
-
-			if (nRow <= 1)
-			{
-				g_pLog->WriteRunLog(KCXP_MODE, LOG_WARN, "LBM[%s]执行失败,ERRCODE = %ld", pLBM->szLbmId, iRetCode);
-			}
-		}
-
-		// 休眠，等待数据库更新
-		Sleep(g_pCfg->GetRefreshDBGap());
-
-		g_pLog->WriteRunLog(KCXP_MODE, LOG_WARN, "End thread %d", dwThreadId);
-	}
-}
-
 BOOL CParseKcbpLog::ResetUserPwd( char *szUserCode )
 {
 	CKDMidCli *m_pKcxpConn = g_pKcxpConn->GetKdMidCli();
@@ -424,3 +310,287 @@ void CParseKcbpLog::GetCustCodeViaAccount( char *pAccount, char *pCustCode )
 	}
 }
 
+void CParseKcbpLog::ExecMultiCmds_1()
+{
+	DWORD dwThreadId = GetCurrentThreadId();
+
+	g_pLog->WriteRunLog(KCXP_MODE, LOG_WARN, "Begin thread %d", dwThreadId);
+
+	int iRetCode = KCBP_MSG_OK;
+	int nIdx = m_arrCmds.GetCount();
+
+	POSITION pos;
+	CString key, value;	
+
+	for (int n=0; n<nIdx; n++)
+	{
+		if (g_bThreadExit == TRUE)
+		{
+			// 线程挂起
+			break; 
+		}
+
+		LBM_PARAM_INFO *pLBM = m_arrCmds.GetAt(n);
+
+		pLBM->mapParams.Lookup("F_OP_ROLE", value);
+
+		if (value.Compare("2") == 0)
+		{
+			// OP_ROLE为2， 通过操作员委托
+			// 需要设置 测试操作员的权限
+
+			char szCustCode[50] = {0};
+
+			// cust_grant
+			pLBM->mapParams.Lookup("CUSTOMER", value);
+			if (value.IsEmpty() == TRUE)
+			{
+				pLBM->mapParams.Lookup("CUST_CODE", value);
+				if (value.IsEmpty() == TRUE)
+				{
+					pLBM->mapParams.Lookup("ACCOUNT", value);
+					if (value.IsEmpty() == TRUE)
+					{
+						// 根据资金帐号查找客户的客户号
+						GetCustCodeViaAccount(value.GetBuffer(), &szCustCode[0]);
+						value.Format("%s", szCustCode);
+					}
+				}
+			}
+
+			// 设置 测试操作员的权限
+			OpGrant(value.GetBuffer());
+		}
+		else if (value.Compare("3") == 0)
+		{
+			// OP_ROLE为1， 通过MID委托
+			// 需要首先重置客户交易密码为123444，然后登录客户
+
+			// 重置客户密码
+			if (pLBM->mapParams.Lookup("F_OP_USER", value) == TRUE)
+			{
+				if (ResetUserPwd(value.GetBuffer()) == TRUE)
+				{
+					// 客户登录
+					CLoginVistor login;
+					login.Vistor(value.GetBuffer());
+				}				
+			}
+			else
+			{
+				// 可能是登录消息， 不处理
+			}		
+		}		
+
+		m_pKcxpConn->BeginWrite();
+
+		for( pos = pLBM->mapParams.GetStartPosition(); pos != NULL; )
+		{
+			pLBM->mapParams.GetNextAssoc( pos, key, value);
+
+			if (iRetCode = m_pKcxpConn->SetValue(key.GetBuffer(), value.GetBuffer()) != KCBP_MSG_OK)
+			{
+				g_pLog->WriteRunLog(KCXP_MODE, LOG_WARN, "KCXP SET VALUE Failed: LBM:%s, ParamName:%s, ParamVal:%s",
+					pLBM->szLbmId, key.GetBuffer(), value.GetBuffer());				
+			}
+		}
+
+		// Execute LBM
+		if ((iRetCode = m_pKcxpConn->CallProgramAndCommit(pLBM->szLbmId)) != KCBP_MSG_OK)
+		{	
+			g_pLog->WriteRunLog(KCXP_MODE, LOG_WARN, "LBM[%s]调用失败,ERRCODE = %ld", pLBM->szLbmId, iRetCode);			
+		}
+	}
+
+	g_pLog->WriteRunLog(KCXP_MODE, LOG_WARN, "End thread %d", dwThreadId);
+}
+
+void CParseKcbpLog::ExecMultiCmds_2()
+{
+	DWORD dwThreadId = GetCurrentThreadId();
+
+	g_pLog->WriteRunLog(KCXP_MODE, LOG_WARN, "Begin thread %d", dwThreadId);
+
+	int iRetCode = KCBP_MSG_OK;
+	int nIdx = m_arrCmds.GetCount();
+
+	POSITION pos;
+	CString key, value;	
+
+	for (int n=0; n<nIdx; n++)
+	{
+		if (g_bThreadExit == TRUE)
+		{
+			// 线程挂起
+			break; 
+		}
+
+		LBM_PARAM_INFO *pLBM = m_arrCmds.GetAt(n);
+
+		pLBM->mapParams.Lookup("F_OP_ROLE", value);
+
+		if (value.Compare("2") == 0)
+		{
+			// OP_ROLE为2， 通过操作员委托
+			// 需要设置 测试操作员的权限
+
+			char szCustCode[50] = {0};
+
+			// cust_grant
+			pLBM->mapParams.Lookup("CUSTOMER", value);
+			if (value.IsEmpty() == TRUE)
+			{
+				pLBM->mapParams.Lookup("CUST_CODE", value);
+				if (value.IsEmpty() == TRUE)
+				{
+					pLBM->mapParams.Lookup("ACCOUNT", value);
+					if (value.IsEmpty() == TRUE)
+					{
+						// 根据资金帐号查找客户的客户号
+						GetCustCodeViaAccount(value.GetBuffer(), &szCustCode[0]);
+						value.Format("%s", szCustCode);
+					}
+				}
+			}
+
+			// 设置 测试操作员的权限
+			OpGrant(value.GetBuffer());
+		}
+		else if (value.Compare("3") == 0)
+		{
+			// OP_ROLE为1， 通过MID委托
+			// 需要首先重置客户交易密码为123444，然后登录客户
+
+			// 重置客户密码
+			if (pLBM->mapParams.Lookup("F_OP_USER", value) == TRUE)
+			{
+				if (ResetUserPwd(value.GetBuffer()) == TRUE)
+				{
+					// 客户登录
+					CLoginVistor login;
+					login.Vistor(value.GetBuffer());
+				}				
+			}
+			else
+			{
+				// 可能是登录消息， 不处理
+			}		
+		}		
+
+		m_pKcxpConn->BeginWrite();
+
+		for( pos = pLBM->mapParams.GetStartPosition(); pos != NULL; )
+		{
+			pLBM->mapParams.GetNextAssoc( pos, key, value);
+
+			if (iRetCode = m_pKcxpConn->SetValue(key.GetBuffer(), value.GetBuffer()) != KCBP_MSG_OK)
+			{
+				g_pLog->WriteRunLog(KCXP_MODE, LOG_WARN, "KCXP SET VALUE Failed: LBM:%s, ParamName:%s, ParamVal:%s",
+					pLBM->szLbmId, key.GetBuffer(), value.GetBuffer());				
+			}
+		}
+
+		// Execute LBM
+		if ((iRetCode = m_pKcxpConn->CallProgramAndCommit(pLBM->szLbmId)) != KCBP_MSG_OK)
+		{	
+			g_pLog->WriteRunLog(KCXP_MODE, LOG_WARN, "LBM[%s]调用失败,ERRCODE = %ld", pLBM->szLbmId, iRetCode);			
+		}		
+	}
+
+	g_pLog->WriteRunLog(KCXP_MODE, LOG_WARN, "End thread %d", dwThreadId);
+}
+
+void CParseKcbpLog::ExecMultiCmds_3()
+{
+	DWORD dwThreadId = GetCurrentThreadId();
+
+	g_pLog->WriteRunLog(KCXP_MODE, LOG_WARN, "Begin thread %d", dwThreadId);
+
+	int iRetCode = KCBP_MSG_OK;
+	int nIdx = m_arrCmds.GetCount();
+
+	POSITION pos;
+	CString key, value;	
+
+	for (int n=0; n<nIdx; n++)
+	{
+		if (g_bThreadExit == TRUE)
+		{
+			// 线程挂起
+			break; 
+		}
+
+		LBM_PARAM_INFO *pLBM = m_arrCmds.GetAt(n);
+
+		pLBM->mapParams.Lookup("F_OP_ROLE", value);
+
+		if (value.Compare("2") == 0)
+		{
+			// OP_ROLE为2， 通过操作员委托
+			// 需要设置 测试操作员的权限
+
+			char szCustCode[50] = {0};
+
+			// cust_grant
+			pLBM->mapParams.Lookup("CUSTOMER", value);
+			if (value.IsEmpty() == TRUE)
+			{
+				pLBM->mapParams.Lookup("CUST_CODE", value);
+				if (value.IsEmpty() == TRUE)
+				{
+					pLBM->mapParams.Lookup("ACCOUNT", value);
+					if (value.IsEmpty() == TRUE)
+					{
+						// 根据资金帐号查找客户的客户号
+						GetCustCodeViaAccount(value.GetBuffer(), &szCustCode[0]);
+						value.Format("%s", szCustCode);
+					}
+				}
+			}
+
+			// 设置 测试操作员的权限
+			OpGrant(value.GetBuffer());
+		}
+		else if (value.Compare("3") == 0)
+		{
+			// OP_ROLE为1， 通过MID委托
+			// 需要首先重置客户交易密码为123444，然后登录客户
+
+			// 重置客户密码
+			if (pLBM->mapParams.Lookup("F_OP_USER", value) == TRUE)
+			{
+				if (ResetUserPwd(value.GetBuffer()) == TRUE)
+				{
+					// 客户登录
+					CLoginVistor login;
+					login.Vistor(value.GetBuffer());
+				}				
+			}
+			else
+			{
+				// 可能是登录消息， 不处理
+			}		
+		}		
+
+		m_pKcxpConn->BeginWrite();
+
+		for( pos = pLBM->mapParams.GetStartPosition(); pos != NULL; )
+		{
+			pLBM->mapParams.GetNextAssoc( pos, key, value);
+
+			if (iRetCode = m_pKcxpConn->SetValue(key.GetBuffer(), value.GetBuffer()) != KCBP_MSG_OK)
+			{
+				g_pLog->WriteRunLog(KCXP_MODE, LOG_WARN, "KCXP SET VALUE Failed: LBM:%s, ParamName:%s, ParamVal:%s",
+					pLBM->szLbmId, key.GetBuffer(), value.GetBuffer());				
+			}
+		}
+
+		// Execute LBM
+		if ((iRetCode = m_pKcxpConn->CallProgramAndCommit(pLBM->szLbmId)) != KCBP_MSG_OK)
+		{	
+			g_pLog->WriteRunLog(KCXP_MODE, LOG_WARN, "LBM[%s]调用失败,ERRCODE = %ld", pLBM->szLbmId, iRetCode);			
+		}		
+	}
+
+	g_pLog->WriteRunLog(KCXP_MODE, LOG_WARN, "End thread %d", dwThreadId);
+}

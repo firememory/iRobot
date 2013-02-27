@@ -8,7 +8,9 @@
 
 #define  MAX_THREAD_NUM 3
 HANDLE g_Event;
-DWORD WINAPI RunThread(LPVOID);
+DWORD WINAPI RunThread_1(LPVOID);
+DWORD WINAPI RunThread_2(LPVOID);
+DWORD WINAPI RunThread_3(LPVOID);
 CRITICAL_SECTION ca;
 
 extern BOOL g_bThreadExit;
@@ -126,7 +128,9 @@ void CPageStressTest::OnBnClickedButtonReadKcbpLog()
 
 		for (int i=0;i<MAX_THREAD_NUM;i++)
 		{
-			::CreateThread(NULL, 0, RunThread, this, 0, NULL); 
+			::CreateThread(NULL, 0, RunThread_1, this, 0, NULL); 
+			::CreateThread(NULL, 0, RunThread_2, this, 0, NULL); 
+			::CreateThread(NULL, 0, RunThread_3, this, 0, NULL); 
 		}
 	}		
 }
@@ -147,7 +151,39 @@ LRESULT CPageStressTest::OnStatusUpdate( WPARAM wParam, LPARAM lParam )
 	return 1;
 }
 
-DWORD WINAPI RunThread(LPVOID pParam)
+DWORD WINAPI RunThread_1(LPVOID pParam)
+{
+	DWORD dwThreadId = 0;
+	DWORD dwCnt = 0;
+
+	CPageStressTest *pPageStressTest = (CPageStressTest *)pParam;	
+
+	while(WAIT_OBJECT_0 == ::WaitForSingleObject(g_Event, INFINITE))
+	{					
+		g_pParseKcbpLog->ExecMultiCmds_1();
+		pPageStressTest->PostMessage(WM_STATUS_UPDATE, 0, 0);		
+	}
+
+	return 1;
+}
+
+DWORD WINAPI RunThread_2(LPVOID pParam)
+{
+	DWORD dwThreadId = 0;
+	DWORD dwCnt = 0;
+
+	CPageStressTest *pPageStressTest = (CPageStressTest *)pParam;	
+
+	while(WAIT_OBJECT_0 == ::WaitForSingleObject(g_Event, INFINITE))
+	{					
+		g_pParseKcbpLog->ExecMultiCmds_2();
+		pPageStressTest->PostMessage(WM_STATUS_UPDATE, 0, 0);
+	}
+
+	return 1;
+}
+
+DWORD WINAPI RunThread_3(LPVOID pParam)
 {
 	DWORD dwThreadId = 0;
 	DWORD dwCnt = 0;
@@ -156,12 +192,8 @@ DWORD WINAPI RunThread(LPVOID pParam)
 
 	while(WAIT_OBJECT_0 == ::WaitForSingleObject(g_Event, INFINITE))
 	{			
-		EnterCriticalSection(&ca);
-		
-		LeaveCriticalSection(&ca);
-		
-		g_pParseKcbpLog->ExecMultiCmds();
-		pPageStressTest->PostMessage(WM_STATUS_UPDATE, 0, 0);
+		g_pParseKcbpLog->ExecMultiCmds_3();
+		pPageStressTest->PostMessage(WM_STATUS_UPDATE, 0, 0);		
 	}
 
 	return 1;
