@@ -72,6 +72,12 @@ public:
 	char* GetSecu_Acc_SHA() { return &m_szSecu_Acc_SHA[0]; }
 	void SetSecu_Acc_SHA(char *val) { strcpy_s(m_szSecu_Acc_SHA, val); }
 
+	char* GetSecu_Acc_SZB() { return &m_szSecu_Acc_SZB[0]; }
+	void SetSecu_Acc_SZB(char *val) { strcpy_s(m_szSecu_Acc_SZB, val); }
+
+	char* GetSecu_Acc_SHB() { return &m_szSecu_Acc_SHB[0]; }
+	void SetSecu_Acc_SHB(char *val) { strcpy_s(m_szSecu_Acc_SHB, val); }
+
 	int GetRefreshDBGap() const { return m_nRefreshDBGap; }
 	void SetRefreshDBGap(int val) { m_nRefreshDBGap = val; }
 
@@ -124,6 +130,8 @@ private:
 
 	char m_szSecu_Acc_SZA[15]; // 深圳A股 股东代码
 	char m_szSecu_Acc_SHA[15]; // 上海A股 股东代码
+	char m_szSecu_Acc_SZB[15]; // 深圳B股 股东代码
+	char m_szSecu_Acc_SHB[15]; // 上海B股 股东代码
 
 	char m_szSZA_BIND_SEAT[10]; // 深A席位
 	char m_szSHA_BIND_SEAT[10]; // 沪A席位

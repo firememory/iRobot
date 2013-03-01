@@ -110,13 +110,23 @@ BOOL CLoginVistor::ResultStrToTable(char *pRetStr)
 							strncpy_s(m_pLoginMsg[nRow].szSecuAcc, q, 15);
 							if (strcmp(m_pLoginMsg[nRow].szMarket, "00") == 0)
 							{
-								// 深市
+								// 深A
 								g_pCfg->SetSecu_Acc_SZA(q);
 							}
 							else if (strcmp(m_pLoginMsg[nRow].szMarket, "10") == 0)
 							{
-								// 沪市
+								// 沪A
 								g_pCfg->SetSecu_Acc_SHA(q);
+							}
+							else if (strcmp(m_pLoginMsg[nRow].szMarket, "01") == 0)
+							{
+								// 深B
+								g_pCfg->SetSecu_Acc_SZB(q);
+							}
+							else if (strcmp(m_pLoginMsg[nRow].szMarket, "11") == 0)
+							{
+								// 沪B
+								g_pCfg->SetSecu_Acc_SHB(q);
 							}
 						}
 						break;

@@ -9,6 +9,9 @@
 #include "SHA_BuyVistor.h"
 #include "SHA_SellVistor.h"
 
+#include "SZB_BuyVistor.h"
+#include "SHB_BuyVistor.h"
+
 #include "QuerySecuAccVistor.h"
 #include "QueryShares.h"
 
@@ -39,6 +42,9 @@ private:
 	CSZA_SellVistor SZA_SellVistor; // 深圳A股卖出
 	CSHA_BuyVistor SHA_BuyVistor; // 上海A股买入
 	CSHA_SellVistor SHA_SellVistor; // 上海A股卖出
+
+	CSZB_BuyVistor SZB_BuyVistor; // 深圳B股买入
+	CSHB_BuyVistor SHB_BuyVistor; // 上海B股买入
 
 	CQueryShares QueryShares; // 查询股份
 	CQuerySecuAccVistor QuerySecuAcc; // 查询股东
