@@ -26,13 +26,8 @@ public:
 	// 向Mid发送消息
 	BOOL SendMidMsg(char *);
 
-	// 用例1: 限价买入
 	BOOL TestCase_1(); 
-
-	// 用例2: 市价买入: 五档即时成交剩余撤销 VB
 	BOOL TestCase_2();
-
-	// 用例3: 市价买入: 五档即时成交剩余转限 UB
 	BOOL TestCase_3();
 	BOOL TestCase_4();
 	BOOL TestCase_5();
