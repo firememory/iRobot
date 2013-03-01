@@ -198,7 +198,7 @@ void CLoginterface::WriteRunLog(int nMode, int nLogLevel, const char *msg, ...)
 		int nLength = (int)m_pDlg->m_ctrlLogMsg.SendMessage(WM_GETTEXTLENGTH); 
 		m_pDlg->m_ctrlLogMsg.SetSel(nLength, nLength); 
 
-		if (nMode == FAIL_MODE)
+		if (nMode == TEST_CASE_MODE_FAIL)
 		{
 			CHARFORMAT cf;
 			
@@ -244,7 +244,11 @@ void CLoginterface::WriteRunLog(int nMode, int nLogLevel, const char *msg, ...)
 		strcpy_s(szLogMode, "SYS");
 		break;
 	case CHKPNT_MODE:
-		strcpy_s(szLogMode, "CHK");
+			 strcpy_s(szLogMode, "CHKPNT");
+		break;
+	case TEST_CASE_MODE_FAIL:
+	case TEST_CASE_MODE_SUCC:
+		strcpy_s(szLogMode, "TEST_CASE");
 		break;
 	case MID_MODE:
 		strcpy_s(szLogMode, "MID");

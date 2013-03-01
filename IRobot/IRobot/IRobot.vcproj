@@ -315,19 +315,11 @@
 					>
 				</File>
 				<File
-					RelativePath=".\SHA_SJ_BuyVistor.cpp"
+					RelativePath=".\SHA_BuyVistor.cpp"
 					>
 				</File>
 				<File
-					RelativePath=".\SHA_XJ_BuyVistor.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\SZA_SJ_BuyVistor.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\SZA_XJ_BuyVistor.cpp"
+					RelativePath=".\SZA_BuyVistor.cpp"
 					>
 				</File>
 			</Filter>
@@ -465,19 +457,11 @@
 					>
 				</File>
 				<File
-					RelativePath=".\SHA_SJ_BuyVistor.h"
+					RelativePath=".\SHA_BuyVistor.h"
 					>
 				</File>
 				<File
-					RelativePath=".\SHA_XJ_BuyVistor.h"
-					>
-				</File>
-				<File
-					RelativePath=".\SZA_SJ_BuyVistor.h"
-					>
-				</File>
-				<File
-					RelativePath=".\SZA_XJ_BuyVistor.h"
+					RelativePath=".\SZA_BuyVistor.h"
 					>
 				</File>
 			</Filter>

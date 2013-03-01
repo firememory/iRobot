@@ -12,7 +12,7 @@ CLoginVistor::CLoginVistor(void)
 {
 	m_pLoginMsg = NULL;
 
-	strcpy_s(m_szTestCaseName, "客户登录");
+	strcpy_s(m_szServiceName, "客户登录");
 }
 
 CLoginVistor::~CLoginVistor(void)

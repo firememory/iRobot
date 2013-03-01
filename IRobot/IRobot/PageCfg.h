@@ -85,4 +85,6 @@ public:
 private:
 	CButton m_ctrlBtnGetCfg;
 	CButton m_ctrlBtnSetCfg;
+
+	BOOL m_bIsComboxInit;
 };

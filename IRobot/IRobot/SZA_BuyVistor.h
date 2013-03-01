@@ -2,21 +2,18 @@
 
 #include "IPCKDGateWayVistor.h"
 
-#define DEFAULT_LEN 30
-
 /************************************************************************/
-/* 深A 限价买入                                                         */
+/* 深A股买入                                                         */
 /************************************************************************/
-class CSHA_SJ_BuyVistor
+class CSZA_BuyVistor
 	: public IPCKDGateWayVistor
 {
 public:
-	CSHA_SJ_BuyVistor(void);
-	virtual ~CSHA_SJ_BuyVistor(void);
+	CSZA_BuyVistor(void);
+	virtual ~CSZA_BuyVistor(void);
 
 	virtual BOOL Vistor();
-	virtual BOOL ResultStrToTable(char *);
-	virtual BOOL SendMsg(char *);
+	virtual BOOL ResultStrToTable(char *);	
 
 	// 在执行前，获取一把相关数据，与执行后数据进行比较
 	BOOL InitUserData();
@@ -24,24 +21,36 @@ public:
 	BOOL GetMatchedData();
 
 	// 向KCXP发送消息
-	BOOL SendKcxpMsg();
+	BOOL SendKcxpMsg(char *);
 
 	// 向Mid发送消息
-	BOOL SendMidMsg();
+	BOOL SendMidMsg(char *);
 
-	BOOL ChkPnt1();
-	void ChkPnt2();
+	// 用例1: 限价买入
+	BOOL TestCase_1(); 
+
+	// 用例2: 市价买入: 五档即时成交剩余撤销 VB
+	BOOL TestCase_2();
+
+	// 用例3: 市价买入: 五档即时成交剩余转限 UB
+	BOOL TestCase_3();
+	BOOL TestCase_4();
+	BOOL TestCase_5();
+	BOOL TestCase_6();
+
+	BOOL ChkData();
 
 private:
 	MID_403_ORDER_RET_MSG *m_pMsg;
 	int m_nRowNum;
 
-	char m_szSecu_intl[DEFAULT_LEN];		// 证券代码
+	char m_szSecu_Intl[DEFAULT_LEN];		// 证券代码
+	char m_szSecu_Code[DEFAULT_LEN];		// 证券代码
 	char m_szPrice[DEFAULT_LEN];			// 委托价格
 	char m_szQty[DEFAULT_LEN];				// 委托数量
 
-	char m_szMarket[2];
-	char m_szBoard[2];
+	char m_szMarket_Board[3];
+	char m_szTrdId[3];
 
 	// 检测数据
 	float m_fMatched_OrderFrzAmt;	// 成交的交易冻结金额
@@ -60,7 +69,6 @@ private:
 	float m_fCptlTrdFrz_Old;		// 交易冻结
 	float m_fCptlOutstanding_Old;	// 在途资金
 	float m_fCptlOtdAvl_Old;		// 在途可用
-
 
 	int m_nShareBln_New;			// 股份余额
 	int m_nShareAvl_New;			// 股份可用

@@ -55,7 +55,7 @@ void CPageStressTest::DoDataExchange(CDataExchange* pDX)
 
 BEGIN_MESSAGE_MAP(CPageStressTest, CPropertyPage)
 	ON_BN_CLICKED(IDC_BUTTON_PERFORMANCE, &CPageStressTest::OnBnClickedButtonPerformance)
-	ON_NOTIFY(NM_CUSTOMDRAW, IDC_SLIDER1, &CPageStressTest::OnNMCustomdrawSlider1)
+	ON_NOTIFY(NM_CUSTOMDRAW, IDC_SLIDER_THREAD_NUM, &CPageStressTest::OnNMCustomdrawSlider1)
 	ON_BN_CLICKED(IDC_BUTTON_PAUSE_THREAD, &CPageStressTest::OnBnClickedPauseThread)
 	ON_BN_CLICKED(IDC_BUTTON_READ_KCBP_LOG, &CPageStressTest::OnBnClickedButtonReadKcbpLog)
 	ON_MESSAGE(WM_STATUS_UPDATE, &CPageStressTest::OnStatusUpdate)

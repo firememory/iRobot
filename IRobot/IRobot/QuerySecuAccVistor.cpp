@@ -19,7 +19,7 @@ CQuerySecuAccVistor::CQuerySecuAccVistor(void)
 {
 	m_pMsg = NULL;
 	m_nRowNum = 0;
-	strcpy_s(m_szTestCaseName, "客户股东查询");
+	strcpy_s(m_szServiceName, "客户股东查询");
 }
 
 CQuerySecuAccVistor::~CQuerySecuAccVistor(void)
@@ -30,10 +30,8 @@ CQuerySecuAccVistor::~CQuerySecuAccVistor(void)
 
 BOOL CQuerySecuAccVistor::Vistor()
 {
-	BOOL bRet = TRUE;	
-
-	bRet = ChkPnt1();
-	
+	BOOL bRet = TRUE;
+	ExecTestCase(TestCase_1, "客户股东查询");
 	return bRet;
 }
 
@@ -110,7 +108,7 @@ BOOL CQuerySecuAccVistor::ResultStrToTable(char *pRetStr)
 }
 
 
-BOOL CQuerySecuAccVistor::ChkPnt1()
+BOOL CQuerySecuAccVistor::TestCase_1()
 {
 	/*
 		检查以下信息
@@ -119,10 +117,28 @@ BOOL CQuerySecuAccVistor::ChkPnt1()
 	BOOL bRet = TRUE;
 
 	// 发送数据
-	if (TRUE != SendMsg(NULL))
+
+	// TODO: KCXP 接口有问题, Market参数返回1位, 因此暂不提供KCXP接口测试
+	char szTemp[2048] = {0};
+	sprintf_s(szTemp,"501|%s|||", g_pCfg->GetCustID());
+	bRet = SendMidMsg(&szTemp[0]);
+	/*
+	if (g_pCfg->GetTestMode() == USE_MID)
 	{
-		return FALSE;
+		sprintf_s(szTemp,"501|%s|||", g_pCfg->GetCustID());
+		bRet = SendMidMsg(&szTemp[0]);
 	}
+	else
+	{
+		sprintf_s(szTemp,"<  29294788> BEGIN:L0301002:27-10:39:01-384953  [_CA=2.3&_ENDIAN=0&F_OP_ROLE=2&F_OP_USER=%s&F_OP_BRANCH=%s&F_SESSION=%s&F_CHANNEL=0&F_OP_SITE=99999&CUSTOMER=%s]",
+			g_pCfg->GetOpId().GetBuffer(), g_pCfg->GetBranch().GetBuffer(), g_pKcxpConn->GetSession(), g_pCfg->GetCustID().GetBuffer());
+
+		bRet = SendKcxpMsg(&szTemp[0]);
+
+		// 清空日志解析，便于下一次操作
+		g_pParseKcbpLog->Clean();
+	}
+	*/
 
 	// 休眠，等待数据库更新
 	Sleep(g_pCfg->GetRefreshDBGap());
@@ -140,28 +156,10 @@ BOOL CQuerySecuAccVistor::ChkPnt1()
 	return bRet;
 }
 
-BOOL CQuerySecuAccVistor::SendMsg(char *pMsg)
-{
-	BOOL bRet = TRUE;
-
-	if (g_pCfg->GetTestMode() == USE_MID)
-	{
-		bRet = SendMidMsg();
-	}
-	else
-	{
-		bRet = SendKcxpMsg();
-		
-		// 清空日志解析，便于下一次操作
-		g_pParseKcbpLog->Clean();
-	}
-
-	return bRet;
-}
-
-BOOL CQuerySecuAccVistor::SendKcxpMsg()
+BOOL CQuerySecuAccVistor::SendKcxpMsg(char *pCmd)
 {
 	int iRetCode = KCBP_MSG_OK;
+	char szTemp[512] = {0};
 
 	if (NULL == m_pKcxpConn)
 	{
@@ -169,16 +167,11 @@ BOOL CQuerySecuAccVistor::SendKcxpMsg()
 		return FALSE;
 	}
 
-	// 拼接发送给KCXP的命令字符串
-	char szTemp[2048] = {0};		
-	sprintf_s(szTemp,"<  29294788> BEGIN:L0301002:27-10:39:01-384953  [_CA=2.3&_ENDIAN=0&F_OP_ROLE=2&F_OP_USER=%s&F_OP_BRANCH=%s&F_SESSION=%s&F_CHANNEL=0&F_OP_SITE=99999&CUSTOMER=%s]",
-		g_pCfg->GetOpId().GetBuffer(), g_pCfg->GetBranch().GetBuffer(), g_pKcxpConn->GetSession(), g_pCfg->GetCustID().GetBuffer());
-
 	// 发送消息
 	try
 	{
 		// 解析命令
-		g_pParseKcbpLog->ParseCmd(&szTemp[0]);
+		g_pParseKcbpLog->ParseCmd(pCmd);
 
 		// 向KCXP发送命令
 		if (FALSE != g_pParseKcbpLog->ExecSingleCmd())
@@ -274,12 +267,9 @@ BOOL CQuerySecuAccVistor::SendKcxpMsg()
 	return TRUE;
 }
 
-BOOL CQuerySecuAccVistor::SendMidMsg()
+BOOL CQuerySecuAccVistor::SendMidMsg(char *pCmd)
 {
-	char szTemp[512];		
-	sprintf_s(szTemp,"501|%s|||", g_pCfg->GetCustID());
-
-	if (m_pKDGateWay->WaitAnswer(&szTemp[0])!=TRUE)
+	if (m_pKDGateWay->WaitAnswer(pCmd)!=TRUE)
 	{
 		g_pLog->WriteRunLog(MID_MODE, LOG_WARN, "[501] 委托接口, 调用失败!");
 		return FALSE;

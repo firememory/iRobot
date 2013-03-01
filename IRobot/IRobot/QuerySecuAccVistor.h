@@ -2,8 +2,6 @@
 
 #include "IPCKDGateWayVistor.h"
 
-#define DEFAULT_LEN 30
-
 /************************************************************************/
 /* 客户股东查询                                                        */
 /************************************************************************/
@@ -16,15 +14,14 @@ public:
 
 	virtual BOOL Vistor();
 	virtual BOOL ResultStrToTable(char *);
-	virtual BOOL SendMsg(char *);
 
 	// 向KCXP发送消息
-	BOOL SendKcxpMsg();
+	BOOL SendKcxpMsg(char *);
 
 	// 向Mid发送消息
-	BOOL SendMidMsg();
+	BOOL SendMidMsg(char *);
 
-	BOOL ChkPnt1();
+	BOOL TestCase_1();
 
 	BOOL ChkData(MID_501_QUERY_SECU_ACC_RET_MSG *pMsg);
 

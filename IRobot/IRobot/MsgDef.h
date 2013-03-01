@@ -1,3 +1,5 @@
+#define DEFAULT_LEN 30
+
 // 买卖委托返回结果
 struct MID_403_ORDER_RET_MSG
 {

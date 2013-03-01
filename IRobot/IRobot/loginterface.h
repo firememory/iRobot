@@ -66,11 +66,12 @@ enum LOGLEVEL
 
 enum LOG_MODE
 {
-	SYS_MODE = 0, // 系统日志
-	CHKPNT_MODE, // 业务日志
+	SYS_MODE = 0, // 系统日志	
 	MID_MODE, // MID 接口日志
 	KCXP_MODE, // KCXP接口日志
-	FAIL_MODE  // 业务执行失败
+	CHKPNT_MODE, // 检查点日志
+	TEST_CASE_MODE_SUCC, // 测试用例执行结果
+	TEST_CASE_MODE_FAIL  // 测试用例执行结果
 };
 
 struct LEVEL_DESCRIPTION
@@ -90,7 +91,7 @@ public:
 
 	char m_szLogFileName[MAX_FILE_PATH];
 	char* m_pBuf;
-	LEVEL_DESCRIPTION m_stLogLevelDescription[4];
+	LEVEL_DESCRIPTION m_stLogLevelDescription[3];
 	FILE* m_pFp;
 	CRITICAL_SECTION m_lock;
 	CIRobotDlg *m_pDlg;

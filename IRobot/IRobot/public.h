@@ -68,3 +68,10 @@
 	x = NULL;\
 	}\
 }
+
+// Float小数点后两位取精度
+inline float CutFloatPnt(float fVal)
+{
+	int nVal = (int)(fVal*100+0.5);
+	return (float)nVal / 100;
+}

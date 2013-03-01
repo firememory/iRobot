@@ -46,6 +46,7 @@ CPageCfg::CPageCfg()
 	, m_nRefreshDBGap(1000)
 {
 	m_nTestMode = USE_MID;
+	m_bIsComboxInit = FALSE;
 }
 
 CPageCfg::~CPageCfg()
@@ -57,7 +58,11 @@ void CPageCfg::OnBnClickedGetCfg()
 	ReadCfg();
 
 	// 必须在g_pLog创建后，再调用这两句
-	InitComboxLogLevel();
+	if (FALSE == m_bIsComboxInit)
+	{
+		InitComboxLogLevel();
+	}
+	
 	UpdateData(FALSE);
 
 	m_ctrlKcxpIp.EnableWindow(TRUE);
@@ -187,6 +192,8 @@ void CPageCfg::InitComboxLogLevel()
 	}
 
 	m_ctrlLogLevel.SetCurSel(m_nLogLevel);
+
+	m_bIsComboxInit = TRUE;
 }
 
 void CPageCfg::OnBnClickedSetCfg()

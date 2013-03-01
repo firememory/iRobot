@@ -5,7 +5,6 @@
 #include "KcxpConn.h"
 #include "MidConn.h"
 
-
 extern CLoginterface *g_pLog;
 
 #define SERVICE_STRNCPY(member)\
@@ -67,6 +66,20 @@ extern CLoginterface *g_pLog;
 	}\
 }
 
+#define ExecTestCase(x,y)\
+{\
+	g_pLog->WriteRunLog(SYS_MODE, LOG_NOTIFY, "#TestCase# %s %s开始", m_szServiceName, y);\
+	if (FALSE == x())\
+	{\
+		g_pLog->WriteRunLog(TEST_CASE_MODE_FAIL, LOG_NOTIFY, "#TestCase# %s %s失败", m_szServiceName, y);\
+		bRet = FALSE;\
+	}\
+	else\
+	{\
+		g_pLog->WriteRunLog(TEST_CASE_MODE_SUCC, LOG_NOTIFY, "#TestCase# %s %s成功", m_szServiceName, y);\
+	}\
+}
+
 class IPCKDGateWayVistor
 {
 public:
@@ -74,13 +87,11 @@ public:
 	~IPCKDGateWayVistor(){};
 
 	virtual BOOL Vistor() = 0;
-	virtual BOOL ResultStrToTable(char *) = 0;
-	virtual BOOL SendMsg(char *) = 0;
-	virtual void BeginTest(){g_pLog->WriteRunLog(SYS_MODE, LOG_NOTIFY, "%s ==========Begin", m_szTestCaseName);};
-	virtual void EndTestSucc(char *pRet){g_pLog->WriteRunLog(SYS_MODE, LOG_NOTIFY, "%s ==========%s", m_szTestCaseName, pRet);};
-	virtual void EndTestFail(char *pRet){g_pLog->WriteRunLog(FAIL_MODE, LOG_NOTIFY, "%s ==========%s", m_szTestCaseName, pRet);};
+	virtual BOOL ResultStrToTable(char *) = 0;	
+	virtual void BeginTest(){g_pLog->WriteRunLog(SYS_MODE, LOG_NOTIFY, "%s", m_szServiceName);};
 protected:
-	char m_szTestCaseName[MAX_PATH];
+	char m_szServiceName[MAX_PATH]; // Service名称	
+
 	CKDGateway *m_pKDGateWay; // MID连接指针
 	CKDMidCli *m_pKcxpConn; // KXCP连接指针
 };

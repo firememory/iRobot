@@ -19,7 +19,7 @@ CQueryShares::CQueryShares(void)
 	m_pMsg = NULL;
 	m_nRecNum = 0;
 
-	strcpy_s(m_szTestCaseName, "客户股份查询");
+	strcpy_s(m_szServiceName, "客户股份查询");
 }
 
 CQueryShares::~CQueryShares(void)
