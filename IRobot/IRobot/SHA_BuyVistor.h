@@ -52,7 +52,7 @@ private:
 	// 检测数据
 	float m_fMatched_OrderFrzAmt;	// 成交的交易冻结金额
 	float m_fMatched_Price;	// 成交价格
-	float m_fMatched_Qty;	// 成交数量
+	int m_nMatched_Qty;	// 成交数量
 	float m_fMatchedAmt;	// 成交金额
 	float m_fMatched_SettAmt; // 清算金额
 

@@ -20,7 +20,7 @@ CSZA_BuyVistor::CSZA_BuyVistor(void)
 	m_pMsg = NULL;
 	m_nRowNum = 0;
 
-	m_fMatched_OrderFrzAmt = m_fMatched_Price = m_fMatched_Qty = m_fMatchedAmt = m_fMatched_SettAmt = 0;
+	m_fMatched_OrderFrzAmt = m_fMatched_Price = m_nMatched_Qty = m_fMatchedAmt = m_fMatched_SettAmt = 0;
 
 	m_nShareBln_Old = m_nShareAvl_Old = m_nShareTrdFrz_Old = m_nShareOtd_Old = 0;
 
@@ -818,7 +818,7 @@ BOOL CSZA_BuyVistor::GetMatchedData()
 		{								
 			DB_GET_VALUE_FLOAT("ORDER_FRZ_AMT", m_fMatched_OrderFrzAmt);
 			DB_GET_VALUE_FLOAT("MATCHED_PRICE", m_fMatched_Price);
-			DB_GET_VALUE_FLOAT("MATCHED_QTY", m_fMatched_Qty);
+			DB_GET_VALUE_INT("MATCHED_QTY", m_nMatched_Qty);
 			DB_GET_VALUE_FLOAT("MATCHED_AMT", m_fMatchedAmt);
 			DB_GET_VALUE_FLOAT("SETT_AMT", m_fMatched_SettAmt);
 
@@ -980,7 +980,7 @@ BOOL CSZA_BuyVistor::ChkData()
 		}
 
 		// 1.5 检查Shares表中【在途股份】增加matching表中的【成交数量】
-		if (m_nShareOtd_New - m_nShareOtd_Old != m_fMatched_Qty)
+		if (m_nShareOtd_New - m_nShareOtd_Old != m_nMatched_Qty)
 		{
 			bRet = FALSE;
 			g_pLog->WriteRunLog(CHKPNT_MODE, LOG_WARN, "Chk 1.5 Fail!");

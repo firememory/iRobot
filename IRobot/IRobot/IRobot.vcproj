@@ -319,6 +319,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\SHA_SellVistor.cpp"
+					>
+				</File>
+				<File
 					RelativePath=".\SZA_BuyVistor.cpp"
 					>
 				</File>
@@ -458,6 +462,10 @@
 				</File>
 				<File
 					RelativePath=".\SHA_BuyVistor.h"
+					>
+				</File>
+				<File
+					RelativePath=".\SHA_SellVistor.h"
 					>
 				</File>
 				<File
