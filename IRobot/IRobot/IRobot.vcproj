@@ -326,6 +326,10 @@
 					RelativePath=".\SZA_BuyVistor.cpp"
 					>
 				</File>
+				<File
+					RelativePath=".\SZA_SellVistor.cpp"
+					>
+				</File>
 			</Filter>
 		</Filter>
 		<Filter
@@ -470,6 +474,10 @@
 				</File>
 				<File
 					RelativePath=".\SZA_BuyVistor.h"
+					>
+				</File>
+				<File
+					RelativePath=".\SZA_SellVistor.h"
 					>
 				</File>
 			</Filter>

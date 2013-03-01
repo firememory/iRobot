@@ -5,6 +5,7 @@
 
 #include "LoginVistor.h"
 #include "SZA_BuyVistor.h"
+#include "SZA_SellVistor.h"
 #include "SHA_BuyVistor.h"
 #include "SHA_SellVistor.h"
 
@@ -35,6 +36,7 @@ private:
 	
 	CLoginVistor LoginVistor;
 	CSZA_BuyVistor SZA_BuyVistor; // 深圳A股买入
+	CSZA_SellVistor SZA_SellVistor; // 深圳A股卖出
 	CSHA_BuyVistor SHA_BuyVistor; // 上海A股买入
 	CSHA_SellVistor SHA_SellVistor; // 上海A股卖出
 
