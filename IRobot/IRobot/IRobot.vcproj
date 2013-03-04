@@ -327,6 +327,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\SHB_SellVistor.cpp"
+					>
+				</File>
+				<File
 					RelativePath=".\SZA_BuyVistor.cpp"
 					>
 				</File>
@@ -336,6 +340,10 @@
 				</File>
 				<File
 					RelativePath=".\SZB_BuyVistor.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\SZB_SellVistor.cpp"
 					>
 				</File>
 			</Filter>
@@ -485,6 +493,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\SHB_SellVistor.h"
+					>
+				</File>
+				<File
 					RelativePath=".\SZA_BuyVistor.h"
 					>
 				</File>
@@ -494,6 +506,10 @@
 				</File>
 				<File
 					RelativePath=".\SZB_BuyVistor.h"
+					>
+				</File>
+				<File
+					RelativePath=".\SZB_SellVistor.h"
 					>
 				</File>
 			</Filter>
