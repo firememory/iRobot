@@ -40,6 +40,7 @@ CSHA_BuyVistor::CSHA_BuyVistor(void)
 	// 沪A
 	strcpy_s(m_szMarket_Board, "10");	
 	strcpy_s(m_szTrdId, "0B");
+	strcpy_s(m_szCurrency, "0");
 }
 
 CSHA_BuyVistor::~CSHA_BuyVistor(void)
@@ -145,6 +146,8 @@ BOOL CSHA_BuyVistor::TestCase_1()
 	BOOL bRet = TRUE;
 	strcpy_s(m_szTrdId, "0B");
 
+	SaveCapital();
+
 	bRet = InitUserData();
 	if (bRet == FALSE)
 	{
@@ -194,6 +197,8 @@ BOOL CSHA_BuyVistor::TestCase_2()
 	BOOL bRet = TRUE;
 	strcpy_s(m_szTrdId, "VB");
 
+	SaveCapital();
+
 	bRet = InitUserData();
 	if (bRet == FALSE)
 	{
@@ -242,6 +247,8 @@ BOOL CSHA_BuyVistor::TestCase_3()
 {
 	BOOL bRet = TRUE;
 	strcpy_s(m_szTrdId, "UB");
+
+	SaveCapital();
 
 	bRet = InitUserData();
 	if (bRet == FALSE)
@@ -473,8 +480,8 @@ BOOL CSHA_BuyVistor::InitUserData()
 	// 2. 获取Capitals表
 	try
 	{
-		strSql.Format("select * from  capital where account = %s and currency = 0",
-			g_pCfg->GetAccount().GetBuffer());
+		strSql.Format("select * from  capital where account = %s and currency = %s",
+			g_pCfg->GetAccount().GetBuffer(), m_szCurrency);
 
 		bstrSQL = strSql.AllocSysString();
 		g_pDBConn->m_pRecordset->Open(bstrSQL, (IDispatch*)g_pDBConn->m_pConnection, adOpenDynamic, adLockOptimistic, adCmdText); 
@@ -576,8 +583,8 @@ BOOL CSHA_BuyVistor::UpdateUserData()
 	// 2. 获取Capitals表
 	try
 	{
-		strSql.Format("select * from  capital where account = %s and currency = 0",
-			g_pCfg->GetAccount().GetBuffer());
+		strSql.Format("select * from  capital where account = %s and currency = %s",
+			g_pCfg->GetAccount().GetBuffer(), m_szCurrency);
 
 		bstrSQL = strSql.AllocSysString();
 		g_pDBConn->m_pRecordset->Open(bstrSQL, (IDispatch*)g_pDBConn->m_pConnection, adOpenDynamic, adLockOptimistic, adCmdText); 
@@ -837,4 +844,29 @@ BOOL CSHA_BuyVistor::ChkData()
 	}
 
 	return bRet;
+}
+
+// 客户资金蓝补
+BOOL CSHA_BuyVistor::SaveCapital()
+{
+	// 资金余额蓝补1W, 资金可用蓝补1W
+
+	// 发送数据
+	char szTemp[2048] = {0};
+
+	// 拼接发送给KCXP的命令字符串
+	sprintf_s(szTemp,"BEGIN:L0107022:04-14:42:45-051781  [_CA=2.3&_ENDIAN=0&F_OP_USER=%s&F_OP_ROLE=2&F_SESSION=%s&F_OP_SITE=00256497d99e&F_OP_BRANCH=%s&F_CHANNEL=0"
+		"&ACC_USER=%s&ACC_USER_ROLE=1&ACCOUNT=%s&CURRENCY=%s&BLN_ADJUST_AMT=10000.00&AVL_ADJUST_AMT=10000.00&OP_REMARK=]",
+		g_pCfg->GetOpId().GetBuffer(), g_pKcxpConn->GetSession(), g_pCfg->GetBranch().GetBuffer(), 
+		g_pCfg->GetCustID().GetBuffer(), g_pCfg->GetAccount().GetBuffer(), m_szCurrency);
+
+	BOOL bRet = SendKcxpMsg(&szTemp[0]);
+
+	// 清空日志解析，便于下一次操作
+	g_pParseKcbpLog->Clean();
+
+	// 休眠，等待数据库更新
+	Sleep(g_pCfg->GetRefreshDBGap());
+
+	return TRUE;
 }

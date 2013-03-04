@@ -1,5 +1,5 @@
 #include "StdAfx.h"
-#include "SZA_BuyVistor.h"
+#include "SB_BuyVistor.h"
 #include "Cfg.h"
 #include "MidConn.h"
 #include "KcxpConn.h"
@@ -15,7 +15,7 @@ extern CLoginterface *g_pLog;
 extern CDBConnect *g_pDBConn;
 extern CParseKcbpLog *g_pParseKcbpLog;
 
-CSZA_BuyVistor::CSZA_BuyVistor(void)
+CSB_BuyVistor::CSB_BuyVistor(void)
 {
 	m_pMsg = NULL;
 	m_nRowNum = 0;
@@ -30,39 +30,35 @@ CSZA_BuyVistor::CSZA_BuyVistor(void)
 	
 	m_fCptlBln_New = m_fCptlAvl_New = m_fCptlTrdFrz_New = m_fCptlOutstanding_New = m_fCptlOtdAvl_New = 0;
 
-	strcpy_s(m_szServiceName, "深圳A股买入");
-	strcpy_s(m_szSecu_Code, "000002");
-	strcpy_s(m_szSecu_Intl, "2");
+	strcpy_s(m_szServiceName, "三板买入");
+	strcpy_s(m_szSecu_Code, "400018");
+	strcpy_s(m_szSecu_Intl, "400018");
 	strcpy_s(m_szQty, "200");
 	strcpy_s(m_szPrice, "2.55");
 
-	// 深A
-	strcpy_s(m_szMarket_Board, "00");	
+	// 深B
+	strcpy_s(m_szMarket_Board, "02");	
 	strcpy_s(m_szTrdId, "0B");
 	strcpy_s(m_szCurrency, "0"); // 人民币
 }
 
-CSZA_BuyVistor::~CSZA_BuyVistor(void)
+CSB_BuyVistor::~CSB_BuyVistor(void)
 {
 	DELCLS(m_pMsg);
 	m_nRowNum = 0;
 }
 
-BOOL CSZA_BuyVistor::Vistor()
+BOOL CSB_BuyVistor::Vistor()
 {
 	BOOL bRet = TRUE;
 
+	// B股目前只支持限价委托
 	ExecTestCase(TestCase_1, "限价买入 0B");
-	ExecTestCase(TestCase_2, "对手方最优价格委托 YB");
-	ExecTestCase(TestCase_3, "本方最有价格委托 XB");
-	ExecTestCase(TestCase_4, "即时成交剩余撤销委托 2B");
-	ExecTestCase(TestCase_5, "五档即时成交剩余撤销 VB");
-	ExecTestCase(TestCase_6, "全额成交或撤销委托 WB");
 
 	return bRet;
 }
 
-BOOL CSZA_BuyVistor::ResultStrToTable(char *pRetStr)
+BOOL CSB_BuyVistor::ResultStrToTable(char *pRetStr)
 {
 	m_nRowNum = m_pKDGateWay->GetRecNum();
 
@@ -143,7 +139,7 @@ BOOL CSZA_BuyVistor::ResultStrToTable(char *pRetStr)
 }
 
 // 限价买入
-BOOL CSZA_BuyVistor::TestCase_1()
+BOOL CSB_BuyVistor::TestCase_1()
 {
 	BOOL bRet = TRUE;
 	strcpy_s(m_szTrdId, "0B");
@@ -161,7 +157,7 @@ BOOL CSZA_BuyVistor::TestCase_1()
 	if (g_pCfg->GetTestMode() == USE_MID)
 	{
 		sprintf_s(szTemp,"403|%s|%s|%s|%s||%s|%s|%s|%s||||||||||||",
-			g_pCfg->GetCustID(), m_szMarket_Board, g_pCfg->GetSecu_Acc_SZA(), g_pCfg->GetAccount(), m_szSecu_Code, m_szTrdId, m_szPrice, m_szQty);
+			g_pCfg->GetCustID(), m_szMarket_Board, g_pCfg->GetSecu_Acc_XSB(), g_pCfg->GetAccount(), m_szSecu_Code, m_szTrdId, m_szPrice, m_szQty);
 
 		bRet = SendMidMsg(&szTemp[0]);
 	}
@@ -171,108 +167,8 @@ BOOL CSZA_BuyVistor::TestCase_1()
 		sprintf_s(szTemp,"BEGIN:L0303001:23-11:00:22-576498  [_CA=2.3&_ENDIAN=0&F_OP_USER=%s&F_OP_ROLE=2&F_SESSION=%s&F_OP_SITE=999999999999999&F_OP_BRANCH=%s&F_CHANNEL=0"
 			"&CUSTOMER=%s&MARKET=%c&BOARD=%c&SECU_ACC=%s&ACCOUNT=%s&SECU_INTL=%s&SERIAL_NO=-1&DELIST_CHANNEL=0&TRD_ID=%s&PRICE=%s&QTY=%s&SEAT=%s]",
 			g_pCfg->GetOpId().GetBuffer(), g_pKcxpConn->GetSession(), g_pCfg->GetBranch().GetBuffer(), 
-			g_pCfg->GetCustID().GetBuffer(), m_szMarket_Board[0], m_szMarket_Board[1], g_pCfg->GetSecu_Acc_SZA(), g_pCfg->GetAccount().GetBuffer(),
-			m_szSecu_Intl, m_szTrdId, m_szPrice, m_szQty, g_pCfg->GetSZA_BIND_SEAT());
-
-		bRet = SendKcxpMsg(&szTemp[0]);
-
-		// 清空日志解析，便于下一次操作
-		g_pParseKcbpLog->Clean();
-	}
-
-	if (bRet == FALSE)
-	{
-		return FALSE;	
-	}
-
-	// 休眠，等待数据库更新
-	Sleep(g_pCfg->GetRefreshDBGap());
-
-	bRet = ChkData();
-
-	return bRet;
-}
-
-BOOL CSZA_BuyVistor::TestCase_2()
-{
-	BOOL bRet = TRUE;
-	strcpy_s(m_szTrdId, "YB");
-
-	SaveCapital();
-
-	bRet = InitUserData();
-	if (bRet == FALSE)
-	{
-		return FALSE;
-	}
-
-	// 发送数据
-	char szTemp[2048] = {0};
-	if (g_pCfg->GetTestMode() == USE_MID)
-	{
-		sprintf_s(szTemp,"403|%s|%s|%s|%s||%s|%s|%s|%s||||||||||||",
-			g_pCfg->GetCustID(), m_szMarket_Board, g_pCfg->GetSecu_Acc_SZA(), g_pCfg->GetAccount(), m_szSecu_Code, m_szTrdId, m_szPrice, m_szQty);
-
-		bRet = SendMidMsg(&szTemp[0]);
-	}
-	else
-	{
-		// 拼接发送给KCXP的命令字符串		
-		sprintf_s(szTemp,"BEGIN:L0303001:23-11:00:22-576498  [_CA=2.3&_ENDIAN=0&F_OP_USER=%s&F_OP_ROLE=2&F_SESSION=%s&F_OP_SITE=999999999999999&F_OP_BRANCH=%s&F_CHANNEL=0"
-			"&CUSTOMER=%s&MARKET=%c&BOARD=%c&SECU_ACC=%s&ACCOUNT=%s&SECU_INTL=%s&SERIAL_NO=-1&DELIST_CHANNEL=0&TRD_ID=%s&PRICE=%s&QTY=%s&SEAT=%s]",
-			g_pCfg->GetOpId().GetBuffer(), g_pKcxpConn->GetSession(), g_pCfg->GetBranch().GetBuffer(), 
-			g_pCfg->GetCustID().GetBuffer(), m_szMarket_Board[0], m_szMarket_Board[1], g_pCfg->GetSecu_Acc_SZA(), g_pCfg->GetAccount().GetBuffer(),
-			m_szSecu_Intl, m_szTrdId, m_szPrice, m_szQty, g_pCfg->GetSZA_BIND_SEAT());
-
-		bRet = SendKcxpMsg(&szTemp[0]);
-
-		// 清空日志解析，便于下一次操作
-		g_pParseKcbpLog->Clean();
-	}
-
-	if (bRet == FALSE)
-	{
-		return FALSE;	
-	}
-
-	// 休眠，等待数据库更新
-	Sleep(g_pCfg->GetRefreshDBGap());
-
-	bRet = ChkData();
-
-	return bRet;
-}
-
-BOOL CSZA_BuyVistor::TestCase_3()
-{
-	BOOL bRet = TRUE;
-	strcpy_s(m_szTrdId, "XB");
-
-	SaveCapital();
-
-	bRet = InitUserData();
-	if (bRet == FALSE)
-	{
-		return FALSE;
-	}
-
-	// 发送数据
-	char szTemp[2048] = {0};
-	if (g_pCfg->GetTestMode() == USE_MID)
-	{
-		sprintf_s(szTemp,"403|%s|%s|%s|%s||%s|%s|%s|%s||||||||||||",
-			g_pCfg->GetCustID(), m_szMarket_Board, g_pCfg->GetSecu_Acc_SZA(), g_pCfg->GetAccount(), m_szSecu_Code, m_szTrdId, m_szPrice, m_szQty);
-
-		bRet = SendMidMsg(&szTemp[0]);
-	}
-	else
-	{
-		// 拼接发送给KCXP的命令字符串		
-		sprintf_s(szTemp,"BEGIN:L0303001:23-11:00:22-576498  [_CA=2.3&_ENDIAN=0&F_OP_USER=%s&F_OP_ROLE=2&F_SESSION=%s&F_OP_SITE=999999999999999&F_OP_BRANCH=%s&F_CHANNEL=0"
-			"&CUSTOMER=%s&MARKET=%c&BOARD=%c&SECU_ACC=%s&ACCOUNT=%s&SECU_INTL=%s&SERIAL_NO=-1&DELIST_CHANNEL=0&TRD_ID=%s&PRICE=%s&QTY=%s&SEAT=%s]",
-			g_pCfg->GetOpId().GetBuffer(), g_pKcxpConn->GetSession(), g_pCfg->GetBranch().GetBuffer(), 
-			g_pCfg->GetCustID().GetBuffer(), m_szMarket_Board[0], m_szMarket_Board[1], g_pCfg->GetSecu_Acc_SZA(), g_pCfg->GetAccount().GetBuffer(),
-			m_szSecu_Intl, m_szTrdId, m_szPrice, m_szQty, g_pCfg->GetSZA_BIND_SEAT());
+			g_pCfg->GetCustID().GetBuffer(), m_szMarket_Board[0], m_szMarket_Board[1], g_pCfg->GetSecu_Acc_XSB(), g_pCfg->GetAccount().GetBuffer(),
+			m_szSecu_Intl, m_szTrdId, m_szPrice, m_szQty, g_pCfg->GetXSB_BIND_SEAT());
 
 		bRet = SendKcxpMsg(&szTemp[0]);
 
@@ -294,159 +190,7 @@ BOOL CSZA_BuyVistor::TestCase_3()
 }
 
 
-BOOL CSZA_BuyVistor::TestCase_4()
-{
-	BOOL bRet = TRUE;
-	strcpy_s(m_szTrdId, "2B");
-
-	SaveCapital();
-
-	bRet = InitUserData();
-	if (bRet == FALSE)
-	{
-		return FALSE;
-	}
-
-	// 发送数据
-	char szTemp[2048] = {0};
-	if (g_pCfg->GetTestMode() == USE_MID)
-	{
-		sprintf_s(szTemp,"403|%s|%s|%s|%s||%s|%s|%s|%s||||||||||||",
-			g_pCfg->GetCustID(), m_szMarket_Board, g_pCfg->GetSecu_Acc_SZA(), g_pCfg->GetAccount(), m_szSecu_Code, m_szTrdId, m_szPrice, m_szQty);
-
-		bRet = SendMidMsg(&szTemp[0]);
-	}
-	else
-	{
-		// 拼接发送给KCXP的命令字符串		
-		sprintf_s(szTemp,"BEGIN:L0303001:23-11:00:22-576498  [_CA=2.3&_ENDIAN=0&F_OP_USER=%s&F_OP_ROLE=2&F_SESSION=%s&F_OP_SITE=999999999999999&F_OP_BRANCH=%s&F_CHANNEL=0"
-			"&CUSTOMER=%s&MARKET=%c&BOARD=%c&SECU_ACC=%s&ACCOUNT=%s&SECU_INTL=%s&SERIAL_NO=-1&DELIST_CHANNEL=0&TRD_ID=%s&PRICE=%s&QTY=%s&SEAT=%s]",
-			g_pCfg->GetOpId().GetBuffer(), g_pKcxpConn->GetSession(), g_pCfg->GetBranch().GetBuffer(), 
-			g_pCfg->GetCustID().GetBuffer(), m_szMarket_Board[0], m_szMarket_Board[1], g_pCfg->GetSecu_Acc_SZA(), g_pCfg->GetAccount().GetBuffer(),
-			m_szSecu_Intl, m_szTrdId, m_szPrice, m_szQty, g_pCfg->GetSZA_BIND_SEAT());
-
-		bRet = SendKcxpMsg(&szTemp[0]);
-
-		// 清空日志解析，便于下一次操作
-		g_pParseKcbpLog->Clean();
-	}
-
-	if (bRet == FALSE)
-	{
-		return FALSE;	
-	}
-
-	// 休眠，等待数据库更新
-	Sleep(g_pCfg->GetRefreshDBGap());
-
-	bRet = ChkData();
-
-	return bRet;
-}
-
-
-BOOL CSZA_BuyVistor::TestCase_5()
-{
-	BOOL bRet = TRUE;
-	strcpy_s(m_szTrdId, "VB");
-
-	SaveCapital();
-
-	bRet = InitUserData();
-	if (bRet == FALSE)
-	{
-		return FALSE;
-	}
-
-	// 发送数据
-	char szTemp[2048] = {0};
-	if (g_pCfg->GetTestMode() == USE_MID)
-	{
-		sprintf_s(szTemp,"403|%s|%s|%s|%s||%s|%s|%s|%s||||||||||||",
-			g_pCfg->GetCustID(), m_szMarket_Board, g_pCfg->GetSecu_Acc_SZA(), g_pCfg->GetAccount(), m_szSecu_Code, m_szTrdId, m_szPrice, m_szQty);
-
-		bRet = SendMidMsg(&szTemp[0]);
-	}
-	else
-	{
-		// 拼接发送给KCXP的命令字符串		
-		sprintf_s(szTemp,"BEGIN:L0303001:23-11:00:22-576498  [_CA=2.3&_ENDIAN=0&F_OP_USER=%s&F_OP_ROLE=2&F_SESSION=%s&F_OP_SITE=999999999999999&F_OP_BRANCH=%s&F_CHANNEL=0"
-			"&CUSTOMER=%s&MARKET=%c&BOARD=%c&SECU_ACC=%s&ACCOUNT=%s&SECU_INTL=%s&SERIAL_NO=-1&DELIST_CHANNEL=0&TRD_ID=%s&PRICE=%s&QTY=%s&SEAT=%s]",
-			g_pCfg->GetOpId().GetBuffer(), g_pKcxpConn->GetSession(), g_pCfg->GetBranch().GetBuffer(), 
-			g_pCfg->GetCustID().GetBuffer(), m_szMarket_Board[0], m_szMarket_Board[1], g_pCfg->GetSecu_Acc_SZA(), g_pCfg->GetAccount().GetBuffer(),
-			m_szSecu_Intl, m_szTrdId, m_szPrice, m_szQty, g_pCfg->GetSZA_BIND_SEAT());
-
-		bRet = SendKcxpMsg(&szTemp[0]);
-
-		// 清空日志解析，便于下一次操作
-		g_pParseKcbpLog->Clean();
-	}
-
-	if (bRet == FALSE)
-	{
-		return FALSE;	
-	}
-
-	// 休眠，等待数据库更新
-	Sleep(g_pCfg->GetRefreshDBGap());
-
-	bRet = ChkData();
-
-	return bRet;
-}
-
-
-BOOL CSZA_BuyVistor::TestCase_6()
-{
-	BOOL bRet = TRUE;
-	strcpy_s(m_szTrdId, "WB");
-
-	SaveCapital();
-
-	bRet = InitUserData();
-	if (bRet == FALSE)
-	{
-		return FALSE;
-	}
-
-	// 发送数据
-	char szTemp[2048] = {0};
-	if (g_pCfg->GetTestMode() == USE_MID)
-	{
-		sprintf_s(szTemp,"403|%s|%s|%s|%s||%s|%s|%s|%s||||||||||||",
-			g_pCfg->GetCustID(), m_szMarket_Board, g_pCfg->GetSecu_Acc_SZA(), g_pCfg->GetAccount(), m_szSecu_Code, m_szTrdId, m_szPrice, m_szQty);
-
-		bRet = SendMidMsg(&szTemp[0]);
-	}
-	else
-	{
-		// 拼接发送给KCXP的命令字符串		
-		sprintf_s(szTemp,"BEGIN:L0303001:23-11:00:22-576498  [_CA=2.3&_ENDIAN=0&F_OP_USER=%s&F_OP_ROLE=2&F_SESSION=%s&F_OP_SITE=999999999999999&F_OP_BRANCH=%s&F_CHANNEL=0"
-			"&CUSTOMER=%s&MARKET=%c&BOARD=%c&SECU_ACC=%s&ACCOUNT=%s&SECU_INTL=%s&SERIAL_NO=-1&DELIST_CHANNEL=0&TRD_ID=%s&PRICE=%s&QTY=%s&SEAT=%s]",
-			g_pCfg->GetOpId().GetBuffer(), g_pKcxpConn->GetSession(), g_pCfg->GetBranch().GetBuffer(), 
-			g_pCfg->GetCustID().GetBuffer(), m_szMarket_Board[0], m_szMarket_Board[1], g_pCfg->GetSecu_Acc_SZA(), g_pCfg->GetAccount().GetBuffer(),
-			m_szSecu_Intl, m_szTrdId, m_szPrice, m_szQty, g_pCfg->GetSZA_BIND_SEAT());
-
-		bRet = SendKcxpMsg(&szTemp[0]);
-
-		// 清空日志解析，便于下一次操作
-		g_pParseKcbpLog->Clean();
-	}
-
-	if (bRet == FALSE)
-	{
-		return FALSE;	
-	}
-
-	// 休眠，等待数据库更新
-	Sleep(g_pCfg->GetRefreshDBGap());
-
-	bRet = ChkData();
-
-	return bRet;
-}
-
-BOOL CSZA_BuyVistor::SendKcxpMsg(char *pCmd)
+BOOL CSB_BuyVistor::SendKcxpMsg(char *pCmd)
 {
 	g_pLog->WriteRunLog(KCXP_MODE, LOG_DEBUG, pCmd);
 
@@ -576,7 +320,7 @@ BOOL CSZA_BuyVistor::SendKcxpMsg(char *pCmd)
 		2.4 在途资金
 		2.5 在途可用
  */
-BOOL CSZA_BuyVistor::InitUserData()
+BOOL CSB_BuyVistor::InitUserData()
 {
 	_variant_t TheValue; //VARIANT数据类型
 	char szTmp[100] = {0};
@@ -686,7 +430,7 @@ BOOL CSZA_BuyVistor::InitUserData()
 }
 
 
-BOOL CSZA_BuyVistor::UpdateUserData()
+BOOL CSB_BuyVistor::UpdateUserData()
 {
 	_variant_t TheValue; //VARIANT数据类型
 	char szTmp[100] = {0};
@@ -733,7 +477,7 @@ BOOL CSZA_BuyVistor::UpdateUserData()
 		return FALSE;
 	}
 
-	// 2. 获取Capitals表
+	// 2. 获取Capitals表, 注意深B取港币信息
 	try
 	{
 		strSql.Format("select * from  capital where account = %s and currency = %s",
@@ -787,7 +531,7 @@ BOOL CSZA_BuyVistor::UpdateUserData()
 	return TRUE;
 }
 
-BOOL CSZA_BuyVistor::GetMatchedData()
+BOOL CSB_BuyVistor::GetMatchedData()
 {
 	CTime tm=CTime::GetCurrentTime();
 	CString strDate = tm.Format("%Y%m%d");
@@ -797,21 +541,11 @@ BOOL CSZA_BuyVistor::GetMatchedData()
 	{
 		// 1.1 检查柜台matching表中的数据是否与委托一致，并获取【持仓成本】
 		CString strSql;
-
-		if (strcmp(m_szTrdId, "0B") == 0)
-		{
-			// 限价买入
-			strSql.Format("select * from  matching where trd_date = %s and trd_id = '%s'and order_id = '%s'"
-				" and account = %s and secu_intl = %s and order_price = %s and order_qty = %s",
-				strDate, m_szTrdId, m_pMsg[0].szOrderID, m_pMsg[0].szAccount, m_szSecu_Intl, m_szPrice, m_szQty);
-		}
-		else
-		{
-			// 市价买入 不用判断委托价格
-			strSql.Format("select * from  matching where trd_date = %s and trd_id = '%s'and order_id = '%s'"
-				" and account = %s and secu_intl = %s and order_qty = %s and matched_amt > 0",
-				strDate, m_szTrdId, m_pMsg[0].szOrderID, m_pMsg[0].szAccount, m_szSecu_Intl, m_szQty);
-		}
+		
+		// 限价买入
+		strSql.Format("select * from  matching where trd_date = %s and trd_id = '%s'and order_id = '%s'"
+			" and account = %s and secu_intl = %s and order_price = %s and order_qty = %s",
+			strDate, m_szTrdId, m_pMsg[0].szOrderID, m_pMsg[0].szAccount, m_szSecu_Intl, m_szPrice, m_szQty);
 
 		BSTR bstrSQL = strSql.AllocSysString();
 		g_pDBConn->m_pRecordset->Open(bstrSQL, (IDispatch*)g_pDBConn->m_pConnection, adOpenDynamic, adLockOptimistic, adCmdText); 
@@ -854,7 +588,7 @@ BOOL CSZA_BuyVistor::GetMatchedData()
 	return bRet;
 }
 
-BOOL CSZA_BuyVistor::SendMidMsg(char *pCmd)
+BOOL CSB_BuyVistor::SendMidMsg(char *pCmd)
 {
 	g_pLog->WriteRunLog(MID_MODE, LOG_DEBUG, "Send:%s", pCmd);
 	if (m_pKDGateWay->WaitAnswer(pCmd)!=TRUE)
@@ -874,7 +608,7 @@ BOOL CSZA_BuyVistor::SendMidMsg(char *pCmd)
 	return TRUE;
 }
 
-BOOL CSZA_BuyVistor::ChkData()
+BOOL CSB_BuyVistor::ChkData()
 {
 	/*
 		检查以下信息
@@ -908,88 +642,23 @@ BOOL CSZA_BuyVistor::ChkData()
 			bRet = FALSE;
 			g_pLog->WriteRunLog(CHKPNT_MODE, LOG_WARN, "Chk 1.2 Fail!");
 		}
-		
-		if (strcmp(m_szTrdId, "0B") == 0)
-		{
-			// 限价买入，TRD_FRZ增加 等于 
-			// 1.3.检查captial表中【资金可用 AVAILABLE】减少 应该等于 Matching表中的【ORDER_FRZ_AMT】
-			// 由于精度问题，允许1以内的差异
-			if (abs(CutFloatPnt(m_fCptlAvl_Old - m_fCptlAvl_New) - m_fMatched_OrderFrzAmt) > 1)
-			{				
-				bRet = FALSE;
-				g_pLog->WriteRunLog(CHKPNT_MODE, LOG_WARN, "Chk 1.3 Fail!");
-			}
-
-			// 1.4.检查captial表中【交易冻结 TRD_FRZ】增加 等于Matching表中的【ORDER_FRZ_AMT】-【SETT_AMT】
-			if (abs(CutFloatPnt( m_fCptlTrdFrz_New - m_fCptlTrdFrz_Old) - CutFloatPnt(m_fMatched_OrderFrzAmt - m_fMatched_SettAmt)) > 1)
-			{
-				float n1 = m_fCptlTrdFrz_New - m_fCptlTrdFrz_Old;
-				float n2 = m_fMatched_SettAmt;
-
-				bRet = FALSE;
-				g_pLog->WriteRunLog(CHKPNT_MODE, LOG_WARN, "Chk 1.4 Fail!");
-			}
+				
+		// 1.3.检查captial表中【资金可用 AVAILABLE】减少 应该等于 Matching表中的【ORDER_FRZ_AMT】
+		// 由于精度问题，允许1以内的差异
+		if (abs(CutFloatPnt(m_fCptlAvl_Old - m_fCptlAvl_New) - m_fMatched_OrderFrzAmt) > 1)
+		{				
+			bRet = FALSE;
+			g_pLog->WriteRunLog(CHKPNT_MODE, LOG_WARN, "Chk 1.3 Fail!");
 		}
-		else if (strcmp(m_szTrdId, "YB") == 0)
+
+		// 1.4.检查captial表中【交易冻结 TRD_FRZ】增加 等于Matching表中的【ORDER_FRZ_AMT】-【SETT_AMT】
+		if (abs(CutFloatPnt( m_fCptlTrdFrz_New - m_fCptlTrdFrz_Old) - CutFloatPnt(m_fMatched_OrderFrzAmt - m_fMatched_SettAmt)) > 1)
 		{
-			// 市价委托 对手方最优价格委托
-			// 1.3.检查captial表中【资金可用 AVAILABLE】减少 应该等于Matching表中的【SETT_AMT】
-			// 由于精度问题，允许1以内的差异
-			float n1 = CutFloatPnt(m_fCptlAvl_Old - m_fCptlAvl_New);
-			float n2 = abs(CutFloatPnt(m_fCptlAvl_Old - m_fCptlAvl_New) - m_fMatched_SettAmt);
+			float n1 = m_fCptlTrdFrz_New - m_fCptlTrdFrz_Old;
+			float n2 = m_fMatched_SettAmt;
 
-			if (abs(CutFloatPnt(m_fCptlAvl_Old - m_fCptlAvl_New) - m_fMatched_SettAmt) > 1)
-			{								
-				bRet = FALSE;
-				g_pLog->WriteRunLog(CHKPNT_MODE, LOG_WARN, "Chk 1.3 Fail!");
-			}
-
-			// 1.4.检查captial表中【交易冻结 TRD_FRZ】增加 等于 0
-			if (CutFloatPnt( m_fCptlTrdFrz_New - m_fCptlTrdFrz_Old) != 0)
-			{
-				float n1 = m_fCptlTrdFrz_New - m_fCptlTrdFrz_Old;
-				float n2 = m_fMatched_SettAmt;
-
-				bRet = FALSE;
-				g_pLog->WriteRunLog(CHKPNT_MODE, LOG_WARN, "Chk 1.4 Fail!");
-			}
-		}
-		else if (strcmp(m_szTrdId, "XB") == 0 || strcmp(m_szTrdId, "2B") == 0 
-			|| strcmp(m_szTrdId, "VB") == 0 || strcmp(m_szTrdId, "WB") == 0)
-		{
-			// 市价委托 本方最有价格委托 XB
-			// 市价委托 即时成交剩余撤销委托 2B
-			// 市价委托 五档即时成交剩余撤销 VB
-			// 市价委托 全额成交或撤销委托 WB
-
-			// 1.3.检查captial表中【资金可用 AVAILABLE】减少 应该等于Matching表中的【ORDER_FRZ_AMT】
-			// 由于精度问题，允许1以内的差异
-			float n1 = CutFloatPnt(m_fCptlAvl_Old - m_fCptlAvl_New);
-			float n2 = abs(CutFloatPnt(m_fCptlAvl_Old - m_fCptlAvl_New) - CutFloatPnt(m_fMatched_OrderFrzAmt));
-
-			if (abs(CutFloatPnt(m_fCptlAvl_Old - m_fCptlAvl_New) - CutFloatPnt(m_fMatched_OrderFrzAmt)) > 1)
-			{
-				float n1 = CutFloatPnt(m_fCptlAvl_Old - m_fCptlAvl_New);
-				float n2 = abs(CutFloatPnt(m_fCptlAvl_Old - m_fCptlAvl_New) != CutFloatPnt(m_fMatched_OrderFrzAmt));
-
-				bRet = FALSE;
-				g_pLog->WriteRunLog(CHKPNT_MODE, LOG_WARN, "Chk 1.3 Fail!");
-			}
-
-			// 1.4.检查captial表中【交易冻结 TRD_FRZ】增加 等于Matching表中的【ORDER_FRZ_AMT】-【SETT_AMT】
-			// 由于精度问题，允许1以内的差异
-			n1 = CutFloatPnt( m_fCptlTrdFrz_New - m_fCptlTrdFrz_Old);
-			float n3 =  CutFloatPnt( m_fMatched_OrderFrzAmt - m_fMatched_SettAmt);
-			n2 = abs(CutFloatPnt( m_fCptlTrdFrz_New - m_fCptlTrdFrz_Old) - CutFloatPnt( m_fMatched_OrderFrzAmt - m_fMatched_SettAmt));
-
-			if (abs(CutFloatPnt( m_fCptlTrdFrz_New - m_fCptlTrdFrz_Old) - CutFloatPnt( m_fMatched_OrderFrzAmt - m_fMatched_SettAmt)) > 1)
-			{
-				float n1 = CutFloatPnt(m_fCptlTrdFrz_New - m_fCptlTrdFrz_Old);
-				float n2 = CutFloatPnt( m_fMatched_OrderFrzAmt - m_fMatched_SettAmt);
-
-				bRet = FALSE;
-				g_pLog->WriteRunLog(CHKPNT_MODE, LOG_WARN, "Chk 1.4 Fail!");
-			}
+			bRet = FALSE;
+			g_pLog->WriteRunLog(CHKPNT_MODE, LOG_WARN, "Chk 1.4 Fail!");
 		}
 
 		// 1.5 检查Shares表中【在途股份】增加matching表中的【成交数量】
@@ -1003,8 +672,9 @@ BOOL CSZA_BuyVistor::ChkData()
 	return bRet;
 }
 
+
 // 客户资金蓝补
-BOOL CSZA_BuyVistor::SaveCapital()
+BOOL CSB_BuyVistor::SaveCapital()
 {
 	// 资金余额蓝补1W, 资金可用蓝补1W
 
@@ -1016,7 +686,7 @@ BOOL CSZA_BuyVistor::SaveCapital()
 		"&ACC_USER=%s&ACC_USER_ROLE=1&ACCOUNT=%s&CURRENCY=%s&BLN_ADJUST_AMT=10000.00&AVL_ADJUST_AMT=10000.00&OP_REMARK=]",
 		g_pCfg->GetOpId().GetBuffer(), g_pKcxpConn->GetSession(), g_pCfg->GetBranch().GetBuffer(), 
 		g_pCfg->GetCustID().GetBuffer(), g_pCfg->GetAccount().GetBuffer(), m_szCurrency);
-	
+
 	BOOL bRet = SendKcxpMsg(&szTemp[0]);
 
 	// 清空日志解析，便于下一次操作

@@ -315,6 +315,14 @@
 					>
 				</File>
 				<File
+					RelativePath=".\SB_BuyVistor.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\SB_SellVistor.cpp"
+					>
+				</File>
+				<File
 					RelativePath=".\SHA_BuyVistor.cpp"
 					>
 				</File>
@@ -478,6 +486,14 @@
 				</File>
 				<File
 					RelativePath=".\QueryShares.h"
+					>
+				</File>
+				<File
+					RelativePath=".\SB_BuyVistor.h"
+					>
+				</File>
+				<File
+					RelativePath=".\SB_SellVistor.h"
 					>
 				</File>
 				<File

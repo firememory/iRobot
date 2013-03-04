@@ -78,6 +78,9 @@ public:
 	char* GetSecu_Acc_SHB() { return &m_szSecu_Acc_SHB[0]; }
 	void SetSecu_Acc_SHB(char *val) { strcpy_s(m_szSecu_Acc_SHB, val); }
 
+	char* GetSecu_Acc_XSB() { return &m_szSecu_Acc_XSB[0]; }
+	void SetSecu_Acc_XSB(char *val) { strcpy_s(m_szSecu_Acc_XSB, val); }
+
 	int GetRefreshDBGap() const { return m_nRefreshDBGap; }
 	void SetRefreshDBGap(int val) { m_nRefreshDBGap = val; }
 
@@ -97,8 +100,8 @@ public:
 	char* GetSHB_BIND_SEAT() { return &m_szSHB_BIND_SEAT[0]; }
 	void SetSHB_BIND_SEAT(char* val) { strcpy_s(m_szSHB_BIND_SEAT ,val); }
 
-	char* GetSB_BIND_SEAT() { return &m_szSB_BIND_SEAT[0]; }
-	void SetSB_BIND_SEAT(char* val) { strcpy_s(m_szSB_BIND_SEAT ,val); }
+	char* GetXSB_BIND_SEAT() { return &m_szXSB_BIND_SEAT[0]; }
+	void SetXSB_BIND_SEAT(char* val) { strcpy_s(m_szXSB_BIND_SEAT ,val); }
 
 private:
 	CString m_strCfgPath;
@@ -122,7 +125,8 @@ private:
 	CString m_strDBPwd;
 
 	CString m_strCustID; // 客户代码	
-	CString m_strAccount; // 资金账户	
+	CString m_strAccount; // 资金账户
+
 	CString m_strCustPwd; // 客户密码	
 	CString m_strOpId; // 操作员号
 	CString m_strOpPwd; // 操作员密码	
@@ -132,10 +136,11 @@ private:
 	char m_szSecu_Acc_SHA[15]; // 上海A股 股东代码
 	char m_szSecu_Acc_SZB[15]; // 深圳B股 股东代码
 	char m_szSecu_Acc_SHB[15]; // 上海B股 股东代码
+	char m_szSecu_Acc_XSB[15]; // 新三板 股东代码
 
 	char m_szSZA_BIND_SEAT[10]; // 深A席位
 	char m_szSHA_BIND_SEAT[10]; // 沪A席位
 	char m_szSZB_BIND_SEAT[10]; // 深B席位
 	char m_szSHB_BIND_SEAT[10]; // 沪B席位
-	char m_szSB_BIND_SEAT[10]; // 三板席位
+	char m_szXSB_BIND_SEAT[10]; // 三板席位
 };

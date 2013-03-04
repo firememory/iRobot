@@ -144,6 +144,8 @@ BOOL CSZB_BuyVistor::TestCase_1()
 	BOOL bRet = TRUE;
 	strcpy_s(m_szTrdId, "0B");
 
+	SaveCapital();
+
 	bRet = InitUserData();
 	if (bRet == FALSE)
 	{
@@ -668,4 +670,30 @@ BOOL CSZB_BuyVistor::ChkData()
 	}
 
 	return bRet;
+}
+
+
+// 客户资金蓝补
+BOOL CSZB_BuyVistor::SaveCapital()
+{
+	// 资金余额蓝补1W, 资金可用蓝补1W
+
+	// 发送数据
+	char szTemp[2048] = {0};
+
+	// 拼接发送给KCXP的命令字符串
+	sprintf_s(szTemp,"BEGIN:L0107022:04-14:42:45-051781  [_CA=2.3&_ENDIAN=0&F_OP_USER=%s&F_OP_ROLE=2&F_SESSION=%s&F_OP_SITE=00256497d99e&F_OP_BRANCH=%s&F_CHANNEL=0"
+		"&ACC_USER=%s&ACC_USER_ROLE=1&ACCOUNT=%s&CURRENCY=%s&BLN_ADJUST_AMT=10000.00&AVL_ADJUST_AMT=10000.00&OP_REMARK=]",
+		g_pCfg->GetOpId().GetBuffer(), g_pKcxpConn->GetSession(), g_pCfg->GetBranch().GetBuffer(), 
+		g_pCfg->GetCustID().GetBuffer(), g_pCfg->GetAccount().GetBuffer(), m_szCurrency);
+
+	BOOL bRet = SendKcxpMsg(&szTemp[0]);
+
+	// 清空日志解析，便于下一次操作
+	g_pParseKcbpLog->Clean();
+
+	// 休眠，等待数据库更新
+	Sleep(g_pCfg->GetRefreshDBGap());
+
+	return TRUE;
 }

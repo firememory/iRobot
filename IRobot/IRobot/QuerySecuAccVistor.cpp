@@ -333,7 +333,7 @@ BOOL CQuerySecuAccVistor::ChkData(MID_501_QUERY_SECU_ACC_RET_MSG *pMsg)
 			else if (strcmp(pMsg->szMarket, "02") == 0)
 			{
 				// Èý°å
-				g_pCfg->SetSZB_BIND_SEAT(pMsg->szBindSeat);
+				g_pCfg->SetXSB_BIND_SEAT(pMsg->szBindSeat);
 			}
 
 			g_pDBConn->m_pRecordset->Close();

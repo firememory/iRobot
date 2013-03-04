@@ -147,6 +147,8 @@ BOOL CSZA_SellVistor::TestCase_1()
 	BOOL bRet = TRUE;
 	strcpy_s(m_szTrdId, "0S");
 
+	SaveShares();
+
 	bRet = InitUserData();
 	if (bRet == FALSE)
 	{
@@ -195,6 +197,8 @@ BOOL CSZA_SellVistor::TestCase_2()
 	BOOL bRet = TRUE;
 	strcpy_s(m_szTrdId, "YS");
 
+	SaveShares();
+
 	bRet = InitUserData();
 	if (bRet == FALSE)
 	{
@@ -242,6 +246,8 @@ BOOL CSZA_SellVistor::TestCase_3()
 {
 	BOOL bRet = TRUE;
 	strcpy_s(m_szTrdId, "XS");
+
+	SaveShares();
 
 	bRet = InitUserData();
 	if (bRet == FALSE)
@@ -292,6 +298,8 @@ BOOL CSZA_SellVistor::TestCase_4()
 	BOOL bRet = TRUE;
 	strcpy_s(m_szTrdId, "2S");
 
+	SaveShares();
+
 	bRet = InitUserData();
 	if (bRet == FALSE)
 	{
@@ -341,6 +349,8 @@ BOOL CSZA_SellVistor::TestCase_5()
 	BOOL bRet = TRUE;
 	strcpy_s(m_szTrdId, "VS");
 
+	SaveShares();
+
 	bRet = InitUserData();
 	if (bRet == FALSE)
 	{
@@ -389,6 +399,8 @@ BOOL CSZA_SellVistor::TestCase_6()
 {
 	BOOL bRet = TRUE;
 	strcpy_s(m_szTrdId, "WS");
+
+	SaveShares();
 
 	bRet = InitUserData();
 	if (bRet == FALSE)
@@ -962,4 +974,28 @@ BOOL CSZA_SellVistor::ChkData()
 	}
 
 	return bRet;
+}
+
+BOOL CSZA_SellVistor::SaveShares()
+{
+	// 发送数据
+	char szTemp[2048] = {0};
+
+	// 拼接发送给KCXP的命令字符串		
+	sprintf_s(szTemp,"BEGIN:L0301009:04-10:03:27-577242  [_CA=2.3&_ENDIAN=0&F_OP_USER=%s&F_OP_ROLE=2&F_SESSION=%s&F_OP_SITE=00256497d99e&F_OP_BRANCH=%s&F_CHANNEL=0"
+		"&OPER_FLAG=1&CUSTOMER=%s&MARKET=%c&BOARD=%c&SECU_ACC=%s&ACCOUNT=%s&SECU_INTL=%s&SEAT=%s&EXT_INST=0&CQLB=0--存入股份&QTY=%s&AVG_PRICE=%s&OP_REMARK=]",
+		g_pCfg->GetOpId().GetBuffer(), g_pKcxpConn->GetSession(), g_pCfg->GetBranch().GetBuffer(), 
+		g_pCfg->GetCustID().GetBuffer(), m_szMarket_Board[0], m_szMarket_Board[1], g_pCfg->GetSecu_Acc_SZA(), g_pCfg->GetAccount().GetBuffer(),
+		m_szSecu_Intl, g_pCfg->GetSZA_BIND_SEAT(), m_szQty, m_szPrice);
+
+	// TODO:由于L0301009 执行成功，也返回FALSE，因此返回值无效， 此函数永远返回TRUE
+	BOOL bRet = SendKcxpMsg(&szTemp[0]);
+
+	// 清空日志解析，便于下一次操作
+	g_pParseKcbpLog->Clean();
+
+	// 休眠，等待数据库更新
+	Sleep(g_pCfg->GetRefreshDBGap());
+
+	return TRUE;
 }

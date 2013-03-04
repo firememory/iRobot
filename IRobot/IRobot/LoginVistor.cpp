@@ -128,6 +128,11 @@ BOOL CLoginVistor::ResultStrToTable(char *pRetStr)
 								// »¦B
 								g_pCfg->SetSecu_Acc_SHB(q);
 							}
+							else if (strcmp(m_pLoginMsg[nRow].szMarket, "02") == 0)
+							{
+								// »¦B
+								g_pCfg->SetSecu_Acc_XSB(q);
+							}
 						}
 						break;
 					case 4:

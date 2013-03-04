@@ -35,6 +35,9 @@ public:
 
 	BOOL ChkData();
 
+	// 资金蓝补
+	BOOL SaveCapital();
+
 private:
 	MID_403_ORDER_RET_MSG *m_pMsg;
 	int m_nRowNum;
@@ -46,6 +49,7 @@ private:
 
 	char m_szMarket_Board[3];
 	char m_szTrdId[3];
+	char m_szCurrency[3];
 
 	// 检测数据
 	float m_fMatched_OrderFrzAmt;	// 成交的交易冻结金额

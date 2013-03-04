@@ -3,14 +3,14 @@
 #include "IPCKDGateWayVistor.h"
 
 /************************************************************************/
-/* 沪A股买入                                                         */
+/* 深B股买入                                                         */
 /************************************************************************/
-class CSHA_BuyVistor
+class CSB_BuyVistor
 	: public IPCKDGateWayVistor
 {
 public:
-	CSHA_BuyVistor(void);
-	virtual ~CSHA_BuyVistor(void);
+	CSB_BuyVistor(void);
+	virtual ~CSB_BuyVistor(void);
 
 	virtual BOOL Vistor();
 	virtual BOOL ResultStrToTable(char *);	
@@ -26,14 +26,7 @@ public:
 	// 向Mid发送消息
 	BOOL SendMidMsg(char *);
 
-	// 用例1: 限价买入
 	BOOL TestCase_1(); 
-
-	// 用例2: 市价买入: 五档即时成交剩余撤销 VB
-	BOOL TestCase_2();
-
-	// 用例3: 市价买入: 五档即时成交剩余转限 UB
-	BOOL TestCase_3();
 
 	BOOL ChkData();
 
@@ -50,7 +43,7 @@ private:
 
 	char m_szMarket_Board[3];
 	char m_szTrdId[3];
-	char m_szCurrency[3];
+	char m_szCurrency[2]; // 币种
 
 	// 检测数据
 	float m_fMatched_OrderFrzAmt;	// 成交的交易冻结金额

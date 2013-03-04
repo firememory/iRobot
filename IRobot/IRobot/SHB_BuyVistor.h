@@ -30,6 +30,8 @@ public:
 
 	BOOL ChkData();
 
+	BOOL SaveCapital();
+
 private:
 	MID_403_ORDER_RET_MSG *m_pMsg;
 	int m_nRowNum;
