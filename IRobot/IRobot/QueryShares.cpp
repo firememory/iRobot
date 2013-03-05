@@ -155,31 +155,13 @@ BOOL CQueryShares::ResultStrToTable( char *pRetStr )
 	return TRUE;
 }
 
-BOOL CQueryShares::SendMsg( char *pMsg )
-{
-	if (m_pKDGateWay->WaitAnswer(pMsg)!=TRUE)
-	{
-		g_pLog->WriteRunLog(MID_MODE, LOG_WARN, "[403] 委托接口, 调用失败!");
-		return FALSE;
-	}
-
-	// 对柜台返回的值进行解析
-	if (ResultStrToTable(m_pKDGateWay->m_pReturnData) != TRUE)
-	{
-		g_pLog->WriteRunLog(MID_MODE, LOG_WARN, "[403] 委托接口, 解析失败!");
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
 BOOL CQueryShares::ChkPnt1()
 {
 	BOOL bRet = TRUE;
 	char szMsg[512];
 	sprintf_s(szMsg,"504|%s|%s|||||", g_pCfg->GetCustID(), g_pCfg->GetAccount());
 
-	if (TRUE != SendMsg(szMsg))
+	if (TRUE != SendMidMsg(szMsg))
 	{
 		return FALSE;
 	}
@@ -190,14 +172,18 @@ BOOL CQueryShares::ChkPnt1()
 		strSql.Format("select * from shares where account = %s", g_pCfg->GetAccount());
 
 		BSTR bstrSQL = strSql.AllocSysString();
-		g_pDBConn->m_pRecordset->Open(bstrSQL, (IDispatch*)g_pDBConn->m_pConnection, adOpenDynamic, adLockOptimistic, adCmdText); 
+		_RecordsetPtr pRecordSet;
+		pRecordSet.CreateInstance(__uuidof(Recordset));
+
+		if (!g_pDBConn->QueryData(bstrSQL, pRecordSet)) 
+			return FALSE;
 
 		_variant_t TheValue; //VARIANT数据类型
 		char szTmp[100] = {0};
 
-		while(!g_pDBConn->m_pRecordset->adoEOF)
+		while(!pRecordSet->adoEOF)
 		{	
-			TheValue = g_pDBConn->m_pRecordset->GetCollect("SECU_INTL");
+			TheValue = pRecordSet->GetCollect("SECU_INTL");
 
 			if(TheValue.vt!=VT_NULL)
 			{	
@@ -232,10 +218,10 @@ BOOL CQueryShares::ChkPnt1()
 					}
 				}
 			}
-			g_pDBConn->m_pRecordset->MoveNext();
+			pRecordSet->MoveNext();
 		}
 
-		g_pDBConn->m_pRecordset->Close();
+		pRecordSet->Close();
 	}
 	catch(_com_error &e)
 	{

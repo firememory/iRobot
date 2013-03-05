@@ -375,8 +375,8 @@ BOOL CKDGateway::WaitAnswer(char *p_pszDataSect)
 {
 	m_dwTotalDataLen = 0;
 	m_dwRecNo = 0;
-	m_dwFieldNo = 0;
-	
+	m_dwFieldNo = 0;	
+
 	//∑¢ÀÕ«Î«Û
 	if (SendRequest(p_pszDataSect)!=TRUE)
 		return FALSE;

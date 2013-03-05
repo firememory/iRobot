@@ -27,7 +27,7 @@ CSHB_SellVistor::CSHB_SellVistor(void)
 	m_fCptlBln_Old = m_fCptlAvl_Old = m_fCptlTrdFrz_Old = m_fCptlOutstanding_Old = m_fCptlOtdAvl_Old = 0;
 
 	m_nShareBln_New = m_nShareAvl_New = m_nShareTrdFrz_New = m_nShareOtd_New = 0;
-	
+
 	m_fCptlBln_New = m_fCptlAvl_New = m_fCptlTrdFrz_New = m_fCptlOutstanding_New = m_fCptlOtdAvl_New = 0;
 
 	strcpy_s(m_szServiceName, "上海B股卖出");
@@ -52,7 +52,7 @@ CSHB_SellVistor::~CSHB_SellVistor(void)
 BOOL CSHB_SellVistor::Vistor()
 {
 	BOOL bRet = TRUE;
-	
+
 	ExecTestCase(TestCase_1, "限价卖出 0S");
 
 	return bRet;
@@ -61,7 +61,7 @@ BOOL CSHB_SellVistor::Vistor()
 BOOL CSHB_SellVistor::ResultStrToTable(char *pRetStr)
 {
 	m_nRowNum = m_pKDGateWay->GetRecNum();
-	
+
 	m_pMsg = new MID_403_ORDER_RET_MSG[m_nRowNum];
 	memset(m_pMsg, 0x00, sizeof(MID_403_ORDER_RET_MSG)*m_nRowNum);
 
@@ -142,10 +142,10 @@ BOOL CSHB_SellVistor::TestCase_1()
 {
 	BOOL bRet = TRUE;
 	strcpy_s(m_szTrdId, "0S");
-	
+
 	// 存入测试股份
 	SaveShares();
-	
+
 	if (FALSE == InitUserData() )
 	{
 		return FALSE;
@@ -305,19 +305,19 @@ BOOL CSHB_SellVistor::SendKcxpMsg(char *pCmd)
 }
 
 /*
- *	获取以下数据
- 	1. Shares表
-		1.1 股份余额
-		1.2 股份可用
-		1.3 交易冻结
-		1.4 在途数量
-	2. Capitals表
-		2.1 资金余额
-		2.2 资金可用
-		2.3 交易冻结
-		2.4 在途资金
-		2.5 在途可用
- */
+*	获取以下数据
+1. Shares表
+1.1 股份余额
+1.2 股份可用
+1.3 交易冻结
+1.4 在途数量
+2. Capitals表
+2.1 资金余额
+2.2 资金可用
+2.3 交易冻结
+2.4 在途资金
+2.5 在途可用
+*/
 BOOL CSHB_SellVistor::InitUserData()
 {
 	_variant_t TheValue; //VARIANT数据类型
@@ -332,15 +332,19 @@ BOOL CSHB_SellVistor::InitUserData()
 
 	try
 	{
-		g_pDBConn->m_pRecordset->Open(bstrSQL, (IDispatch*)g_pDBConn->m_pConnection, adOpenDynamic, adLockOptimistic, adCmdText); 
+		_RecordsetPtr pRecordSet;
+		pRecordSet.CreateInstance(__uuidof(Recordset));
+
+		if (!g_pDBConn->QueryData(bstrSQL, pRecordSet)) 
+			return FALSE;
 
 		// 客户当前没有持仓此股票
-		if (g_pDBConn->m_pRecordset->adoEOF)
+		if (pRecordSet->adoEOF)
 		{
 			m_nShareBln_Old = m_nShareAvl_Old = m_nShareTrdFrz_Old = m_nShareOtd_Old = 0;
 		}
 
-		while(!g_pDBConn->m_pRecordset->adoEOF)
+		while(!pRecordSet->adoEOF)
 		{	
 			// 1.1 股份余额
 			DB_GET_VALUE_INT("SHARE_BLN", m_nShareBln_Old);
@@ -354,10 +358,10 @@ BOOL CSHB_SellVistor::InitUserData()
 			// 1.4 在途数量
 			DB_GET_VALUE_INT("SHARE_OTD", m_nShareOtd_Old);
 
-			g_pDBConn->m_pRecordset->MoveNext();
+			pRecordSet->MoveNext();
 		}
 
-		g_pDBConn->m_pRecordset->Close();
+		pRecordSet->Close();
 	}
 	catch(_com_error &e)
 	{
@@ -370,7 +374,7 @@ BOOL CSHB_SellVistor::InitUserData()
 
 		return FALSE;
 	}
-	
+
 
 	// 2. 获取Capitals表
 	try
@@ -379,18 +383,23 @@ BOOL CSHB_SellVistor::InitUserData()
 			g_pCfg->GetAccount().GetBuffer(), m_szCurrency);
 
 		bstrSQL = strSql.AllocSysString();
-		g_pDBConn->m_pRecordset->Open(bstrSQL, (IDispatch*)g_pDBConn->m_pConnection, adOpenDynamic, adLockOptimistic, adCmdText); 
 
-		if (g_pDBConn->m_pRecordset->adoEOF)
+		_RecordsetPtr pRecordSet;
+		pRecordSet.CreateInstance(__uuidof(Recordset));
+
+		if (!g_pDBConn->QueryData(bstrSQL, pRecordSet)) 
+			return FALSE;
+
+		if (pRecordSet->adoEOF)
 		{
 			// 数据库返回的结果为空
-			g_pDBConn->m_pRecordset->Close();
+			pRecordSet->Close();
 
 			g_pLog->WriteRunLogEx(__FILE__,__LINE__, "获取Capitals表数据失败!");
 			return FALSE;
 		}
 
-		while(!g_pDBConn->m_pRecordset->adoEOF)
+		while(!pRecordSet->adoEOF)
 		{	
 			// 2.1 资金余额
 			DB_GET_VALUE_FLOAT("BALANCE", m_fCptlBln_Old);
@@ -407,10 +416,10 @@ BOOL CSHB_SellVistor::InitUserData()
 			// 2.5 在途可用
 			DB_GET_VALUE_FLOAT("OTD_AVL", m_fCptlOtdAvl_Old);
 
-			g_pDBConn->m_pRecordset->MoveNext();
+			pRecordSet->MoveNext();
 		}
 
-		g_pDBConn->m_pRecordset->Close();
+		pRecordSet->Close();
 	}
 	catch(_com_error &e)
 	{
@@ -442,9 +451,13 @@ BOOL CSHB_SellVistor::UpdateUserData()
 
 	try
 	{
-		g_pDBConn->m_pRecordset->Open(bstrSQL, (IDispatch*)g_pDBConn->m_pConnection, adOpenDynamic, adLockOptimistic, adCmdText); 
+		_RecordsetPtr pRecordSet;
+		pRecordSet.CreateInstance(__uuidof(Recordset));
 
-		while(!g_pDBConn->m_pRecordset->adoEOF)
+		if (!g_pDBConn->QueryData(bstrSQL, pRecordSet)) 
+			return FALSE;
+
+		while(!pRecordSet->adoEOF)
 		{	
 			// 1.1 股份余额
 			DB_GET_VALUE_INT("SHARE_BLN", m_nShareBln_New);
@@ -458,10 +471,10 @@ BOOL CSHB_SellVistor::UpdateUserData()
 			// 1.4 在途数量
 			DB_GET_VALUE_INT("SHARE_OTD", m_nShareOtd_New);
 
-			g_pDBConn->m_pRecordset->MoveNext();
+			pRecordSet->MoveNext();
 		}
 
-		g_pDBConn->m_pRecordset->Close();
+		pRecordSet->Close();
 	}
 	catch(_com_error &e)
 	{
@@ -482,17 +495,22 @@ BOOL CSHB_SellVistor::UpdateUserData()
 			g_pCfg->GetAccount().GetBuffer(), m_szCurrency);
 
 		bstrSQL = strSql.AllocSysString();
-		g_pDBConn->m_pRecordset->Open(bstrSQL, (IDispatch*)g_pDBConn->m_pConnection, adOpenDynamic, adLockOptimistic, adCmdText); 
 
-		if (g_pDBConn->m_pRecordset->adoEOF)
+		_RecordsetPtr pRecordSet;
+		pRecordSet.CreateInstance(__uuidof(Recordset));
+
+		if (!g_pDBConn->QueryData(bstrSQL, pRecordSet)) 
+			return FALSE;
+
+		if (pRecordSet->adoEOF)
 		{
 			// 数据库返回的结果为空
-			g_pDBConn->m_pRecordset->Close();
+			pRecordSet->Close();
 			g_pLog->WriteRunLogEx(__FILE__,__LINE__,"获取Capitals表数据失败!");
 			return FALSE;
 		}
 
-		while(!g_pDBConn->m_pRecordset->adoEOF)
+		while(!pRecordSet->adoEOF)
 		{	
 			// 2.1 资金余额
 			DB_GET_VALUE_FLOAT("BALANCE", m_fCptlBln_New);
@@ -509,10 +527,10 @@ BOOL CSHB_SellVistor::UpdateUserData()
 			// 2.5 在途可用
 			DB_GET_VALUE_FLOAT("OTD_AVL", m_fCptlOtdAvl_New);
 
-			g_pDBConn->m_pRecordset->MoveNext();
+			pRecordSet->MoveNext();
 		}
 
-		g_pDBConn->m_pRecordset->Close();
+		pRecordSet->Close();
 	}
 	catch(_com_error &e)
 	{
@@ -525,7 +543,7 @@ BOOL CSHB_SellVistor::UpdateUserData()
 
 		return FALSE;
 	}
-	
+
 	return TRUE;
 }
 
@@ -555,21 +573,41 @@ BOOL CSHB_SellVistor::GetMatchedData()
 				strDate, m_szTrdId, m_pMsg[0].szOrderID, m_pMsg[0].szAccount, m_szSecu_Intl, m_szQty);
 		}
 
+		m_nWaitMatchingCnt = 0;
 		BSTR bstrSQL = strSql.AllocSysString();
-		g_pDBConn->m_pRecordset->Open(bstrSQL, (IDispatch*)g_pDBConn->m_pConnection, adOpenDynamic, adLockOptimistic, adCmdText); 
+		_RecordsetPtr pRecordSet;
+
+		while(m_nWaitMatchingCnt < MAX_WAIT_MATCH_CNT)
+		{						
+			pRecordSet.CreateInstance(__uuidof(Recordset));
+
+			if (!g_pDBConn->QueryData(bstrSQL, pRecordSet)) 
+				return FALSE;
+
+			if (pRecordSet->adoEOF && m_nWaitMatchingCnt == MAX_WAIT_MATCH_CNT - 1)
+			{
+				// 数据库返回的结果为空
+				g_pLog->WriteRunLog(CHKPNT_MODE, LOG_WARN, "Chk 1.1 Fail!");
+				pRecordSet->Close();
+				return FALSE;
+			}
+			else if (pRecordSet->adoEOF)
+			{
+				pRecordSet->Close();
+			}
+			else if (!pRecordSet->adoEOF)
+			{
+				break;;
+			}
+
+			m_nWaitMatchingCnt++;
+			Sleep(g_pCfg->GetRefreshDBGap());
+		}
 
 		_variant_t TheValue; //VARIANT数据类型
 		char szTmp[100] = {0};
 
-		if (g_pDBConn->m_pRecordset->adoEOF)
-		{
-			// 数据库返回的结果为空
-			g_pLog->WriteRunLog(CHKPNT_MODE, LOG_WARN, "Chk 1.1 Fail!");
-			g_pDBConn->m_pRecordset->Close();
-			return FALSE;
-		}	
-
-		while(!g_pDBConn->m_pRecordset->adoEOF)
+		while(!pRecordSet->adoEOF)
 		{								
 			DB_GET_VALUE_FLOAT("ORDER_FRZ_AMT", m_fMatched_OrderFrzAmt);
 			DB_GET_VALUE_FLOAT("MATCHED_PRICE", m_fMatched_Price);
@@ -578,9 +616,9 @@ BOOL CSHB_SellVistor::GetMatchedData()
 			DB_GET_VALUE_FLOAT("MATCHED_AMT", m_fMatchedAmt);
 			DB_GET_VALUE_FLOAT("SETT_AMT", m_fMatched_SettAmt);
 
-			g_pDBConn->m_pRecordset->MoveNext();
+			pRecordSet->MoveNext();
 		}
-		g_pDBConn->m_pRecordset->Close();
+		pRecordSet->Close();
 	}
 	catch(_com_error &e)
 	{
@@ -597,40 +635,20 @@ BOOL CSHB_SellVistor::GetMatchedData()
 	return bRet;
 }
 
-BOOL CSHB_SellVistor::SendMidMsg(char *pCmd)
-{
-	g_pLog->WriteRunLog(MID_MODE, LOG_DEBUG, "Send:%s", pCmd);
-	if (m_pKDGateWay->WaitAnswer(pCmd)!=TRUE)
-	{
-		g_pLog->WriteRunLog(MID_MODE, LOG_WARN, "[403] 委托接口, 调用失败!");
-		return FALSE;
-	}
-
-	// 对柜台返回的值进行解析
-	g_pLog->WriteRunLog(MID_MODE, LOG_DEBUG, "Recv:%s", m_pKDGateWay->m_pReturnData);
-	if (ResultStrToTable(m_pKDGateWay->m_pReturnData) != TRUE)
-	{
-		g_pLog->WriteRunLog(MID_MODE, LOG_WARN, "[403] 委托接口, 解析失败!");
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
 BOOL CSHB_SellVistor::ChkData()
 {
 	/*
-		检查以下信息
-		1.1.检查柜台matching表中的数据是否与委托一致	
-		1.2.检查captial表中【资金余额 BALANCE】
-		1.3.检查captial表中【资金可用 AVAILABLE】
-		1.4.检查captial表中【交易冻结 TRD_FRZ】		
-		1.5.检查captial表中【在途资金 OUTSTANDING】
-		1.6.检查captial表中【在途可用 OTD_AVL】
-		1.7 检查Shares表中【股份余额 SHARE_BLN】
-		1.8 检查Shares表中【股份可用 SHARE_AVL】
-		1.9 检查Shares表中【股份冻结 SHARE_TRD_FRZ】
-		2.0 检查Shares表中【在途股份】
+	检查以下信息
+	1.1.检查柜台matching表中的数据是否与委托一致	
+	1.2.检查captial表中【资金余额 BALANCE】
+	1.3.检查captial表中【资金可用 AVAILABLE】
+	1.4.检查captial表中【交易冻结 TRD_FRZ】		
+	1.5.检查captial表中【在途资金 OUTSTANDING】
+	1.6.检查captial表中【在途可用 OTD_AVL】
+	1.7 检查Shares表中【股份余额 SHARE_BLN】
+	1.8 检查Shares表中【股份可用 SHARE_AVL】
+	1.9 检查Shares表中【股份冻结 SHARE_TRD_FRZ】
+	2.0 检查Shares表中【在途股份】
 	*/
 
 	BOOL bRet = TRUE;
@@ -656,7 +674,7 @@ BOOL CSHB_SellVistor::ChkData()
 			bRet = FALSE;
 			g_pLog->WriteRunLog(CHKPNT_MODE, LOG_WARN, "Chk 1.2 Fail!");
 		}
-				
+
 		// 1.3.检查captial表中【资金可用 AVAILABLE】增加 应该等于 Matching表中的【SETT_AMT】
 		// 由于精度问题，允许1以内的差异
 		if (abs(CutFloatPnt(m_fCptlAvl_New - m_fCptlAvl_Old) - m_fMatched_SettAmt) > 1)
@@ -678,7 +696,7 @@ BOOL CSHB_SellVistor::ChkData()
 			bRet = FALSE;
 			g_pLog->WriteRunLog(CHKPNT_MODE, LOG_WARN, "Chk 1.5 Fail!");
 		}
-			
+
 		// 1.6.检查captial表中【在途可用 OTD_AVL】增加 应该等于Matching表中的【SETT_AMT】
 		if (abs(CutFloatPnt(m_fCptlOtdAvl_New - m_fCptlOtdAvl_Old) - m_fMatched_SettAmt) > 1)
 		{	
@@ -692,7 +710,7 @@ BOOL CSHB_SellVistor::ChkData()
 			bRet = FALSE;
 			g_pLog->WriteRunLog(CHKPNT_MODE, LOG_WARN, "Chk 1.7 Fail!");
 		}
-		
+
 		// 1.8 检查Shares表中【股份可用 SHARE_AVL】减少 应该等于Matching表中的【ORDER_QTY】
 		// TODO: 此检查点存在问题，集中交易系统存在缺陷: [JZJY BUG-136] A股卖出操作【市价委托】中的剩余撤销 不起作用， 依然被冻结
 		if (m_nShareAvl_Old - m_nShareAvl_New != m_nOrder_Qty)
@@ -723,7 +741,7 @@ BOOL CSHB_SellVistor::SaveShares()
 {
 	// 发送数据
 	char szTemp[2048] = {0};
-	
+
 	// 拼接发送给KCXP的命令字符串		
 	sprintf_s(szTemp,"BEGIN:L0301009:04-10:03:27-577242  [_CA=2.3&_ENDIAN=0&F_OP_USER=%s&F_OP_ROLE=2&F_SESSION=%s&F_OP_SITE=00256497d99e&F_OP_BRANCH=%s&F_CHANNEL=0"
 		"&OPER_FLAG=1&CUSTOMER=%s&MARKET=%c&BOARD=%c&SECU_ACC=%s&ACCOUNT=%s&SECU_INTL=%s&SEAT=%s&EXT_INST=0&CQLB=0--存入股份&QTY=%s&AVG_PRICE=%s&OP_REMARK=]",

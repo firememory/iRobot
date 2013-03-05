@@ -40,7 +40,7 @@ BOOL CLoginVistor::Vistor()
 	char szTemp[512] = {0};
 	sprintf_s(szTemp, "409101|Z|%s|%s|", strAccount.GetBuffer(), szPwd);
 	
-	if (TRUE != SendMsg(szTemp))
+	if (TRUE != SendMidMsg(szTemp))
 	{
 		return FALSE;
 	}
@@ -64,7 +64,7 @@ BOOL CLoginVistor::Vistor( char *szUserCode )
 	char szTemp[512] = {0};
 	sprintf_s(szTemp, "409101|U|%s|%s|", szUserCode, szPwd);
 
-	if (TRUE != SendMsg(szTemp))
+	if (TRUE != SendMidMsg(szTemp))
 	{
 		return FALSE;
 	}
@@ -179,21 +179,4 @@ void CLoginVistor::GetSession()
 	m_pKDGateWay->SetSession(m_pLoginMsg[0].szSession);
 
 	g_pLog->WriteRunLogEx(__FILE__,__LINE__,"[409101] 登录接口, 获取Session:%s", m_pLoginMsg[0].szSession);
-}
-
-BOOL CLoginVistor::SendMsg( char *szMsg )
-{
-	if (TRUE != m_pKDGateWay->WaitAnswer(szMsg))
-	{
-		g_pLog->WriteRunLog(MID_MODE, LOG_WARN, "[409101] 登录接口, 调用失败!");
-		return FALSE;
-	}
-
-	if (TRUE != ResultStrToTable(m_pKDGateWay->m_pReturnData))
-	{
-		g_pLog->WriteRunLog(MID_MODE, LOG_WARN, "[409101] 登录接口, 返回值解析失败!");
-		return FALSE;
-	}
-
-	return TRUE;
 }

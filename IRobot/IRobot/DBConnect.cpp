@@ -26,6 +26,8 @@ CDBConnect::CDBConnect()
 
 	m_pConnection.CreateInstance(__uuidof(Connection));
     m_pRecordset.CreateInstance(__uuidof(Recordset));
+
+	InitializeCriticalSection(&m_caQueryData);
 }
 
 CDBConnect::~CDBConnect()
@@ -117,5 +119,33 @@ void CDBConnect::Disconnect()
 	{
 		if (m_pConnection->GetState() == adStateOpen)
 			m_pConnection->Close();
+	}
+}
+
+BOOL CDBConnect::QueryData( BSTR bstrSQL, _RecordsetPtr &pRecordSet)
+{
+	try
+	{
+		EnterCriticalSection(&m_caQueryData);
+		m_pRecordset->Open(bstrSQL, (IDispatch*)m_pConnection, adOpenStatic, adLockOptimistic, adCmdText);
+
+		pRecordSet = m_pRecordset->Clone(adLockReadOnly);
+		
+		m_pRecordset->Close();
+		LeaveCriticalSection(&m_caQueryData);
+
+		return TRUE;
+	}
+	catch(_com_error &e)
+	{
+		CString strMsg;
+		strMsg.Format(_T("´íÎóÃèÊö£º%s\n´íÎóÏûÏ¢%s"), 
+			(LPCTSTR)e.Description(),
+			(LPCTSTR)e.ErrorMessage());
+
+		g_pLog->WriteRunLogEx(__FILE__,__LINE__,strMsg.GetBuffer());
+
+		LeaveCriticalSection(&m_caQueryData);
+		return FALSE;
 	}
 }

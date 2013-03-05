@@ -267,24 +267,6 @@ BOOL CQuerySecuAccVistor::SendKcxpMsg(char *pCmd)
 	return TRUE;
 }
 
-BOOL CQuerySecuAccVistor::SendMidMsg(char *pCmd)
-{
-	if (m_pKDGateWay->WaitAnswer(pCmd)!=TRUE)
-	{
-		g_pLog->WriteRunLog(MID_MODE, LOG_WARN, "[501] 委托接口, 调用失败!");
-		return FALSE;
-	}
-
-	// 对柜台返回的值进行解析
-	if (ResultStrToTable(m_pKDGateWay->m_pReturnData) != TRUE)
-	{
-		g_pLog->WriteRunLog(MID_MODE, LOG_WARN, "[501] 委托接口, 解析失败!");
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
 BOOL CQuerySecuAccVistor::ChkData(MID_501_QUERY_SECU_ACC_RET_MSG *pMsg)
 {
 	_variant_t TheValue; //VARIANT数据类型

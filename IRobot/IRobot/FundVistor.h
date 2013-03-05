@@ -22,9 +22,6 @@ public:
 	// 向KCXP发送消息
 	BOOL SendKcxpMsg(char *);
 
-	// 向Mid发送消息
-	BOOL SendMidMsg(char *);
-
 	BOOL TestCase_1(); 
 
 	BOOL ChkData();
@@ -35,7 +32,6 @@ public:
 
 private:
 	MID_821_ORDER_RET_MSG *m_pMsg;
-	int m_nRowNum;
 
 	char m_szFund_Intl[DEFAULT_LEN];		// 基金代码
 	char m_szOrderAmt[DEFAULT_LEN];			// 委托金额

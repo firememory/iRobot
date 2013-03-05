@@ -23,9 +23,6 @@ public:
 	// 向KCXP发送消息
 	BOOL SendKcxpMsg(char *);
 
-	// 向Mid发送消息
-	BOOL SendMidMsg(char *);
-
 	BOOL TestCase_1(); 
 	BOOL TestCase_2();
 	BOOL TestCase_3();
@@ -40,7 +37,6 @@ public:
 
 private:
 	MID_403_ORDER_RET_MSG *m_pMsg;
-	int m_nRowNum;
 
 	char m_szSecu_Intl[DEFAULT_LEN];		// 证券代码
 	char m_szSecu_Code[DEFAULT_LEN];		// 证券代码

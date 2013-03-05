@@ -18,14 +18,10 @@ public:
 	// 向KCXP发送消息
 	BOOL SendKcxpMsg(char *);
 
-	// 向Mid发送消息
-	BOOL SendMidMsg(char *);
-
 	BOOL TestCase_1();
 
 	BOOL ChkData(MID_501_QUERY_SECU_ACC_RET_MSG *pMsg);
 
 private:
 	MID_501_QUERY_SECU_ACC_RET_MSG *m_pMsg;
-	int m_nRowNum;
 };

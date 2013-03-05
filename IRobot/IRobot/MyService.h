@@ -22,6 +22,12 @@
 #include "QuerySecuAccVistor.h"
 #include "QueryShares.h"
 
+#define INCREMENT_LOCK(lock, cnt)\
+{\
+	EnterCriticalSection(&lock);\
+	cnt++;\
+	LeaveCriticalSection(&lock);\
+}
 
 class CMyService
 {
@@ -36,13 +42,15 @@ public:
 	CPageFuncTest * GetDlg() const { return m_pDlg; }
 	void SetDlg(CPageFuncTest * val) { m_pDlg = val; }
 
-private:
+public:
 	CArray <IPCKDGateWayVistor*, IPCKDGateWayVistor*> m_ptServiceArray;
 	CPageFuncTest *m_pDlg;
 
 	int m_nTotalCaseCnt;
 	int m_nSuccCaseCnt;
 	int m_nFailCaseCnt;
+	
+	int m_nCurCaseIdx;
 	
 	CLoginVistor LoginVistor;
 	CSZA_BuyVistor SZA_BuyVistor; // …Ó€⁄Aπ…¬Ú»Î

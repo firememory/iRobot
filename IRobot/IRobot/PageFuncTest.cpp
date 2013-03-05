@@ -56,6 +56,7 @@ BEGIN_MESSAGE_MAP(CPageFuncTest, CPropertyPage)
 	ON_NOTIFY(NM_CUSTOMDRAW, IDC_PROGRESS1, &CPageFuncTest::OnNMCustomdrawProgress1)				
 	ON_BN_CLICKED(IDC_BUTTON_CONNECT, &CPageFuncTest::OnBnClickedButtonInit)
 	ON_BN_CLICKED(IDC_BUTTON_DISCONNECT, &CPageFuncTest::OnBnClickedButtonDisconnect)
+	ON_MESSAGE(WM_FUNC_PAGE_UPDATE, &CPageFuncTest::OnStatusUpdate)
 END_MESSAGE_MAP()
 
 
@@ -66,7 +67,7 @@ void CPageFuncTest::OnBnClickedOk()
 	// TODO: Add your control notification handler code here
 	SetCtrlSuccCaseNum(0);
 	SetCtrlFailCaseNum(0);
-	UpdateData(FALSE);
+	UpdateData(TRUE);
 
 	g_pMyService->Run();
 }
@@ -173,4 +174,14 @@ void CPageFuncTest::OnBnClickedButtonDisconnect()
 
 	m_ctrlBtnDisConn.EnableWindow(FALSE);
 	m_ctrlBtnConn.EnableWindow(TRUE);
+}
+
+LRESULT CPageFuncTest::OnStatusUpdate( WPARAM wParam, LPARAM lParam )
+{
+	SetCtrlSuccCaseNum(g_pMyService->m_nSuccCaseCnt);
+	SetCtrlFailCaseNum(g_pMyService->m_nFailCaseCnt);
+	m_ctrlWait.StepIt();
+
+	UpdateData(TRUE);
+	return 1;
 }

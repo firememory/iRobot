@@ -3,6 +3,7 @@
 #include "afxwin.h"
 
 // CPageFuncTest dialog
+#define WM_FUNC_PAGE_UPDATE WM_USER + 111
 
 class CPageFuncTest : public CPropertyPage
 {
@@ -22,6 +23,7 @@ protected:
 	afx_msg void OnNMCustomdrawProgress1(NMHDR *pNMHDR, LRESULT *pResult);	
 	afx_msg void OnBnClickedButtonInit();
 	afx_msg void OnBnClickedButtonDisconnect();
+	afx_msg LRESULT OnStatusUpdate(WPARAM wParam, LPARAM lParam);
 	DECLARE_MESSAGE_MAP()
 
 private:

@@ -435,15 +435,19 @@ BOOL CSHLOFVistor::InitUserData()
 
 	try
 	{
-		g_pDBConn->m_pRecordset->Open(bstrSQL, (IDispatch*)g_pDBConn->m_pConnection, adOpenDynamic, adLockOptimistic, adCmdText); 
+		_RecordsetPtr pRecordSet;
+		pRecordSet.CreateInstance(__uuidof(Recordset));
+
+		if (!g_pDBConn->QueryData(bstrSQL, pRecordSet)) 
+			return FALSE;
 
 		// 客户当前没有持仓此股票
-		if (g_pDBConn->m_pRecordset->adoEOF)
+		if (pRecordSet->adoEOF)
 		{
 			m_nShareBln_Old = m_nShareAvl_Old = m_nShareTrdFrz_Old = m_nShareOtd_Old = 0;
 		}
 
-		while(!g_pDBConn->m_pRecordset->adoEOF)
+		while(!pRecordSet->adoEOF)
 		{	
 			// 1.1 股份余额
 			DB_GET_VALUE_INT("SHARE_BLN", m_nShareBln_Old);
@@ -457,10 +461,10 @@ BOOL CSHLOFVistor::InitUserData()
 			// 1.4 在途数量
 			DB_GET_VALUE_INT("SHARE_OTD", m_nShareOtd_Old);
 
-			g_pDBConn->m_pRecordset->MoveNext();
+			pRecordSet->MoveNext();
 		}
 
-		g_pDBConn->m_pRecordset->Close();
+		pRecordSet->Close();
 	}
 	catch(_com_error &e)
 	{
@@ -482,18 +486,22 @@ BOOL CSHLOFVistor::InitUserData()
 			g_pCfg->GetAccount().GetBuffer(), m_szCurrency);
 
 		bstrSQL = strSql.AllocSysString();
-		g_pDBConn->m_pRecordset->Open(bstrSQL, (IDispatch*)g_pDBConn->m_pConnection, adOpenDynamic, adLockOptimistic, adCmdText); 
+		_RecordsetPtr pRecordSet;
+		pRecordSet.CreateInstance(__uuidof(Recordset));
 
-		if (g_pDBConn->m_pRecordset->adoEOF)
+		if (!g_pDBConn->QueryData(bstrSQL, pRecordSet)) 
+			return FALSE;
+
+		if (pRecordSet->adoEOF)
 		{
 			// 数据库返回的结果为空
-			g_pDBConn->m_pRecordset->Close();
+			pRecordSet->Close();
 
 			g_pLog->WriteRunLogEx(__FILE__,__LINE__, "获取Capitals表数据失败!");
 			return FALSE;
 		}
 
-		while(!g_pDBConn->m_pRecordset->adoEOF)
+		while(!pRecordSet->adoEOF)
 		{	
 			// 2.1 资金余额
 			DB_GET_VALUE_FLOAT("BALANCE", m_fCptlBln_Old);
@@ -510,10 +518,10 @@ BOOL CSHLOFVistor::InitUserData()
 			// 2.5 在途可用
 			DB_GET_VALUE_FLOAT("OTD_AVL", m_fCptlOtdAvl_Old);
 
-			g_pDBConn->m_pRecordset->MoveNext();
+			pRecordSet->MoveNext();
 		}
 
-		g_pDBConn->m_pRecordset->Close();
+		pRecordSet->Close();
 	}
 	catch(_com_error &e)
 	{
@@ -545,9 +553,13 @@ BOOL CSHLOFVistor::UpdateUserData()
 
 	try
 	{
-		g_pDBConn->m_pRecordset->Open(bstrSQL, (IDispatch*)g_pDBConn->m_pConnection, adOpenDynamic, adLockOptimistic, adCmdText); 
+		_RecordsetPtr pRecordSet;
+		pRecordSet.CreateInstance(__uuidof(Recordset));
 
-		while(!g_pDBConn->m_pRecordset->adoEOF)
+		if (!g_pDBConn->QueryData(bstrSQL, pRecordSet)) 
+			return FALSE;
+
+		while(!pRecordSet->adoEOF)
 		{	
 			// 1.1 股份余额
 			DB_GET_VALUE_INT("SHARE_BLN", m_nShareBln_New);
@@ -561,10 +573,10 @@ BOOL CSHLOFVistor::UpdateUserData()
 			// 1.4 在途数量
 			DB_GET_VALUE_INT("SHARE_OTD", m_nShareOtd_New);
 
-			g_pDBConn->m_pRecordset->MoveNext();
+			pRecordSet->MoveNext();
 		}
 
-		g_pDBConn->m_pRecordset->Close();
+		pRecordSet->Close();
 	}
 	catch(_com_error &e)
 	{
@@ -585,17 +597,21 @@ BOOL CSHLOFVistor::UpdateUserData()
 			g_pCfg->GetAccount().GetBuffer(), m_szCurrency);
 
 		bstrSQL = strSql.AllocSysString();
-		g_pDBConn->m_pRecordset->Open(bstrSQL, (IDispatch*)g_pDBConn->m_pConnection, adOpenDynamic, adLockOptimistic, adCmdText); 
+		_RecordsetPtr pRecordSet;
+		pRecordSet.CreateInstance(__uuidof(Recordset));
 
-		if (g_pDBConn->m_pRecordset->adoEOF)
+		if (!g_pDBConn->QueryData(bstrSQL, pRecordSet)) 
+			return FALSE;
+
+		if (pRecordSet->adoEOF)
 		{
 			// 数据库返回的结果为空
-			g_pDBConn->m_pRecordset->Close();
+			pRecordSet->Close();
 			g_pLog->WriteRunLogEx(__FILE__,__LINE__,"获取Capitals表数据失败!");
 			return FALSE;
 		}
 
-		while(!g_pDBConn->m_pRecordset->adoEOF)
+		while(!pRecordSet->adoEOF)
 		{	
 			// 2.1 资金余额
 			DB_GET_VALUE_FLOAT("BALANCE", m_fCptlBln_New);
@@ -612,10 +628,10 @@ BOOL CSHLOFVistor::UpdateUserData()
 			// 2.5 在途可用
 			DB_GET_VALUE_FLOAT("OTD_AVL", m_fCptlOtdAvl_New);
 
-			g_pDBConn->m_pRecordset->MoveNext();
+			pRecordSet->MoveNext();
 		}
 
-		g_pDBConn->m_pRecordset->Close();
+		pRecordSet->Close();
 	}
 	catch(_com_error &e)
 	{
@@ -657,26 +673,30 @@ BOOL CSHLOFVistor::GetOrderData()
 		}
 		
 		BSTR bstrSQL = strSql.AllocSysString();
-		g_pDBConn->m_pRecordset->Open(bstrSQL, (IDispatch*)g_pDBConn->m_pConnection, adOpenDynamic, adLockOptimistic, adCmdText); 
+		_RecordsetPtr pRecordSet;
+		pRecordSet.CreateInstance(__uuidof(Recordset));
+
+		if (!g_pDBConn->QueryData(bstrSQL, pRecordSet)) 
+			return FALSE;
 
 		_variant_t TheValue; //VARIANT数据类型
 		char szTmp[100] = {0};
 
-		if (g_pDBConn->m_pRecordset->adoEOF)
+		if (pRecordSet->adoEOF)
 		{
 			// 数据库返回的结果为空
 			g_pLog->WriteRunLog(CHKPNT_MODE, LOG_WARN, "Chk 1.1 Fail!");
-			g_pDBConn->m_pRecordset->Close();
+			pRecordSet->Close();
 			return FALSE;
 		}
 
-		while(!g_pDBConn->m_pRecordset->adoEOF)
+		while(!pRecordSet->adoEOF)
 		{								
 			DB_GET_VALUE_FLOAT("RLT_FRZ_AMT", m_fOrder_RltFrzAmt);
 			DB_GET_VALUE_FLOAT("RLT_FRZ_QTY", m_fOrder_RltFrzQty);
-			g_pDBConn->m_pRecordset->MoveNext();
+			pRecordSet->MoveNext();
 		}
-		g_pDBConn->m_pRecordset->Close();	
+		pRecordSet->Close();	
 	}
 	catch(_com_error &e)
 	{
@@ -691,26 +711,6 @@ BOOL CSHLOFVistor::GetOrderData()
 	}
 
 	return bRet;
-}
-
-BOOL CSHLOFVistor::SendMidMsg(char *pCmd)
-{
-	g_pLog->WriteRunLog(MID_MODE, LOG_DEBUG, "Send:%s", pCmd);
-	if (m_pKDGateWay->WaitAnswer(pCmd)!=TRUE)
-	{
-		g_pLog->WriteRunLog(MID_MODE, LOG_WARN, "[403] 委托接口, 调用失败!");
-		return FALSE;
-	}
-
-	// 对柜台返回的值进行解析
-	g_pLog->WriteRunLog(MID_MODE, LOG_DEBUG, "Recv:%s", m_pKDGateWay->m_pReturnData);
-	if (ResultStrToTable(m_pKDGateWay->m_pReturnData) != TRUE)
-	{
-		g_pLog->WriteRunLog(MID_MODE, LOG_WARN, "[403] 委托接口, 解析失败!");
-		return FALSE;
-	}
-
-	return TRUE;
 }
 
 BOOL CSHLOFVistor::ChkData()
