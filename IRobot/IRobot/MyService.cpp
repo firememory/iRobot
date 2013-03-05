@@ -25,7 +25,8 @@ void CMyService::Init()
 	RegisterProtocal(&LoginVistor);
 	RegisterProtocal(&QueryShares);
 	RegisterProtocal(&QuerySecuAcc);
-	
+
+	/*
 	RegisterProtocal(&SZA_BuyVistor);
 	RegisterProtocal(&SHA_BuyVistor);
 	RegisterProtocal(&SHA_SellVistor);
@@ -34,10 +35,13 @@ void CMyService::Init()
 	RegisterProtocal(&SHB_BuyVistor);
 	RegisterProtocal(&SZB_SellVistor);
 	RegisterProtocal(&SHB_SellVistor);
-
 	RegisterProtocal(&SB_BuyVistor);
 	RegisterProtocal(&SB_SellVistor);
+*/
 
+	RegisterProtocal(&SZ_LOFVistor);
+	RegisterProtocal(&SH_LOFVistor);
+	
 	m_nTotalCaseCnt = m_ptServiceArray.GetCount();
 
 	m_pDlg->SetCtrlTotalCaseNum(m_nTotalCaseCnt);

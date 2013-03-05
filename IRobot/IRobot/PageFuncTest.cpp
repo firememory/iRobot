@@ -66,7 +66,7 @@ void CPageFuncTest::OnBnClickedOk()
 	// TODO: Add your control notification handler code here
 	SetCtrlSuccCaseNum(0);
 	SetCtrlFailCaseNum(0);
-	UpdateData(TRUE);
+	UpdateData(FALSE);
 
 	g_pMyService->Run();
 }

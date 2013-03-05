@@ -79,3 +79,15 @@ struct MID_501_QUERY_SECU_ACC_RET_MSG
 	char szBindStatus[10];
 	char szStatus[3];
 };
+
+// 基金委托返回结果
+struct MID_821_ORDER_RET_MSG
+{
+	char szAccount[21];
+	char szOrderSn[30];
+	char szAppSn[30];
+	char szOrder_Amt[21];
+	char szOrder_Frz_Amt[21];
+	char szFee_Type[3];
+	char szDiscount_Ratio[10];
+};

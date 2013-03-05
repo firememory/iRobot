@@ -303,6 +303,10 @@
 				Name="业务"
 				>
 				<File
+					RelativePath=".\FundVistor.cpp"
+					>
+				</File>
+				<File
 					RelativePath=".\LoginVistor.cpp"
 					>
 				</File>
@@ -323,6 +327,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\SH_LOF_Vistor.cpp"
+					>
+				</File>
+				<File
 					RelativePath=".\SHA_BuyVistor.cpp"
 					>
 				</File>
@@ -336,6 +344,10 @@
 				</File>
 				<File
 					RelativePath=".\SHB_SellVistor.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\SZ_LOF_Vistor.cpp"
 					>
 				</File>
 				<File
@@ -477,6 +489,10 @@
 				Name="业务"
 				>
 				<File
+					RelativePath=".\FundVistor.h"
+					>
+				</File>
+				<File
 					RelativePath=".\LoginVistor.h"
 					>
 				</File>
@@ -497,6 +513,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\SH_LOF_Vistor.h"
+					>
+				</File>
+				<File
 					RelativePath=".\SHA_BuyVistor.h"
 					>
 				</File>
@@ -510,6 +530,10 @@
 				</File>
 				<File
 					RelativePath=".\SHB_SellVistor.h"
+					>
+				</File>
+				<File
+					RelativePath=".\SZ_LOF_Vistor.h"
 					>
 				</File>
 				<File

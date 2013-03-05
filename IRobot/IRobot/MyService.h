@@ -16,6 +16,9 @@
 #include "SB_BuyVistor.h"
 #include "SB_SellVistor.h"
 
+#include "SZ_LOF_Vistor.h"
+#include "SH_LOF_Vistor.h"
+
 #include "QuerySecuAccVistor.h"
 #include "QueryShares.h"
 
@@ -54,6 +57,9 @@ private:
 
 	CSB_BuyVistor SB_BuyVistor; // 三板买入
 	CSB_SellVistor SB_SellVistor; // 三板卖出
+
+	CSZLOFVistor SZ_LOFVistor; // 深圳LOF基金业务
+	CSHLOFVistor SH_LOFVistor; // 上海LOF基金业务
 
 	CQueryShares QueryShares; // 查询股份
 	CQuerySecuAccVistor QuerySecuAcc; // 查询股东
