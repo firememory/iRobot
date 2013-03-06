@@ -11,6 +11,7 @@ public:
 
 	virtual BOOL Vistor();
 	virtual BOOL ResultStrToTable(char *);
+	virtual void ParseKcxpRetMsg(){};
 
 	BOOL ChkPnt1();
 

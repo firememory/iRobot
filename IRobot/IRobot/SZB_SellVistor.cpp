@@ -6,14 +6,12 @@
 #include "loginterface.h"
 #include "DBConnect.h"
 #include "public.h"
-#include "ParseKcbpLog.h"
 
 extern CCfg *g_pCfg;
 extern CMidConn *g_pMidConn;
 extern CKcxpConn *g_pKcxpConn;
 extern CLoginterface *g_pLog;
 extern CDBConnect *g_pDBConn;
-extern CParseKcbpLog *g_pParseKcbpLog;
 
 CSZB_SellVistor::CSZB_SellVistor(void)
 {
@@ -169,10 +167,10 @@ BOOL CSZB_SellVistor::TestCase_1()
 			g_pCfg->GetCustID().GetBuffer(), m_szMarket_Board[0], m_szMarket_Board[1], g_pCfg->GetSecu_Acc_SZB(), g_pCfg->GetAccount().GetBuffer(),
 			m_szSecu_Intl, m_szTrdId, m_szPrice, m_szQty, g_pCfg->GetSZB_BIND_SEAT());
 
-		bRet = SendKcxpMsg(&szTemp[0]);
-
-		// 清空日志解析，便于下一次操作
-		g_pParseKcbpLog->Clean();
+		if (TRUE == (bRet = SendKcxpMsg(&szTemp[0])) && m_nRowNum > 0)
+		{
+			ParseKcxpRetMsg();
+		}
 	}
 
 	if (bRet == FALSE)
@@ -186,122 +184,6 @@ BOOL CSZB_SellVistor::TestCase_1()
 	bRet = ChkData();
 
 	return bRet;
-}
-
-BOOL CSZB_SellVistor::SendKcxpMsg(char *pCmd)
-{
-	g_pLog->WriteRunLog(KCXP_MODE, LOG_DEBUG, pCmd);
-
-	int iRetCode = KCBP_MSG_OK;
-	char szTemp[512] = {0};
-
-	if (NULL == m_pKcxpConn)
-	{
-		g_pLog->WriteRunLog(KCXP_MODE, LOG_DEBUG, "获取KCXP连接失败!");
-		return FALSE;
-	}	
-
-	// 发送消息
-	try
-	{
-		// 解析命令
-		g_pParseKcbpLog->ParseCmd(pCmd);
-
-		// 向KCXP发送命令
-		if (FALSE != g_pParseKcbpLog->ExecSingleCmd())
-		{
-			// 获取执行结果
-			int nRow = 0;				
-
-			if ((iRetCode = m_pKcxpConn->RsOpen()) == KCBP_MSG_OK)
-			{
-				// 获取结果集行数，注意行数是包括标题的，因此行数要减1
-				m_pKcxpConn->RsGetRowNum(&nRow);
-
-				if (nRow>1)
-				{
-					m_nRowNum = nRow - 1;
-
-					m_pMsg = new MID_403_ORDER_RET_MSG[m_nRowNum];
-					memset(m_pMsg, 0x00, sizeof(MID_403_ORDER_RET_MSG)*m_nRowNum);
-				}
-				else
-				{
-					g_pLog->WriteRunLogEx(__FILE__,__LINE__,"结果集返回行数异常!");
-					m_nRowNum = 0;
-					return FALSE;
-				}
-
-				if ((iRetCode = m_pKcxpConn->RsFetchRow()) == KCBP_MSG_OK)
-				{
-					if ((iRetCode = m_pKcxpConn->RsGetCol(1, szTemp)) == KCBP_MSG_OK)
-					{
-						if ((iRetCode = m_pKcxpConn->RsGetCol(2, szTemp)) == KCBP_MSG_OK)
-						{
-							if(strcmp(szTemp,"0") != 0)
-							{
-								iRetCode = m_pKcxpConn->RsGetCol(3, szTemp);
-
-								g_pLog->WriteRunLogEx(__FILE__,__LINE__, "获取结果集列信息失败,ERRCODE = %ld", iRetCode);
-								return FALSE;
-							}
-						}
-					}
-					else
-					{
-						g_pLog->WriteRunLogEx(__FILE__,__LINE__, "获取结果集列信息失败,ERRCODE = %ld", iRetCode);
-
-						return FALSE;
-					}
-				}
-
-				//取第二结果集数据		
-				if (iRetCode = m_pKcxpConn->RsMore() == KCBP_MSG_OK)
-				{
-					int nRow = 0;
-					while(nRow < m_nRowNum)
-					{
-						if(m_pKcxpConn->RsFetchRow() != KCBP_MSG_OK)
-						{
-
-							break;
-						}
-
-						SERVICE_KCXP_STRNCPY("BIZ_NO", szBizNo);
-						SERVICE_KCXP_STRNCPY("ORDER_ID", szOrderID);
-						SERVICE_KCXP_STRNCPY("ACCOUNT", szAccount);
-						SERVICE_KCXP_STRNCPY("PRICE", szPrice);
-						SERVICE_KCXP_STRNCPY("QTY", szQty);
-						SERVICE_KCXP_STRNCPY("ORDER_AMT", szOrderAmt);
-						SERVICE_KCXP_STRNCPY("ORDER_FRZ_AMT", szOrderFrzAmt);
-						SERVICE_KCXP_STRNCPY("SEAT", szSeat);
-						SERVICE_KCXP_STRNCPY("EXT_INST", szExtInst);
-						SERVICE_KCXP_STRNCPY("EXT_ACC", szExtAcc);
-						SERVICE_KCXP_STRNCPY("EXT_SUB_ACC", szExtSubAcc);
-						SERVICE_KCXP_STRNCPY("EXT_FRZ_AMT", szExtFrzAmt);		
-						nRow++;
-					}		
-				}
-			}
-			else
-			{	
-				g_pLog->WriteRunLogEx(__FILE__,__LINE__,"打开结果集失败,ERRCODE = %ld", iRetCode);
-
-				return FALSE;
-			}
-		}
-		else
-		{
-			return FALSE;
-		}
-	}
-	catch(...)
-	{
-		g_pLog->WriteRunLog(KCXP_MODE, LOG_DEBUG, "LBM[L0303001]调用异常！");
-		return FALSE;
-	}	
-
-	return TRUE;
 }
 
 /*
@@ -749,6 +631,7 @@ BOOL CSZB_SellVistor::SaveShares()
 {
 	// 发送数据
 	char szTemp[2048] = {0};
+	BOOL bRet = TRUE;
 	
 	// 拼接发送给KCXP的命令字符串		
 	sprintf_s(szTemp,"BEGIN:L0301009:04-10:03:27-577242  [_CA=2.3&_ENDIAN=0&F_OP_USER=%s&F_OP_ROLE=2&F_SESSION=%s&F_OP_SITE=00256497d99e&F_OP_BRANCH=%s&F_CHANNEL=0"
@@ -758,13 +641,50 @@ BOOL CSZB_SellVistor::SaveShares()
 		m_szSecu_Intl, g_pCfg->GetSZB_BIND_SEAT(), m_szQty, m_szPrice);
 
 	// TODO:由于L0301009 执行成功，也返回FALSE，因此返回值无效， 此函数永远返回TRUE
-	BOOL bRet = SendKcxpMsg(&szTemp[0]);
-
-	// 清空日志解析，便于下一次操作
-	g_pParseKcbpLog->Clean();
+	if (TRUE == (bRet = SendKcxpMsg(&szTemp[0])) && m_nRowNum > 0)
+	{
+		ParseKcxpRetMsg();
+	}
 
 	// 休眠，等待数据库更新
 	Sleep(g_pCfg->GetRefreshDBGap());
 
-	return TRUE;
+	return bRet;
+}
+
+void CSZB_SellVistor::ParseKcxpRetMsg()
+{
+	m_pMsg = new MID_403_ORDER_RET_MSG[m_nRowNum];
+	memset(m_pMsg, 0x00, sizeof(MID_403_ORDER_RET_MSG)*m_nRowNum);
+
+	//取结果集数据
+	int iRetCode = KCBP_MSG_OK;
+	char szTemp[512] = {0};
+
+	if (iRetCode = m_pKcxpConn->RsMore() == KCBP_MSG_OK)
+	{
+		int nRow = 0;
+		while(nRow < m_nRowNum)
+		{
+			if(m_pKcxpConn->RsFetchRow() != KCBP_MSG_OK)
+			{
+
+				break;
+			}
+
+			SERVICE_KCXP_STRNCPY("BIZ_NO", szBizNo);
+			SERVICE_KCXP_STRNCPY("ORDER_ID", szOrderID);
+			SERVICE_KCXP_STRNCPY("ACCOUNT", szAccount);
+			SERVICE_KCXP_STRNCPY("PRICE", szPrice);
+			SERVICE_KCXP_STRNCPY("QTY", szQty);
+			SERVICE_KCXP_STRNCPY("ORDER_AMT", szOrderAmt);
+			SERVICE_KCXP_STRNCPY("ORDER_FRZ_AMT", szOrderFrzAmt);
+			SERVICE_KCXP_STRNCPY("SEAT", szSeat);
+			SERVICE_KCXP_STRNCPY("EXT_INST", szExtInst);
+			SERVICE_KCXP_STRNCPY("EXT_ACC", szExtAcc);
+			SERVICE_KCXP_STRNCPY("EXT_SUB_ACC", szExtSubAcc);
+			SERVICE_KCXP_STRNCPY("EXT_FRZ_AMT", szExtFrzAmt);		
+			nRow++;
+		}		
+	}
 }

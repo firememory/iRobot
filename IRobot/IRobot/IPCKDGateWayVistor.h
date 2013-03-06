@@ -41,7 +41,9 @@ public:
 	~IPCKDGateWayVistor();
 
 	virtual BOOL Vistor() = 0;
-	virtual BOOL ResultStrToTable(char *) = 0;	
+	virtual BOOL ResultStrToTable(char *) = 0;
+	virtual void ParseKcxpRetMsg() = 0;
+
 	virtual void BeginTest(){g_pLog->WriteRunLog(SYS_MODE, LOG_NOTIFY, "%s", m_szServiceName);};
 	virtual LPSTR GetNextLine(LPSTR lpstr);
 	virtual BOOL SendMidMsg(char *pCmd);

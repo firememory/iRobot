@@ -11,6 +11,7 @@ public:
 	virtual BOOL Vistor();
 	BOOL Vistor(char *);
 	virtual BOOL ResultStrToTable(char *);
+	virtual void ParseKcxpRetMsg(){};
 	void GetSession();
 
 private:

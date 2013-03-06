@@ -14,9 +14,7 @@ public:
 
 	virtual BOOL Vistor();
 	virtual BOOL ResultStrToTable(char *);
-
-	// 向KCXP发送消息
-	BOOL SendKcxpMsg(char *);
+	virtual void ParseKcxpRetMsg();
 
 	BOOL TestCase_1();
 

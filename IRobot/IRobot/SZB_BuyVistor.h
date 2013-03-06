@@ -13,15 +13,13 @@ public:
 	virtual ~CSZB_BuyVistor(void);
 
 	virtual BOOL Vistor();
-	virtual BOOL ResultStrToTable(char *);	
+	virtual BOOL ResultStrToTable(char *);
+	virtual void ParseKcxpRetMsg();
 
 	// 在执行前，获取一把相关数据，与执行后数据进行比较
 	BOOL InitUserData();
 	BOOL UpdateUserData();
 	BOOL GetMatchedData();
-
-	// 向KCXP发送消息
-	BOOL SendKcxpMsg(char *);
 
 	BOOL TestCase_1(); 
 
