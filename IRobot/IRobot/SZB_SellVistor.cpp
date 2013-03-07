@@ -30,10 +30,10 @@ CSZB_SellVistor::CSZB_SellVistor(void)
 
 	strcpy_s(m_szServiceName, "深圳B股卖出");
 
-	strcpy_s(m_szSecu_Code, "200002");
-	strcpy_s(m_szSecu_Intl, "200002");
-	strcpy_s(m_szQty, "200");
-	strcpy_s(m_szPrice, "3.25");
+	strcpy_s(m_szSecu_Code, "200725");
+	strcpy_s(m_szSecu_Intl, "200725");
+	strcpy_s(m_szQty, "100");
+	strcpy_s(m_szPrice, "1.35");
 
 	// 深A
 	strcpy_s(m_szMarket_Board, "01");	
@@ -50,7 +50,10 @@ CSZB_SellVistor::~CSZB_SellVistor(void)
 BOOL CSZB_SellVistor::Vistor()
 {
 	BOOL bRet = TRUE;
-	
+
+	// 获取当前价格
+	GetSecuCurPrice(m_szSecu_Intl, m_szPrice);
+
 	ExecTestCase(TestCase_1, "限价卖出 0S");
 
 	return bRet;
@@ -142,7 +145,7 @@ BOOL CSZB_SellVistor::TestCase_1()
 	strcpy_s(m_szTrdId, "0S");
 	
 	// 存入测试股份
-	SaveShares();
+	//SaveShares();
 	
 	if (FALSE == InitUserData() )
 	{

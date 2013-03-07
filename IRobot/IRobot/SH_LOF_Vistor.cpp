@@ -50,7 +50,10 @@ CSHLOFVistor::~CSHLOFVistor(void)
 BOOL CSHLOFVistor::Vistor()
 {
 	BOOL bRet = TRUE;
-	
+
+	// 获取当前价格
+	GetSecuCurPrice(m_szSecu_Intl, m_szPrice);
+
 	ExecTestCase(TestCase_1, "申购 7M");
 	ExecTestCase(TestCase_2, "赎回 7N");
 	ExecTestCase(TestCase_3, "认购 7J");

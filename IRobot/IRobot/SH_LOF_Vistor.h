@@ -36,15 +36,6 @@ public:
 private:
 	MID_403_ORDER_RET_MSG *m_pMsg;
 
-	char m_szSecu_Intl[DEFAULT_LEN];		// 证券代码
-	char m_szSecu_Code[DEFAULT_LEN];		// 证券代码
-	char m_szPrice[DEFAULT_LEN];			// 委托价格
-	char m_szQty[DEFAULT_LEN];				// 委托数量
-
-	char m_szMarket_Board[3];
-	char m_szTrdId[3];
-	char m_szCurrency[3];
-
 	// 检测数据
 	float m_fOrder_RltFrzAmt;		// 交易冻结金额
 	float m_fOrder_RltFrzQty;		// 交易冻结数量

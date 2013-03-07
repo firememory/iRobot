@@ -3,10 +3,12 @@
 #include "MidConn.h"
 #include "KcxpConn.h"
 #include "ParseKcbpLog.h"
+#include "DBConnect.h"
 
 extern CMidConn *g_pMidConn;
 extern CKcxpConn *g_pKcxpConn;
 extern CParseKcbpLog *g_pParseKcbpLog;
+extern CDBConnect *g_pDBConn;
 
 CRITICAL_SECTION IPCKDGateWayVistor::m_caSendMsgLock;
 
@@ -167,4 +169,59 @@ BOOL IPCKDGateWayVistor::SendKcxpMsg( char *pCmd )
 
 	LeaveCriticalSection(&m_caSendMsgLock);
 	return TRUE;
+}
+
+// 获取股票当前价格
+BOOL IPCKDGateWayVistor::GetSecuCurPrice( char *pSecuintl, char* pOrderPrice )
+{
+	_variant_t TheValue; //VARIANT数据类型
+	char szTmp[100] = {0};
+
+	// 1. 获取Shares表
+	CString strSql;
+	float fPrice = 0;
+
+	strSql.Format("select * from  secu_mkt_info where secu_intl = %s",m_szSecu_Intl);
+
+	BSTR bstrSQL = strSql.AllocSysString();
+
+	try
+	{
+		_RecordsetPtr pRecordSet;
+		pRecordSet.CreateInstance(__uuidof(Recordset));
+
+		if (!g_pDBConn->QueryData(bstrSQL, pRecordSet))
+		{
+			return FALSE;
+		}
+
+		// 客户当前没有持仓此股票
+		if (pRecordSet->adoEOF)
+		{
+			fPrice = 1;
+		}
+
+		while(!pRecordSet->adoEOF)
+		{	
+			// 当前价格
+			DB_GET_VALUE_FLOAT("CURRENT_PRICE", fPrice);
+
+			pRecordSet->MoveNext();
+		}
+
+		pRecordSet->Close();
+
+		sprintf(pOrderPrice, "%.2f", fPrice);
+	}
+	catch(_com_error &e)
+	{
+		CString strMsg;
+		strMsg.Format(_T("错误描述：%s\n错误消息%s"), 
+			(LPCTSTR)e.Description(),
+			(LPCTSTR)e.ErrorMessage());
+
+		g_pLog->WriteRunLogEx(__FILE__,__LINE__,strMsg.GetBuffer());
+
+		return FALSE;
+	}
 }

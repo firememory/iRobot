@@ -49,7 +49,10 @@ CSHA_SellVistor::~CSHA_SellVistor(void)
 BOOL CSHA_SellVistor::Vistor()
 {
 	BOOL bRet = TRUE;
-	
+
+	// 获取当前价格
+	GetSecuCurPrice(m_szSecu_Intl, m_szPrice);
+
 	ExecTestCase(TestCase_1, "限价卖出 0S");
 	ExecTestCase(TestCase_2, "市价 五档即时成交剩余撤销 VS");
 	ExecTestCase(TestCase_3, "市价 五档即时成交剩余转限 US");

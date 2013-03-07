@@ -32,7 +32,6 @@ CSB_BuyVistor::CSB_BuyVistor(void)
 	strcpy_s(m_szSecu_Code, "400018");
 	strcpy_s(m_szSecu_Intl, "400018");
 	strcpy_s(m_szQty, "200");
-	strcpy_s(m_szPrice, "2.55");
 
 	// 深B
 	strcpy_s(m_szMarket_Board, "02");	
@@ -49,6 +48,9 @@ CSB_BuyVistor::~CSB_BuyVistor(void)
 BOOL CSB_BuyVistor::Vistor()
 {
 	BOOL bRet = TRUE;
+
+	// 获取当前价格
+	GetSecuCurPrice(m_szSecu_Intl, m_szPrice);
 
 	// B股目前只支持限价委托
 	ExecTestCase(TestCase_1, "限价买入 0B");

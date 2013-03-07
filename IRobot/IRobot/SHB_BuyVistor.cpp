@@ -50,6 +50,9 @@ BOOL CSHB_BuyVistor::Vistor()
 {
 	BOOL bRet = TRUE;
 
+	// 获取当前价格
+	GetSecuCurPrice(m_szSecu_Intl, m_szPrice);
+
 	// B股目前只支持限价委托
 	ExecTestCase(TestCase_1, "限价买入 0B");
 

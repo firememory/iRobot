@@ -31,8 +31,8 @@ CSZB_BuyVistor::CSZB_BuyVistor(void)
 	strcpy_s(m_szServiceName, "深圳B股买入");
 	strcpy_s(m_szSecu_Code, "200002");
 	strcpy_s(m_szSecu_Intl, "200002");
-	strcpy_s(m_szQty, "200");
-	strcpy_s(m_szPrice, "2.55");
+	strcpy_s(m_szQty, "100");
+	strcpy_s(m_szPrice, "15.01");
 
 	// 深B
 	strcpy_s(m_szMarket_Board, "01");	
@@ -49,6 +49,9 @@ CSZB_BuyVistor::~CSZB_BuyVistor(void)
 BOOL CSZB_BuyVistor::Vistor()
 {
 	BOOL bRet = TRUE;
+
+	// 获取当前价格
+	GetSecuCurPrice(m_szSecu_Intl, m_szPrice);
 
 	// B股目前只支持限价委托
 	ExecTestCase(TestCase_1, "限价买入 0B");

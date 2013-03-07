@@ -48,6 +48,7 @@ public:
 	virtual LPSTR GetNextLine(LPSTR lpstr);
 	virtual BOOL SendMidMsg(char *pCmd);
 	virtual BOOL SendKcxpMsg(char *pCmd);
+	virtual BOOL GetSecuCurPrice(char *pSecu_intl, char *pPrice);
 protected:
 	char m_szServiceName[MAX_PATH]; // Service名称	
 
@@ -58,6 +59,20 @@ protected:
 	// MID返回值
 	int m_nRowNum;
 	int m_nFieldNum;
+
+	char m_szSecu_Intl[DEFAULT_LEN];		// 证券代码
+	char m_szSecu_Code[DEFAULT_LEN];		// 证券代码
+
+	char m_szFund_Intl[DEFAULT_LEN];		// 基金代码
+	char m_szOrderAmt[DEFAULT_LEN];			// 委托金额
+
+	char m_szPrice[DEFAULT_LEN];			// 委托价格
+	char m_szQty[DEFAULT_LEN];				// 委托数量
+
+	char m_szMarket_Board[3];
+	char m_szTrdId[3];
+	char m_szCurrency[2]; // 币种
+	char m_szTA_Code[3];	
 
 private:
 	static CRITICAL_SECTION m_caSendMsgLock; // 发送消息的锁

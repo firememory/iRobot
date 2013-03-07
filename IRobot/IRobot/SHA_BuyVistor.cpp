@@ -50,7 +50,10 @@ CSHA_BuyVistor::~CSHA_BuyVistor(void)
 BOOL CSHA_BuyVistor::Vistor()
 {
 	BOOL bRet = TRUE;
-	
+
+	// 获取当前价格
+	GetSecuCurPrice(m_szSecu_Intl, m_szPrice);
+
 	ExecTestCase(TestCase_1, "限价买入 0B");
 	ExecTestCase(TestCase_2, "五档即时成交剩余撤销 VB");
 	ExecTestCase(TestCase_3, "五档即时成交剩余转限 UB");

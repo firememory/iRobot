@@ -51,6 +51,9 @@ BOOL CSB_SellVistor::Vistor()
 {
 	BOOL bRet = TRUE;
 	
+	// 获取当前价格
+	GetSecuCurPrice(m_szSecu_Intl, m_szPrice);
+
 	ExecTestCase(TestCase_1, "限价卖出 0S");
 
 	return bRet;

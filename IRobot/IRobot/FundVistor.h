@@ -31,12 +31,6 @@ public:
 private:
 	MID_821_ORDER_RET_MSG *m_pMsg;
 
-	char m_szFund_Intl[DEFAULT_LEN];		// 基金代码
-	char m_szOrderAmt[DEFAULT_LEN];			// 委托金额
-	char m_szTrdId[3];
-	char m_szTA_Code[3];
-	char m_szCurrency[3];
-
 	// 检测数据
 	float m_fOrderAmt;		// 交易冻结金额
 	float m_fOrderFrzAmt;		// 交易冻结数量

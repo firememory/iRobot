@@ -52,6 +52,9 @@ BOOL CSZA_BuyVistor::Vistor()
 {
 	BOOL bRet = TRUE;
 
+	// 获取当前价格
+	GetSecuCurPrice(m_szSecu_Intl, m_szPrice);
+
 	ExecTestCase(TestCase_1, "限价买入 0B");
 	ExecTestCase(TestCase_2, "对手方最优价格委托 YB");
 	ExecTestCase(TestCase_3, "本方最有价格委托 XB");

@@ -45,7 +45,6 @@ void CMyService::Init()
 	RegisterProtocal(&LoginVistor);
 	RegisterProtocal(&QueryShares);
 	RegisterProtocal(&QuerySecuAcc);
-
 	RegisterProtocal(&SZA_BuyVistor);
 	RegisterProtocal(&SHA_BuyVistor);
 	RegisterProtocal(&SHA_SellVistor);
