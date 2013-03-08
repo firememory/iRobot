@@ -12,27 +12,28 @@ public:
 	CSZA_BuyVistor(void);
 	virtual ~CSZA_BuyVistor(void);
 
+	// 调用测试
 	virtual BOOL Vistor();
+
+	// 解析Mid接口返回消息
 	virtual BOOL ResultStrToTable(char *);
 	
-	// 解析KCXP发回的消息
+	// 解析KCXP接口返回消息
 	virtual void ParseKcxpRetMsg();
 
-	// 在执行前，获取一把相关数据，与执行后数据进行比较
-	BOOL InitUserData();
-	BOOL UpdateUserData();
-	BOOL GetMatchedData();
+	// 测试用例集
+	BOOL TestCase_1();  // 市价买入
+	BOOL TestCase_2();  // 对手方最优价格委托
+	BOOL TestCase_3();	// 本方最有价格委托
+	BOOL TestCase_4();	// 即时成交剩余撤销委托 
+	BOOL TestCase_5();	// 五档即时成交剩余撤销
+	BOOL TestCase_6();	// 全额成交或撤销委托
 
-
-
-	BOOL TestCase_1(); 
-	BOOL TestCase_2();
-	BOOL TestCase_3();
-	BOOL TestCase_4();
-	BOOL TestCase_5();
-	BOOL TestCase_6();
-
+	// 检查点
 	BOOL ChkData();
+	BOOL InitUserData();   // 委托前，客户资金、股份快照
+	BOOL UpdateUserData(); // 成交后，客户资金、股份快照
+	BOOL GetMatchedData(); // 成交结果
 
 	// 资金蓝补
 	BOOL SaveCapital();

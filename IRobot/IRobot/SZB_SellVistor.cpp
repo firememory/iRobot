@@ -145,7 +145,7 @@ BOOL CSZB_SellVistor::TestCase_1()
 	strcpy_s(m_szTrdId, "0S");
 	
 	// ¥Ê»Î≤‚ ‘π…∑›
-	//SaveShares();
+	SaveShares();
 	
 	if (FALSE == InitUserData() )
 	{
