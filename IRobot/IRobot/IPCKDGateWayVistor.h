@@ -49,6 +49,7 @@ public:
 	virtual BOOL SendMidMsg(char *pCmd);
 	virtual BOOL SendKcxpMsg(char *pCmd);
 	virtual BOOL GetSecuCurPrice(char *pSecu_intl, char *pPrice);
+	//virtual BOOL GetSecuInfo(char *pSecuIntl, char* pAccount);
 protected:
 	char m_szServiceName[MAX_PATH]; // ServiceÃû³Æ	
 

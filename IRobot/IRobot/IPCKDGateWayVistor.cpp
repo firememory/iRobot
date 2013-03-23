@@ -224,4 +224,6 @@ BOOL IPCKDGateWayVistor::GetSecuCurPrice( char *pSecuintl, char* pOrderPrice )
 
 		return FALSE;
 	}
+
+	return TRUE;
 }

@@ -19,6 +19,8 @@
 #include "SZ_LOF_Vistor.h"
 #include "SH_LOF_Vistor.h"
 
+#include "SH_ETFVistor.h"
+
 #include "QuerySecuAccVistor.h"
 #include "QueryShares.h"
 
@@ -68,6 +70,8 @@ public:
 
 	CSZLOFVistor SZ_LOFVistor; // 深圳LOF基金业务
 	CSHLOFVistor SH_LOFVistor; // 上海LOF基金业务
+
+	CSH_ETFVistor SH_ETFVistor; // 上海ETF业务
 
 	CQueryShares QueryShares; // 查询股份
 	CQuerySecuAccVistor QuerySecuAcc; // 查询股东

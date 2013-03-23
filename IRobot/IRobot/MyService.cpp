@@ -58,7 +58,9 @@ void CMyService::Init()
 	RegisterProtocal(&SB_SellVistor);
 	RegisterProtocal(&SZ_LOFVistor);
 	RegisterProtocal(&SH_LOFVistor);
-
+	/*
+	RegisterProtocal(&SH_ETFVistor);
+	*/
 	m_nTotalCaseCnt = m_ptServiceArray.GetCount();
 
 	m_pDlg->SetCtrlTotalCaseNum(m_nTotalCaseCnt);

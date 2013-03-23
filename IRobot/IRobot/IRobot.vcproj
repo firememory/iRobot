@@ -323,6 +323,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\SH_ETFVistor.cpp"
+					>
+				</File>
+				<File
 					RelativePath=".\SH_LOF_Vistor.cpp"
 					>
 				</File>
@@ -502,6 +506,10 @@
 				</File>
 				<File
 					RelativePath=".\SB_SellVistor.h"
+					>
+				</File>
+				<File
+					RelativePath=".\SH_ETFVistor.h"
 					>
 				</File>
 				<File
