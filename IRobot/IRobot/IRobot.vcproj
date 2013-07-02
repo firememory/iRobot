@@ -248,6 +248,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\SH_CROSS_ETFVistor.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\SH_MONEY_ETFVistor.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\stdafx.cpp"
 				>
 				<FileConfiguration
@@ -320,6 +328,10 @@
 				</File>
 				<File
 					RelativePath=".\SB_SellVistor.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\SH_BOND_ETFVistor.cpp"
 					>
 				</File>
 				<File
@@ -446,6 +458,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\SH_CROSS_ETFVistor.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SH_MONEY_ETFVistor.h"
+				>
+			</File>
+			<File
 				RelativePath=".\stdafx.h"
 				>
 			</File>
@@ -506,6 +526,10 @@
 				</File>
 				<File
 					RelativePath=".\SB_SellVistor.h"
+					>
+				</File>
+				<File
+					RelativePath=".\SH_BOND_ETFVistor.h"
 					>
 				</File>
 				<File

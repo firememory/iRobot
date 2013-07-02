@@ -22,6 +22,20 @@ extern CLoginterface *g_pLog;
 {\
 	g_pLog->WriteRunLog(SYS_MODE, LOG_NOTIFY, "#TestCase# %s %s开始", m_szServiceName, y);\
 	if (FALSE == x())\
+{\
+	g_pLog->WriteRunLog(TEST_CASE_MODE_FAIL, LOG_NOTIFY, "#TestCase# %s %s失败", m_szServiceName, y);\
+	bRet = FALSE;\
+}\
+	else\
+{\
+	g_pLog->WriteRunLog(TEST_CASE_MODE_SUCC, LOG_NOTIFY, "#TestCase# %s %s成功", m_szServiceName, y);\
+}\
+}
+
+#define ExecTestCase1(x,y,secu_intl,trd_id)\
+{\
+	g_pLog->WriteRunLog(SYS_MODE, LOG_NOTIFY, "#TestCase# %s %s开始", m_szServiceName, y);\
+	if (FALSE == x(secu_intl, trd_id))\
 	{\
 		g_pLog->WriteRunLog(TEST_CASE_MODE_FAIL, LOG_NOTIFY, "#TestCase# %s %s失败", m_szServiceName, y);\
 		bRet = FALSE;\
@@ -61,7 +75,8 @@ protected:
 	int m_nRowNum;
 	int m_nFieldNum;
 
-	char m_szSecu_Intl[DEFAULT_LEN];		// 证券代码
+	char m_szETF_Intl[DEFAULT_LEN];			// ETF代码
+	char m_szSecu_Intl[DEFAULT_LEN];		// 证券内码
 	char m_szSecu_Code[DEFAULT_LEN];		// 证券代码
 
 	char m_szFund_Intl[DEFAULT_LEN];		// 基金代码

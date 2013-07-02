@@ -20,6 +20,9 @@
 #include "SH_LOF_Vistor.h"
 
 #include "SH_ETFVistor.h"
+#include "SH_BOND_ETFVistor.h"
+#include "SH_CROSS_ETFVistor.h"
+#include "SH_MONEY_ETFVistor.h"
 
 #include "QuerySecuAccVistor.h"
 #include "QueryShares.h"
@@ -72,6 +75,9 @@ public:
 	CSHLOFVistor SH_LOFVistor; // 上海LOF基金业务
 
 	CSH_ETFVistor SH_ETFVistor; // 上海ETF业务
+	CSH_BOND_ETFVistor SH_BOND_ETFVistor; // 上海债券ETF业务
+	CSH_CROSS_ETFVistor SH_CROSS_ETFVistor; // 上海跨境ETF业务
+	CSH_MONEY_ETFVistor SH_MONEY_ETFVistor; // 上海货币ETF业务
 
 	CQueryShares QueryShares; // 查询股份
 	CQuerySecuAccVistor QuerySecuAcc; // 查询股东

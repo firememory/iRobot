@@ -11,13 +11,26 @@ struct ETF_SECU_SHARES
 	int nSHareOtd_Avl;		// 在途可用
 };
 
+// ETF定义信息
+struct ETF_INFO
+{
+	char szEtfIntl[11];				// ETF代码
+	int nCreationRedemptionUnit;	// 每个篮子（最小申购、赎回单位）对应的ETF份数
+	float fMaxCashRatio;			// 总的现金替代比例
+	int nRecordNum;					// 成份证券的数目
+	float fEstimateCashComponent;	// T日每个篮子的预估现金差额
+	float fCashComponent;			// 前一日现金差额
+	float fNavPerCu;				// 前一日最小申赎单位净值
+	float fNav;						// 前一日基金份额净值
+};
+
 // ETF成份股信息
 struct ETF_SECU_INFO
 {
-	char szSecuIntl[11]; // 成份股内码
-	int nShareQty;		 // 成份股替代数量
-	int nInsteadFlag;	 // 是否可现金替代 1:不可 2:可
-
+	char szSecuIntl[11];	// 成份股内码
+	int nShareQty;			// 成份股替代数量
+	int nInsteadFlag;		// 是否可现金替代 1:不可 2:可
+	float fPrice_Ratio;		// 溢价比例
 	ETF_SECU_SHARES shares_old;
 	ETF_SECU_SHARES shares_new;
 };
@@ -41,29 +54,29 @@ public:
 	BOOL UpdateUserData();
 	BOOL GetMatchedData();
 
+	BOOL GetEtfInfo(char *pEtfIntl);
 	BOOL GetEtfSecuInfo(char *pEtfIntl);
-	BOOL GetEtfSecuShares(char *pSecuIntl, ETF_SECU_SHARES* pShares);
+	BOOL GetEtfSecuShares(int nType);
 
-	BOOL TestCase_1(); 
-	BOOL TestCase_2();
-	BOOL TestCase_3();
-	BOOL TestCase_4(); 
-	BOOL TestCase_5();
-	BOOL TestCase_6();
+	BOOL TestCase_1(char *pEtf_Code, char* pTrd_Id); 
 
 	BOOL ChkData();
 
 	BOOL SaveCapital();
+	BOOL SaveShares();
+	BOOL SaveEtfSecuShares();
 
 private:
 	MID_403_ORDER_RET_MSG *m_pMsg;
-	
-	int m_nEtfSecuCnt; // ETF 成份股数量
-	ETF_SECU_INFO *m_pEtfSecuInfo; // ETF 成份股信息	
+		
+	ETF_INFO *m_pEtfInfo;			// ETF定义信息
+	ETF_SECU_INFO *m_pEtfSecuInfo;	// ETF 成份股信息
+	int m_nEtfSecuCnt;				// ETF 成份股数量
 
 	// 检测数据
 	float m_fMatched_OrderFrzAmt;	// 成交的交易冻结金额
 	float m_fMatched_Price;	// 成交价格
+	int m_nOrder_Qty; // 委托数量
 	int m_nMatched_Qty;	// 成交数量
 	float m_fMatchedAmt;	// 成交金额
 	float m_fMatched_SettAmt; // 清算金额

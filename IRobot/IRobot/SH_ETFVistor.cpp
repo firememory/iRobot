@@ -25,10 +25,10 @@ CSH_ETFVistor::CSH_ETFVistor(void)
 	m_fCptlBln_Old = m_fCptlAvl_Old = m_fCptlTrdFrz_Old = m_fCptlOutstanding_Old = m_fCptlOtdAvl_Old = 0;
 
 	m_nShareBln_New = m_nShareAvl_New = m_nShareTrdFrz_New = m_nShareOtd_New = 0;
-	
+
 	m_fCptlBln_New = m_fCptlAvl_New = m_fCptlTrdFrz_New = m_fCptlOutstanding_New = m_fCptlOtdAvl_New = 0;
 
-	strcpy_s(m_szServiceName, "上海ETF");
+	strcpy_s(m_szServiceName, "上海ETF业务");
 
 	strcpy_s(m_szSecu_Code, "511011");
 	strcpy_s(m_szSecu_Intl, "1511011");
@@ -51,20 +51,11 @@ BOOL CSH_ETFVistor::Vistor()
 {
 	BOOL bRet = TRUE;
 
-	// 获取当前价格
-	GetSecuCurPrice(m_szSecu_Intl, m_szPrice);
-
-	// 获取成份股信息
-	GetEtfSecuInfo(m_szSecu_Intl);
-
-	ExecTestCase(TestCase_1, "ETF买入 0B");
-	ExecTestCase(TestCase_2, "ETF卖出 0S");
-	/*
-	ExecTestCase(TestCase_3, "ETF申购 7K");	
-	ExecTestCase(TestCase_4, "ETF赎回 7L");		
-	ExecTestCase(TestCase_5, "ETF网下现金认购 7P");
-	ExecTestCase(TestCase_6, "ETF网下股票认购 7Q");
-	*/
+	ExecTestCase1(TestCase_1, "普通ETF买入 0B", "510050", "0B");	
+	ExecTestCase1(TestCase_1, "普通ETF卖出 0S", "510050", "0S");
+	
+	ExecTestCase1(TestCase_1, "普通ETF申购 7K", "510051", "7K");
+	ExecTestCase1(TestCase_1, "普通ETF赎回 7L", "510051", "7L");
 
 	return bRet;
 }
@@ -72,7 +63,7 @@ BOOL CSH_ETFVistor::Vistor()
 BOOL CSH_ETFVistor::ResultStrToTable(char *pRetStr)
 {
 	m_nRowNum = m_pKDGateWay->GetRecNum();
-	
+
 	m_pMsg = new MID_403_ORDER_RET_MSG[m_nRowNum];
 	memset(m_pMsg, 0x00, sizeof(MID_403_ORDER_RET_MSG)*m_nRowNum);
 
@@ -149,12 +140,54 @@ BOOL CSH_ETFVistor::ResultStrToTable(char *pRetStr)
 	return TRUE;
 }
 
-BOOL CSH_ETFVistor::TestCase_1()
+/************************************************************************/
+/* 测试用例:
+普通ETF 510050 买入/卖出
+国债ETF 511010 买入/卖出
+跨境ETF 510900 买入/卖出
+货币ETF 511990 买入/卖出
+/************************************************************************/
+BOOL CSH_ETFVistor::TestCase_1(char *pEtf_Code, char* pTrd_Id)
 {
 	BOOL bRet = TRUE;
-	strcpy_s(m_szTrdId, "0B");
+	strcpy_s(m_szTrdId, pTrd_Id);
+	strcpy_s(m_szSecu_Code, pEtf_Code);
+	sprintf_s(m_szSecu_Intl, "1%s", pEtf_Code);
 
+	if (StrCmp(m_szTrdId, "0B") == 0 || StrCmp(m_szTrdId, "0S") == 0)
+	{
+		// 获取当前价格
+		GetSecuCurPrice(m_szSecu_Intl, m_szPrice);
+	}	
+	else
+	{
+		// ETF申赎,委托价格固定为1元
+		strcpy_s(m_szPrice, "1");
+	}
+
+	// 获取ETF定义
+	GetEtfInfo(m_szSecu_Intl);
+
+	// 获取ETF成份股信息
+	GetEtfSecuInfo(m_szSecu_Intl);
+
+	// 存钱
 	SaveCapital();
+
+	// 存股
+	if (StrCmp(m_szTrdId, "0B") == 0 || StrCmp(m_szTrdId, "7K") == 0)
+	{
+	}
+	else
+	{
+		SaveShares();
+	}
+
+	// 普通ETF,国债ETF申购,需要给不能现金替代的成份股,预先存入股份
+	if (StrCmp(m_szTrdId, "7K") == 0)
+	{
+		SaveEtfSecuShares();
+	}
 
 	bRet = InitUserData();
 	if (bRet == FALSE)
@@ -195,276 +228,24 @@ BOOL CSH_ETFVistor::TestCase_1()
 	Sleep(g_pCfg->GetRefreshDBGap());
 
 	bRet = ChkData();
-	
-	return bRet;
-}
-
-BOOL CSH_ETFVistor::TestCase_2()
-{
-	BOOL bRet = TRUE;
-	strcpy_s(m_szTrdId, "7L");
-
-	SaveCapital();
-
-	bRet = InitUserData();
-	if (bRet == FALSE)
-	{
-		return FALSE;
-	}
-
-	// 发送数据
-	char szTemp[2048] = {0};
-	if (g_pCfg->GetTestMode() == USE_MID)
-	{
-		sprintf_s(szTemp,"403|%s|%s|%s|%s||%s|%s|%s|%s||||||||||||",
-			g_pCfg->GetCustID(), m_szMarket_Board, g_pCfg->GetSecu_Acc_SHA(), g_pCfg->GetAccount(), m_szSecu_Code, m_szTrdId, m_szPrice, m_szQty);
-
-		bRet = SendMidMsg(&szTemp[0]);
-	}
-	else
-	{
-		// 拼接发送给KCXP的命令字符串		
-		sprintf_s(szTemp,"BEGIN:L0303001:23-11:00:22-576498  [_CA=2.3&_ENDIAN=0&F_OP_USER=%s&F_OP_ROLE=2&F_SESSION=%s&F_OP_SITE=999999999999999&F_OP_BRANCH=%s&F_CHANNEL=0"
-			"&CUSTOMER=%s&MARKET=%c&BOARD=%c&SECU_ACC=%s&ACCOUNT=%s&SECU_INTL=%s&SERIAL_NO=-1&DELIST_CHANNEL=0&TRD_ID=%s&PRICE=%s&QTY=%s&SEAT=%s]",
-			g_pCfg->GetOpId().GetBuffer(), g_pKcxpConn->GetSession(), g_pCfg->GetBranch().GetBuffer(), 
-			g_pCfg->GetCustID().GetBuffer(), m_szMarket_Board[0], m_szMarket_Board[1], g_pCfg->GetSecu_Acc_SHA(), g_pCfg->GetAccount().GetBuffer(),
-			m_szSecu_Intl, m_szTrdId, m_szPrice, m_szQty, g_pCfg->GetSHA_BIND_SEAT());
-
-		if (TRUE == (bRet = SendKcxpMsg(&szTemp[0])) && m_nRowNum > 0)
-		{
-			ParseKcxpRetMsg();
-		}
-	}
-
-	if (bRet == FALSE)
-	{
-		return FALSE;	
-	}
-
-	// 休眠，等待数据库更新
-	Sleep(g_pCfg->GetRefreshDBGap());
-
-	bRet = ChkData();
 
 	return bRet;
 }
 
-
-BOOL CSH_ETFVistor::TestCase_3()
-{
-	BOOL bRet = TRUE;
-	strcpy_s(m_szTrdId, "0B");
-
-	SaveCapital();
-
-	bRet = InitUserData();
-	if (bRet == FALSE)
-	{
-		return FALSE;
-	}
-
-	// 发送数据
-	char szTemp[2048] = {0};
-	if (g_pCfg->GetTestMode() == USE_MID)
-	{
-		sprintf_s(szTemp,"403|%s|%s|%s|%s||%s|%s|%s|%s||||||||||||",
-			g_pCfg->GetCustID(), m_szMarket_Board, g_pCfg->GetSecu_Acc_SHA(), g_pCfg->GetAccount(), m_szSecu_Code, m_szTrdId, m_szPrice, m_szQty);
-
-		bRet = SendMidMsg(&szTemp[0]);
-	}
-	else
-	{
-		// 拼接发送给KCXP的命令字符串		
-		sprintf_s(szTemp,"BEGIN:L0303001:23-11:00:22-576498  [_CA=2.3&_ENDIAN=0&F_OP_USER=%s&F_OP_ROLE=2&F_SESSION=%s&F_OP_SITE=999999999999999&F_OP_BRANCH=%s&F_CHANNEL=0"
-			"&CUSTOMER=%s&MARKET=%c&BOARD=%c&SECU_ACC=%s&ACCOUNT=%s&SECU_INTL=%s&SERIAL_NO=-1&DELIST_CHANNEL=0&TRD_ID=%s&PRICE=%s&QTY=%s&SEAT=%s]",
-			g_pCfg->GetOpId().GetBuffer(), g_pKcxpConn->GetSession(), g_pCfg->GetBranch().GetBuffer(), 
-			g_pCfg->GetCustID().GetBuffer(), m_szMarket_Board[0], m_szMarket_Board[1], g_pCfg->GetSecu_Acc_SHA(), g_pCfg->GetAccount().GetBuffer(),
-			m_szSecu_Intl, m_szTrdId, m_szPrice, m_szQty, g_pCfg->GetSHA_BIND_SEAT());
-
-		if (TRUE == (bRet = SendKcxpMsg(&szTemp[0])) && m_nRowNum > 0)
-		{
-			ParseKcxpRetMsg();
-		}
-	}
-
-	if (bRet == FALSE)
-	{
-		return FALSE;	
-	}
-
-	// 休眠，等待数据库更新
-	Sleep(g_pCfg->GetRefreshDBGap());
-
-	bRet = ChkData();
-
-	return bRet;
-}
-
-BOOL CSH_ETFVistor::TestCase_4()
-{
-	BOOL bRet = TRUE;
-	strcpy_s(m_szTrdId, "0S");
-
-	SaveCapital();
-
-	bRet = InitUserData();
-	if (bRet == FALSE)
-	{
-		return FALSE;
-	}
-
-	// 发送数据
-	char szTemp[2048] = {0};
-	if (g_pCfg->GetTestMode() == USE_MID)
-	{
-		sprintf_s(szTemp,"403|%s|%s|%s|%s||%s|%s|%s|%s||||||||||||",
-			g_pCfg->GetCustID(), m_szMarket_Board, g_pCfg->GetSecu_Acc_SHA(), g_pCfg->GetAccount(), m_szSecu_Code, m_szTrdId, m_szPrice, m_szQty);
-
-		bRet = SendMidMsg(&szTemp[0]);
-	}
-	else
-	{
-		// 拼接发送给KCXP的命令字符串		
-		sprintf_s(szTemp,"BEGIN:L0303001:23-11:00:22-576498  [_CA=2.3&_ENDIAN=0&F_OP_USER=%s&F_OP_ROLE=2&F_SESSION=%s&F_OP_SITE=999999999999999&F_OP_BRANCH=%s&F_CHANNEL=0"
-			"&CUSTOMER=%s&MARKET=%c&BOARD=%c&SECU_ACC=%s&ACCOUNT=%s&SECU_INTL=%s&SERIAL_NO=-1&DELIST_CHANNEL=0&TRD_ID=%s&PRICE=%s&QTY=%s&SEAT=%s]",
-			g_pCfg->GetOpId().GetBuffer(), g_pKcxpConn->GetSession(), g_pCfg->GetBranch().GetBuffer(), 
-			g_pCfg->GetCustID().GetBuffer(), m_szMarket_Board[0], m_szMarket_Board[1], g_pCfg->GetSecu_Acc_SHA(), g_pCfg->GetAccount().GetBuffer(),
-			m_szSecu_Intl, m_szTrdId, m_szPrice, m_szQty, g_pCfg->GetSHA_BIND_SEAT());
-
-		if (TRUE == (bRet = SendKcxpMsg(&szTemp[0])) && m_nRowNum > 0)
-		{
-			ParseKcxpRetMsg();
-		}
-	}
-
-	if (bRet == FALSE)
-	{
-		return FALSE;	
-	}
-
-	// 休眠，等待数据库更新
-	Sleep(g_pCfg->GetRefreshDBGap());
-
-	bRet = ChkData();
-
-	return bRet;
-}
-
-
-BOOL CSH_ETFVistor::TestCase_5()
-{
-	BOOL bRet = TRUE;
-	strcpy_s(m_szTrdId, "7P");
-
-	SaveCapital();
-
-	bRet = InitUserData();
-	if (bRet == FALSE)
-	{
-		return FALSE;
-	}
-
-	// 发送数据
-	char szTemp[2048] = {0};
-	if (g_pCfg->GetTestMode() == USE_MID)
-	{
-		sprintf_s(szTemp,"403|%s|%s|%s|%s||%s|%s|%s|%s||||||||||||",
-			g_pCfg->GetCustID(), m_szMarket_Board, g_pCfg->GetSecu_Acc_SHA(), g_pCfg->GetAccount(), m_szSecu_Code, m_szTrdId, m_szPrice, m_szQty);
-
-		bRet = SendMidMsg(&szTemp[0]);
-	}
-	else
-	{
-		// 拼接发送给KCXP的命令字符串		
-		sprintf_s(szTemp,"BEGIN:L0303001:23-11:00:22-576498  [_CA=2.3&_ENDIAN=0&F_OP_USER=%s&F_OP_ROLE=2&F_SESSION=%s&F_OP_SITE=999999999999999&F_OP_BRANCH=%s&F_CHANNEL=0"
-			"&CUSTOMER=%s&MARKET=%c&BOARD=%c&SECU_ACC=%s&ACCOUNT=%s&SECU_INTL=%s&SERIAL_NO=-1&DELIST_CHANNEL=0&TRD_ID=%s&PRICE=%s&QTY=%s&SEAT=%s]",
-			g_pCfg->GetOpId().GetBuffer(), g_pKcxpConn->GetSession(), g_pCfg->GetBranch().GetBuffer(), 
-			g_pCfg->GetCustID().GetBuffer(), m_szMarket_Board[0], m_szMarket_Board[1], g_pCfg->GetSecu_Acc_SHA(), g_pCfg->GetAccount().GetBuffer(),
-			m_szSecu_Intl, m_szTrdId, m_szPrice, m_szQty, g_pCfg->GetSHA_BIND_SEAT());
-
-		if (TRUE == (bRet = SendKcxpMsg(&szTemp[0])) && m_nRowNum > 0)
-		{
-			ParseKcxpRetMsg();
-		}
-	}
-
-	if (bRet == FALSE)
-	{
-		return FALSE;	
-	}
-
-	// 休眠，等待数据库更新
-	Sleep(g_pCfg->GetRefreshDBGap());
-
-	bRet = ChkData();
-
-	return bRet;
-}
-
-
-BOOL CSH_ETFVistor::TestCase_6()
-{
-	BOOL bRet = TRUE;
-	strcpy_s(m_szTrdId, "7Q");
-
-	SaveCapital();
-
-	bRet = InitUserData();
-	if (bRet == FALSE)
-	{
-		return FALSE;
-	}
-
-	// 发送数据
-	char szTemp[2048] = {0};
-	if (g_pCfg->GetTestMode() == USE_MID)
-	{
-		sprintf_s(szTemp,"403|%s|%s|%s|%s||%s|%s|%s|%s||||||||||||",
-			g_pCfg->GetCustID(), m_szMarket_Board, g_pCfg->GetSecu_Acc_SHA(), g_pCfg->GetAccount(), m_szSecu_Code, m_szTrdId, m_szPrice, m_szQty);
-
-		bRet = SendMidMsg(&szTemp[0]);
-	}
-	else
-	{
-		// 拼接发送给KCXP的命令字符串		
-		sprintf_s(szTemp,"BEGIN:L0303001:23-11:00:22-576498  [_CA=2.3&_ENDIAN=0&F_OP_USER=%s&F_OP_ROLE=2&F_SESSION=%s&F_OP_SITE=999999999999999&F_OP_BRANCH=%s&F_CHANNEL=0"
-			"&CUSTOMER=%s&MARKET=%c&BOARD=%c&SECU_ACC=%s&ACCOUNT=%s&SECU_INTL=%s&SERIAL_NO=-1&DELIST_CHANNEL=0&TRD_ID=%s&PRICE=%s&QTY=%s&SEAT=%s]",
-			g_pCfg->GetOpId().GetBuffer(), g_pKcxpConn->GetSession(), g_pCfg->GetBranch().GetBuffer(), 
-			g_pCfg->GetCustID().GetBuffer(), m_szMarket_Board[0], m_szMarket_Board[1], g_pCfg->GetSecu_Acc_SHA(), g_pCfg->GetAccount().GetBuffer(),
-			m_szSecu_Intl, m_szTrdId, m_szPrice, m_szQty, g_pCfg->GetSHA_BIND_SEAT());
-
-		if (TRUE == (bRet = SendKcxpMsg(&szTemp[0])) && m_nRowNum > 0)
-		{
-			ParseKcxpRetMsg();
-		}
-	}
-
-	if (bRet == FALSE)
-	{
-		return FALSE;	
-	}
-
-	// 休眠，等待数据库更新
-	Sleep(g_pCfg->GetRefreshDBGap());
-
-	bRet = ChkData();
-
-	return bRet;
-}
 /*
- *	获取以下数据
- 	1. Shares表
-		1.1 股份余额
-		1.2 股份可用
-		1.3 交易冻结
-		1.4 在途数量
-	2. Capitals表
-		2.1 资金余额
-		2.2 资金可用
-		2.3 交易冻结
-		2.4 在途资金
-		2.5 在途可用
- */
+*	获取以下数据
+1. Shares表
+1.1 股份余额
+1.2 股份可用
+1.3 交易冻结
+1.4 在途数量
+2. Capitals表
+2.1 资金余额
+2.2 资金可用
+2.3 交易冻结
+2.4 在途资金
+2.5 在途可用
+*/
 BOOL CSH_ETFVistor::InitUserData()
 {
 	_variant_t TheValue; //VARIANT数据类型
@@ -514,10 +295,7 @@ BOOL CSH_ETFVistor::InitUserData()
 		pRecordSet->Close();
 
 		// 获取成份股的股份余额
-		for(int n=0; n<m_nEtfSecuCnt; n++)
-		{
-			GetEtfSecuShares(m_pEtfSecuInfo[n].szSecuIntl, &m_pEtfSecuInfo[n].shares_old);
-		}		
+		GetEtfSecuShares(1);
 	}
 	catch(_com_error &e)
 	{
@@ -530,7 +308,7 @@ BOOL CSH_ETFVistor::InitUserData()
 
 		return FALSE;
 	}
-	
+
 
 	// 2. 获取Capitals表
 	try
@@ -539,7 +317,7 @@ BOOL CSH_ETFVistor::InitUserData()
 			g_pCfg->GetAccount().GetBuffer(), m_szCurrency);
 
 		bstrSQL = strSql.AllocSysString();
-		
+
 		_RecordsetPtr pRecordSet;
 		pRecordSet.CreateInstance(__uuidof(Recordset));
 
@@ -636,10 +414,8 @@ BOOL CSH_ETFVistor::UpdateUserData()
 		pRecordSet->Close();
 
 		// 获取成份股的股份余额
-		for(int n=0; n<m_nEtfSecuCnt; n++)
-		{
-			GetEtfSecuShares(m_pEtfSecuInfo[n].szSecuIntl, &m_pEtfSecuInfo[n].shares_old);
-		}	
+		GetEtfSecuShares(2);
+
 	}
 	catch(_com_error &e)
 	{
@@ -660,7 +436,7 @@ BOOL CSH_ETFVistor::UpdateUserData()
 			g_pCfg->GetAccount().GetBuffer(), m_szCurrency);
 
 		bstrSQL = strSql.AllocSysString();
-		
+
 		_RecordsetPtr pRecordSet;
 		pRecordSet.CreateInstance(__uuidof(Recordset));
 
@@ -708,7 +484,7 @@ BOOL CSH_ETFVistor::UpdateUserData()
 
 		return FALSE;
 	}
-	
+
 	return TRUE;
 }
 
@@ -723,18 +499,10 @@ BOOL CSH_ETFVistor::GetMatchedData()
 		// 1.1 检查柜台matching表中的数据是否与委托一致，并获取【持仓成本】
 		CString strSql;
 
-		if (strcmp(m_szTrdId, "0B") == 0)
-		{
-			// 买入ETF份额
-			strSql.Format("select * from  matching where trd_date = %s and trd_id = '%s'and order_id = '%s'"
-				" and account = %s and secu_intl = %s and order_qty = %s",
-				strDate, m_szTrdId, m_pMsg[0].szOrderID, m_pMsg[0].szAccount, m_szSecu_Intl, m_szQty);
-		}
-		else if (strcmp(m_szTrdId, "0S") == 0)
-		{
-			// 卖出ETF份额
-		}
-		
+		// 买入ETF份额
+		strSql.Format("select * from  matching where trd_date = %s and trd_id = '%s'and order_id = '%s'"
+			" and account = %s and secu_intl = %s and order_qty = %s",
+			strDate, m_szTrdId, m_pMsg[0].szOrderID, m_pMsg[0].szAccount, m_szSecu_Intl, m_szQty);
 
 		m_nWaitMatchingCnt = 0;
 		BSTR bstrSQL = strSql.AllocSysString();
@@ -777,6 +545,7 @@ BOOL CSH_ETFVistor::GetMatchedData()
 			DB_GET_VALUE_INT("MATCHED_QTY", m_nMatched_Qty);			
 			DB_GET_VALUE_FLOAT("MATCHED_AMT", m_fMatchedAmt);
 			DB_GET_VALUE_FLOAT("SETT_AMT", m_fMatched_SettAmt);
+			DB_GET_VALUE_INT("ORDER_QTY", m_nOrder_Qty);
 
 			pRecordSet->MoveNext();
 		}
@@ -822,11 +591,11 @@ BOOL CSH_ETFVistor::ChkData()
 			bRet = FALSE;
 			g_pLog->WriteRunLog(CHKPNT_MODE, LOG_WARN, "Chk 1.2 Fail!");
 		}		
-		
+
 		if (strcmp(m_szTrdId, "0B") == 0)
 		{
 			// ETF买入
-			
+
 			//======================校验资金===============================
 
 			// 1.3.检查captial表中【资金可用 AVAILABLE】减少 应该等于 Matching表中的【SETT_AMT】
@@ -857,7 +626,8 @@ BOOL CSH_ETFVistor::ChkData()
 
 			//======================校验股份===============================
 
-			// 1.6 检查Shares表中ETF份额的【SHARE_BLN】、【SHARE_AVL】、【SHARE_TRD_FRZ】无变化			
+			// 1.6 检查Shares表中ETF份额的【SHARE_BLN】、【SHARE_AVL】、【SHARE_TRD_FRZ】无变化
+			// TODO:国债ETF比较特殊,买入成交后,SHARE_AVL立即增加
 			if (m_nShareBln_New - m_nShareBln_Old != 0
 				||m_nShareAvl_New - m_nShareAvl_Old != 0
 				||m_nShareTrdFrz_New - m_nShareTrdFrz_Old != 0)
@@ -867,9 +637,8 @@ BOOL CSH_ETFVistor::ChkData()
 			}
 
 
-			// 1.7 检查Shares表中ETF份额的【SHARE_OTD】、【SHARE_OTD_AVL】增加等于 matching表中的【MATCHED_QTY】
-			if (m_nShareAvl_New - m_nShareAvl_Old != m_nMatched_Qty
-				|| m_nSHareOtd_Avl_New - m_nSHareOtd_Avl_Old != m_nMatched_Qty)
+			// 1.7 检查Shares表中ETF份额的【SHARE_OTD】增加等于 matching表中的【MATCHED_QTY】
+			if (m_nShareOtd_New - m_nShareOtd_Old != m_nMatched_Qty)
 			{
 				bRet = FALSE;
 				g_pLog->WriteRunLog(CHKPNT_MODE, LOG_WARN, "Chk 1.7 Fail!");
@@ -880,7 +649,6 @@ BOOL CSH_ETFVistor::ChkData()
 			// ETF卖出
 
 			//======================校验资金===============================
-
 			// 1.3.检查captial表中的【资金可用 AVAILABLE】、【OUTSTANDING】、【OTD_AVL】增加 应该等于Matching表中的【SETT_AMT】					
 			if (abs(CutFloatPnt(m_fCptlAvl_New - m_fCptlAvl_Old) - m_fMatched_SettAmt) > 1
 				|| abs(CutFloatPnt(m_fCptlOutstanding_New - m_fCptlOutstanding_Old) - m_fMatched_SettAmt) > 1
@@ -898,40 +666,35 @@ BOOL CSH_ETFVistor::ChkData()
 			}
 
 			//======================校验股份===============================
-
-		}
-		else if (strcmp(m_szTrdId, "UB") == 0)
-		{
-			// 市价委托 五档即时成交剩余转限 UB
-
-			// 1.3.检查captial表中【资金可用 AVAILABLE】减少 应该等于Matching表中的【ORDER_FRZ_AMT】
-			// 由于精度问题，允许1以内的差异
-			float n1 = CutFloatPnt(m_fCptlAvl_Old - m_fCptlAvl_New);
-			float n2 = abs(CutFloatPnt(m_fCptlAvl_Old - m_fCptlAvl_New) - CutFloatPnt(m_fMatched_OrderFrzAmt));
-
-			if (abs(CutFloatPnt(m_fCptlAvl_Old - m_fCptlAvl_New) - CutFloatPnt(m_fMatched_OrderFrzAmt)) > 1)
+			// 1.5 检查Shares表中【股份余额 SHARE_BLN】不变
+			if (m_nShareBln_New != m_nShareBln_Old)
 			{
-				float n1 = CutFloatPnt(m_fCptlAvl_Old - m_fCptlAvl_New);
-				float n2 = abs(CutFloatPnt(m_fCptlAvl_Old - m_fCptlAvl_New) != CutFloatPnt(m_fMatched_OrderFrzAmt));
-
 				bRet = FALSE;
-				g_pLog->WriteRunLog(CHKPNT_MODE, LOG_WARN, "Chk 1.3 Fail!");
+				g_pLog->WriteRunLog(CHKPNT_MODE, LOG_WARN, "Chk 1.7 Fail!");
 			}
 
-			// 1.4.检查captial表中【交易冻结 TRD_FRZ】增加 等于Matching表中的【ORDER_FRZ_AMT】-【SETT_AMT】
-			// 由于精度问题，允许1以内的差异
-			n1 = CutFloatPnt( m_fCptlTrdFrz_New - m_fCptlTrdFrz_Old);
-			float n3 =  CutFloatPnt( m_fMatched_OrderFrzAmt - m_fMatched_SettAmt);
-			n2 = abs(CutFloatPnt( m_fCptlTrdFrz_New - m_fCptlTrdFrz_Old) - CutFloatPnt( m_fMatched_OrderFrzAmt - m_fMatched_SettAmt));
-
-			if (abs(CutFloatPnt( m_fCptlTrdFrz_New - m_fCptlTrdFrz_Old) - CutFloatPnt( m_fMatched_OrderFrzAmt - m_fMatched_SettAmt)) > 1)
+			// 1.8 检查Shares表中【股份可用 SHARE_AVL】减少 应该等于Matching表中的【ORDER_QTY】			
+			if (m_nShareAvl_Old - m_nShareAvl_New != m_nOrder_Qty)
 			{
-				float n1 = CutFloatPnt(m_fCptlTrdFrz_New - m_fCptlTrdFrz_Old);
-				float n2 = CutFloatPnt( m_fMatched_OrderFrzAmt - m_fMatched_SettAmt);
-
 				bRet = FALSE;
-				g_pLog->WriteRunLog(CHKPNT_MODE, LOG_WARN, "Chk 1.4 Fail!");
+				g_pLog->WriteRunLog(CHKPNT_MODE, LOG_WARN, "Chk 1.8 Fail!");
 			}
+
+			// 1.9 检查Shares表中【股份冻结 SHARE_TRD_FRZ】增加 应该等于Matching表中的【ORDER_QTY】-【MATCHED_qty】
+			if ((m_nShareTrdFrz_New - m_nShareTrdFrz_Old) != (m_nOrder_Qty - m_nMatched_Qty))
+			{
+				bRet = FALSE;
+				g_pLog->WriteRunLog(CHKPNT_MODE, LOG_WARN, "Chk 1.9 Fail!");
+			}
+
+			// 2.0 检查Shares表中【在途股份】 不变
+			if (m_nShareOtd_New != m_nShareOtd_Old)
+			{
+				bRet = FALSE;
+				g_pLog->WriteRunLog(CHKPNT_MODE, LOG_WARN, "Chk 2.0 Fail!");
+			}
+
+
 		}
 	}
 
@@ -963,6 +726,65 @@ BOOL CSH_ETFVistor::SaveCapital()
 
 	return bRet;
 }
+
+BOOL CSH_ETFVistor::SaveShares()
+{
+	// 发送数据
+	char szTemp[2048] = {0};
+	BOOL bRet = TRUE;
+
+	// 拼接发送给KCXP的命令字符串		
+	sprintf_s(szTemp,"BEGIN:L0301009:04-10:03:27-577242  [_CA=2.3&_ENDIAN=0&F_OP_USER=%s&F_OP_ROLE=2&F_SESSION=%s&F_OP_SITE=00256497d99e&F_OP_BRANCH=%s&F_CHANNEL=0"
+		"&OPER_FLAG=1&CUSTOMER=%s&MARKET=%c&BOARD=%c&SECU_ACC=%s&ACCOUNT=%s&SECU_INTL=%s&SECU_NAME=%s&SEAT=%s&EXT_INST=0&CQLB=0--存入股份&QTY=%s&AVG_PRICE=%s&OP_REMARK=]",
+		g_pCfg->GetOpId().GetBuffer(), g_pKcxpConn->GetSession(), g_pCfg->GetBranch().GetBuffer(), 
+		g_pCfg->GetCustID().GetBuffer(), m_szMarket_Board[0], m_szMarket_Board[1], g_pCfg->GetSecu_Acc_SHA(), g_pCfg->GetAccount().GetBuffer(),
+		m_szSecu_Intl, "510050--50ETF", g_pCfg->GetSHA_BIND_SEAT(), m_szQty, m_szPrice);
+
+	// TODO:由于L0301009 执行成功，也返回FALSE，因此返回值无效， 此函数永远返回TRUE
+	if (TRUE == (bRet = SendKcxpMsg(&szTemp[0])) && m_nRowNum > 0)
+	{
+		ParseKcxpRetMsg();
+	}
+
+	// 休眠，等待数据库更新
+	Sleep(g_pCfg->GetRefreshDBGap());
+
+	return bRet;
+}
+
+// 给客户存入成份股
+BOOL CSH_ETFVistor::SaveEtfSecuShares()
+{
+	// 发送数据
+	char szTemp[2048] = {0};
+	BOOL bRet = TRUE;
+
+	for (int i=0; i<m_nEtfSecuCnt; i++)
+	{
+		// 只给不能现金替代的成份股,存入股份
+		if (m_pEtfSecuInfo[i].nInsteadFlag == 0)
+		{
+			// 拼接发送给KCXP的命令字符串		
+			sprintf_s(szTemp,"BEGIN:L0301009:04-10:03:27-577242  [_CA=2.3&_ENDIAN=0&F_OP_USER=%s&F_OP_ROLE=2&F_SESSION=%s&F_OP_SITE=00256497d99e&F_OP_BRANCH=%s&F_CHANNEL=0"
+				"&OPER_FLAG=1&CUSTOMER=%s&MARKET=%c&BOARD=%c&SECU_ACC=%s&ACCOUNT=%s&SECU_INTL=%s&SEAT=%s&EXT_INST=0&CQLB=0--存入股份&QTY=%s&AVG_PRICE=%s&OP_REMARK=]",
+				g_pCfg->GetOpId().GetBuffer(), g_pKcxpConn->GetSession(), g_pCfg->GetBranch().GetBuffer(), 
+				g_pCfg->GetCustID().GetBuffer(), m_szMarket_Board[0], m_szMarket_Board[1], g_pCfg->GetSecu_Acc_SHA(), g_pCfg->GetAccount().GetBuffer(),
+				m_pEtfSecuInfo[i].szSecuIntl, g_pCfg->GetSHA_BIND_SEAT(), m_pEtfSecuInfo[i].nShareQty, m_szPrice);
+
+			// TODO:由于L0301009 执行成功，也返回FALSE，因此返回值无效， 此函数永远返回TRUE
+			if (TRUE == (bRet = SendKcxpMsg(&szTemp[0])) && m_nRowNum > 0)
+			{
+				ParseKcxpRetMsg();
+			}
+
+			// 休眠，等待数据库更新
+			Sleep(g_pCfg->GetRefreshDBGap());
+		}		
+	}
+
+	return bRet;
+}
+
 
 void CSH_ETFVistor::ParseKcxpRetMsg()
 {
@@ -1041,11 +863,12 @@ BOOL CSH_ETFVistor::GetEtfSecuInfo( char *pEtfIntl )
 		int n = 0;
 		while(!pRecordSet->adoEOF)
 		{	
-			// 当前价格
+			// ETF成份股信息
 			DB_GET_VALUE_STRING("SECU_INTL", m_pEtfSecuInfo[n].szSecuIntl);
 			DB_GET_VALUE_INT("SHARE_QTY", m_pEtfSecuInfo[n].nShareQty);
-			DB_GET_VALUE_INT("INSTEAD_FLAG", m_pEtfSecuInfo[n].nInsteadFlag);		
-			
+			DB_GET_VALUE_INT("INSTEAD_FLAG", m_pEtfSecuInfo[n].nInsteadFlag);
+			DB_GET_VALUE_FLOAT("PRICE_RATIO", m_pEtfSecuInfo[n].fPrice_Ratio);						
+
 			pRecordSet->MoveNext();
 		}
 
@@ -1064,16 +887,106 @@ BOOL CSH_ETFVistor::GetEtfSecuInfo( char *pEtfIntl )
 	}
 }
 
-BOOL CSH_ETFVistor::GetEtfSecuShares( char *pSecuIntl, ETF_SECU_SHARES* pShares )
+/************************************************************************/
+/* nType: 1为获取历史股份,2为获取最新的股份
+*/
+/************************************************************************/
+BOOL CSH_ETFVistor::GetEtfSecuShares(int nType)
 {
 	_variant_t TheValue; //VARIANT数据类型
 	char szTmp[100] = {0};
 
 	// 1. 获取Shares表
 	CString strSql;
+
+	for(int i=0; i<m_nEtfSecuCnt; i++)
+	{
+		strSql.Format("select * from shares where secu_intl = %s and account = %s", m_pEtfSecuInfo[i].szSecuIntl, g_pCfg->GetAccount());
+
+		BSTR bstrSQL = strSql.AllocSysString();
+
+		try
+		{
+			_RecordsetPtr pRecordSet;
+			pRecordSet.CreateInstance(__uuidof(Recordset));
+
+			if (!g_pDBConn->QueryData(bstrSQL, pRecordSet))
+			{
+				return FALSE;
+			}
+
+			// 没有数据
+			if (pRecordSet->adoEOF)
+			{
+				return FALSE;
+			}
+
+			while(!pRecordSet->adoEOF)
+			{	
+				if (nType == 1)
+				{
+					// 获取初始股份数据
+
+					// 1.1 股份余额
+					DB_GET_VALUE_INT("SHARE_BLN", m_pEtfSecuInfo[i].shares_old.nShareBln);
+
+					// 1.2 股份可用
+					DB_GET_VALUE_INT("SHARE_AVL", m_pEtfSecuInfo[i].shares_old.nShareAvl);
+
+					// 1.3 交易冻结
+					DB_GET_VALUE_INT("SHARE_TRD_FRZ", m_pEtfSecuInfo[i].shares_old.nShareTrdFrz);
+
+					// 1.4 在途数量
+					DB_GET_VALUE_INT("SHARE_OTD", m_pEtfSecuInfo[i].shares_old.nShareOtd);
+				}
+				else
+				{
+					// 获取最新股份数据
+
+					// 1.1 股份余额
+					DB_GET_VALUE_INT("SHARE_BLN", m_pEtfSecuInfo[i].shares_new.nShareBln);
+
+					// 1.2 股份可用
+					DB_GET_VALUE_INT("SHARE_AVL", m_pEtfSecuInfo[i].shares_new.nShareAvl);
+
+					// 1.3 交易冻结
+					DB_GET_VALUE_INT("SHARE_TRD_FRZ", m_pEtfSecuInfo[i].shares_new.nShareTrdFrz);
+
+					// 1.4 在途数量
+					DB_GET_VALUE_INT("SHARE_OTD", m_pEtfSecuInfo[i].shares_new.nShareOtd);
+				}
+
+				pRecordSet->MoveNext();
+			}
+
+			pRecordSet->Close();
+		}
+		catch(_com_error &e)
+		{
+			CString strMsg;
+			strMsg.Format(_T("错误描述：%s\n错误消息%s"), 
+				(LPCTSTR)e.Description(),
+				(LPCTSTR)e.ErrorMessage());
+
+			g_pLog->WriteRunLogEx(__FILE__,__LINE__,strMsg.GetBuffer());
+
+			return FALSE;
+		}
+	}
+
+	return TRUE;
+}
+
+BOOL CSH_ETFVistor::GetEtfInfo( char *pEtfIntl )
+{
+	_variant_t TheValue; //VARIANT数据类型
+	char szTmp[100] = {0};
+
+	// 1. 获取etf_info表
+	CString strSql;
 	float fPrice = 0;
 
-	strSql.Format("select * from  shares where secu_intl = %s and account = %s", pSecuIntl, g_pCfg->GetAccount());
+	strSql.Format("select * from etf_info where etf_intl = %s",pEtfIntl);
 
 	BSTR bstrSQL = strSql.AllocSysString();
 
@@ -1087,33 +1000,36 @@ BOOL CSH_ETFVistor::GetEtfSecuShares( char *pSecuIntl, ETF_SECU_SHARES* pShares 
 			return FALSE;
 		}
 
-		// 客户当前没有持仓此股票
+		// 查询不到ETF信息
 		if (pRecordSet->adoEOF)
 		{
 			return FALSE;
 		}
 
+		// 初始化成份股信息
+		m_pEtfInfo = new ETF_INFO;
+		if (NULL == m_pEtfInfo)
+		{
+			g_pLog->WriteRunLogEx(__FILE__, __LINE__, "初始化ETF信息失败!");
+			return FALSE;
+		}
+
+		int n = 0;
 		while(!pRecordSet->adoEOF)
 		{	
-			// 1.1 股份余额
-			DB_GET_VALUE_INT("SHARE_BLN", pShares->nShareBln);
-
-			// 1.2 股份可用
-			DB_GET_VALUE_INT("SHARE_AVL", pShares->nShareAvl);
-
-			// 1.3 交易冻结
-			DB_GET_VALUE_INT("SHARE_TRD_FRZ", pShares->nShareTrdFrz);
-
-			// 1.4 在途数量
-			DB_GET_VALUE_INT("SHARE_OTD", pShares->nShareOtd);
-
-			// 1.5 在途可用
-			DB_GET_VALUE_INT("SHARE_OTD_AVL", pShares->nSHareOtd_Avl);
+			// 当前价格
+			DB_GET_VALUE_STRING("ETF_INTL", m_pEtfInfo->szEtfIntl);
+			DB_GET_VALUE_INT("CREATIONREDEMPTIONUNIT", m_pEtfInfo->nCreationRedemptionUnit);
+			DB_GET_VALUE_FLOAT("MAXCASHRATIO", m_pEtfInfo->fMaxCashRatio);
+			DB_GET_VALUE_FLOAT("ESTIMATECASHCOMPONENT", m_pEtfInfo->fEstimateCashComponent);
+			DB_GET_VALUE_FLOAT("CASHCOMPONENT", m_pEtfInfo->fCashComponent);
+			DB_GET_VALUE_FLOAT("NAVPERCU", m_pEtfInfo->fNavPerCu);
+			DB_GET_VALUE_FLOAT("NAV", m_pEtfInfo->fNav);
 
 			pRecordSet->MoveNext();
 		}
 
-		pRecordSet->Close();
+		pRecordSet->Close();		
 	}
 	catch(_com_error &e)
 	{
@@ -1125,7 +1041,5 @@ BOOL CSH_ETFVistor::GetEtfSecuShares( char *pSecuIntl, ETF_SECU_SHARES* pShares 
 		g_pLog->WriteRunLogEx(__FILE__,__LINE__,strMsg.GetBuffer());
 
 		return FALSE;
-	}
-
-	return TRUE;
+	}	
 }
