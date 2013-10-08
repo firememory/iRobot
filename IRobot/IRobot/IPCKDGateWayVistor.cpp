@@ -56,7 +56,7 @@ BOOL IPCKDGateWayVistor::SendMidMsg(char *pCmd)
 	// 对柜台返回的值进行解析
 	g_pLog->WriteRunLog(MID_MODE, LOG_DEBUG, "Recv:%s", m_pKDGateWay->m_pReturnData);
 
-	char szTemp[2048] = {0};
+	char szTemp[2048*10] = {0};
 	strcpy_s(szTemp, m_pKDGateWay->m_pReturnData);
 
 	m_nRowNum = m_pKDGateWay->GetRecNum();

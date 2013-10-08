@@ -143,6 +143,7 @@ void CPageFuncTest::OnBnClickedButtonInit()
 	// 初始化数据库连接
 	if (!g_pDBConn->init())
 	{
+		g_pLog->WriteRunLog(SYS_MODE, LOG_WARN, "数据库连接失败!");
 		return;
 	}
 

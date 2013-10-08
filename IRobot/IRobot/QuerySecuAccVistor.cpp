@@ -147,8 +147,7 @@ BOOL CQuerySecuAccVistor::TestCase_1()
 		if (ChkData(&m_pMsg[i]) == FALSE)
 		{
 			return FALSE;
-		}
-		
+		}		
 	}
 
 	return bRet;
@@ -161,8 +160,8 @@ BOOL CQuerySecuAccVistor::ChkData(MID_501_QUERY_SECU_ACC_RET_MSG *pMsg)
 
 	// 1. »ñÈ¡Shares±í
 	CString strSql;
-	strSql.Format("select * from  secu_acc where secu_acc = '%s' and bind_seat = %s and dft_acc = %s",
-		pMsg->szSecuAcc, pMsg->szBindSeat, g_pCfg->GetAccount().GetBuffer());
+	strSql.Format("select * from  secu_acc where secu_acc = '%s' and dft_acc = %s",
+		pMsg->szSecuAcc, g_pCfg->GetAccount().GetBuffer());
 
 	BSTR bstrSQL = strSql.AllocSysString();
 

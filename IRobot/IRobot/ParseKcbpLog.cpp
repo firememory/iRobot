@@ -361,7 +361,7 @@ void CParseKcbpLog::ExecMultiCmds_1()
 			// 设置 测试操作员的权限
 			OpGrant(value.GetBuffer());
 		}
-		else if (value.Compare("3") == 0)
+		else if (value.Compare("1") == 0)
 		{
 			// OP_ROLE为1， 通过MID委托
 			// 需要首先重置客户交易密码为123444，然后登录客户
@@ -456,7 +456,7 @@ void CParseKcbpLog::ExecMultiCmds_2()
 			// 设置 测试操作员的权限
 			OpGrant(value.GetBuffer());
 		}
-		else if (value.Compare("3") == 0)
+		else if (value.Compare("1") == 0)
 		{
 			// OP_ROLE为1， 通过MID委托
 			// 需要首先重置客户交易密码为123444，然后登录客户
@@ -551,7 +551,7 @@ void CParseKcbpLog::ExecMultiCmds_3()
 			// 设置 测试操作员的权限
 			OpGrant(value.GetBuffer());
 		}
-		else if (value.Compare("3") == 0)
+		else if (value.Compare("1") == 0)
 		{
 			// OP_ROLE为1， 通过MID委托
 			// 需要首先重置客户交易密码为123444，然后登录客户

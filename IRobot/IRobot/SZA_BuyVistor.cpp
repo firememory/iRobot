@@ -870,37 +870,31 @@ BOOL CSZA_BuyVistor::ChkData()
 				g_pLog->WriteRunLog(CHKPNT_MODE, LOG_WARN, "Chk 1.4 Fail!");
 			}
 		}
-		else if (strcmp(m_szTrdId, "YB") == 0)
+		else if (strcmp(m_szTrdId, "WB") == 0)
 		{
-			// 市价委托 对手方最优价格委托
+			// 市价委托 全额成交或撤销委托 WB
 			// 1.3.检查captial表中【资金可用 AVAILABLE】减少 应该等于Matching表中的【SETT_AMT】
-			// 由于精度问题，允许1以内的差异
-			float n1 = CutFloatPnt(m_fCptlAvl_Old - m_fCptlAvl_New);
-			float n2 = abs(CutFloatPnt(m_fCptlAvl_Old - m_fCptlAvl_New) - m_fMatched_SettAmt);
-
+			// 由于精度问题，允许1以内的差异		
 			if (abs(CutFloatPnt(m_fCptlAvl_Old - m_fCptlAvl_New) - m_fMatched_SettAmt) > 1)
 			{								
 				bRet = FALSE;
 				g_pLog->WriteRunLog(CHKPNT_MODE, LOG_WARN, "Chk 1.3 Fail!");
 			}
 
-			// 1.4.检查captial表中【交易冻结 TRD_FRZ】增加 等于 0
-			if (CutFloatPnt( m_fCptlTrdFrz_New - m_fCptlTrdFrz_Old) != 0)
-			{
-				float n1 = m_fCptlTrdFrz_New - m_fCptlTrdFrz_Old;
-				float n2 = m_fMatched_SettAmt;
-
+			// 1.4.检查captial表中【交易冻结 TRD_FRZ】 无变化
+			if (m_fCptlTrdFrz_New != m_fCptlTrdFrz_Old)
+			{			
 				bRet = FALSE;
 				g_pLog->WriteRunLog(CHKPNT_MODE, LOG_WARN, "Chk 1.4 Fail!");
 			}
 		}
 		else if (strcmp(m_szTrdId, "XB") == 0 || strcmp(m_szTrdId, "2B") == 0 
-			|| strcmp(m_szTrdId, "VB") == 0 || strcmp(m_szTrdId, "WB") == 0)
+			|| strcmp(m_szTrdId, "VB") == 0 || strcmp(m_szTrdId, "YB") == 0)
 		{
 			// 市价委托 本方最有价格委托 XB
 			// 市价委托 即时成交剩余撤销委托 2B
 			// 市价委托 五档即时成交剩余撤销 VB
-			// 市价委托 全额成交或撤销委托 WB
+			// 市价委托 对手方最优价格委托 YB			
 
 			// 1.3.检查captial表中【资金可用 AVAILABLE】减少 应该等于Matching表中的【ORDER_FRZ_AMT】
 			// 由于精度问题，允许1以内的差异

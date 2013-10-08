@@ -175,7 +175,7 @@ void CLoginterface::WriteRunLog(int nMode, int nLogLevel, const char *msg, ...)
 		return;
 	}
 
-	const int nTmpBufSize = 2048;
+	const int nTmpBufSize = 1024 * 10;
 	char msgStr[nTmpBufSize]={0};
 	char bufStr[nTmpBufSize]={0};
 	char timeStr[nTmpBufSize]={0};
