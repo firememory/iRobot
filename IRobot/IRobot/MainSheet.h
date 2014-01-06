@@ -3,6 +3,7 @@
 #include "PageCfg.h"
 #include "PageFuncTest.h"
 #include "PageStressTest.h"
+#include "PageInterTest.h"
 
 // CMainSheet
 
@@ -18,6 +19,7 @@ public:
 	CPageCfg m_pageCfg;
 	CPageFuncTest m_pageFuncTest;
 	CPageStressTest m_pageStressTest;
+	CPageInterTest m_pageInterTest;
 
 protected:	
 	DECLARE_MESSAGE_MAP()

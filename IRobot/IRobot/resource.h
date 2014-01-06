@@ -11,6 +11,7 @@
 #define IDD_PAGEFUNCTEST                103
 #define IDD_PAGECFG                     104
 #define IDD_PAGESTRESSTEST              105
+#define IDD_PAGEINTERFACE               106
 #define IDR_MAINFRAME                   128
 #define IDC_KCXP_IP                     1000
 #define IDC_KCXP_SENDQ                  1001
@@ -53,6 +54,12 @@
 #define IDC_BUTTON_FUNC_TEST_RUN        1043
 #define IDC_BUTTON_EXIT                 1044
 #define IDC_BUTTON_PAUSE_THREAD         1045
+#define IDC_KCXP                        1047
+#define IDC_MID                         1048
+#define IDC_BUTTON_INVOKE               1049
+#define IDC_EDIT1                       1050
+#define IDC_EDIT_COMMAND                1050
+#define IDC_EDIT_LBM                    1051
 
 // Next default values for new objects
 // 
@@ -60,7 +67,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        129
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1047
+#define _APS_NEXT_CONTROL_VALUE         1052
 #define _APS_NEXT_SYMED_VALUE           106
 #endif
 #endif

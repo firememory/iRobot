@@ -21,6 +21,7 @@ CMainSheet::CMainSheet(LPCTSTR pszCaption, CWnd* pParentWnd, UINT iSelectPage)
 	AddPage(&m_pageCfg);
 	AddPage(&m_pageFuncTest);
 	AddPage(&m_pageStressTest);
+	AddPage(&m_pageInterTest);
 }
 
 CMainSheet::~CMainSheet()
